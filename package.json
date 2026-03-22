@@ -1,0 +1,11 @@
+{
+  "id": "cbb0f5e7-2b0f-4886-9dc4-8f0a0a52df24",
+  "name": "Concurrent Studios and DLCs",
+  "version": "1.0.0",
+  "author": "Jeffrey Epstein",
+  "description": "Introduces rival studios, stock market, subsidiaries, founding studios, and a DLC system.",
+  "main": "./main.js",
+  "dependencies": {
+    "gdt-modAPI": "0.1.x"
+  }
+}
