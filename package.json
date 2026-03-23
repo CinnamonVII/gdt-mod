@@ -2,7 +2,7 @@
   "id": "cbb0f5e7-2b0f-4886-9dc4-8f0a0a52df24",
   "name": "concurrent-studios",
   "version": "1.0.0",
-  "author": "Jeffrey Epstein",
+  "author": "Cinnamon",
   "description": "Introduces rival studios, stock market, subsidiaries, founding studios, and a DLC system.",
   "main": "./main.js",
   "dependencies": {
