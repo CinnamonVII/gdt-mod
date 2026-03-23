@@ -115,7 +115,7 @@
     }, 1000);
 
     function tickEconomy() {
-        var currentWeek = GameManager.company.currentWeek;
+        var currentWeek = Math.floor(GameManager.company.currentWeek);
         if (store.data.lastWeekProcessed === currentWeek) {
             return;
         }
@@ -124,6 +124,19 @@
         // Perform weekly simulation for studios and active DLC
         processCompetitors();
         processDLCs();
+        
+        // Split Revenue Intercept: remove 70% of gross from Published Games so player only nets 30% contract cut!
+        for (var i = 0; i < GameManager.company.games.length; i++) {
+            var g = GameManager.company.games[i];
+            if (g.state === Game.states.onTheMarket && g.modIsPublishingDeal) {
+                var delta = g.totalSalesCash - (g.modLastSalesCash || 0);
+                if (delta > 0) {
+                    var takeBack = delta * 0.70;
+                    GameManager.company.adjustCash(-takeBack, "Publisher Split Cut: " + g.title);
+                }
+                g.modLastSalesCash = g.totalSalesCash;
+            }
+        }
     }
 
     function processCompetitors() {
@@ -160,7 +173,8 @@
                                 topic: offer.topic,
                                 genre: offer.genre,
                                 size: offer.size,
-                                weeksRemaining: (offer.size==="Small"?10:(offer.size==="Medium"?20:(offer.size==="Large"?35:50))),
+                                platforms: offer.platforms || [offer.platform],
+                                weeksRemaining: (offer.size==="Small"?15:(offer.size==="Medium"?30:(offer.size==="Large"?50:80))),
                                 isPublishedByPlayer: true,
                                 publishedGameAdvance: offer.advance
                             };
@@ -226,46 +240,81 @@
         if (proj.size === "Large") price = 25;
         if (proj.size === "AAA") price = 40;
 
-        var revenue = units * price;
-        var cost = 0;
-        if (proj.size === "Small") cost = 80000;
-        if (proj.size === "Medium") cost = 300000;
-        if (proj.size === "Large") cost = 1500000;
-        if (proj.size === "AAA") cost = 8000000;
+        if (proj.isDLC) {
+            store.data.dlcData[proj.gameId] = {
+                activeWeeksLeft: 20,
+                weeklyRevenue: proj.weeklyRevenue
+            };
+            GameManager.company.notifications.push(new Notification({
+                header: "Subsidiary DLC Released",
+                text: studio.name + " finished developing " + proj.name + "! It is now generating revenue.",
+                image: ""
+            }));
+            return;
+        }
 
-        var netProfit = revenue - cost;
+        var score = Math.floor(Math.random() * 5) + 6; // 6 to 10
+        if (proj.size === "AAA") score = Math.floor(Math.random() * 3) + 8;
 
-        studio.valuation += Math.floor(netProfit * 0.5); 
-        if (studio.valuation < 1000000) studio.valuation = 1000000; 
+        var myPlats = [];
+        if (GameManager.company.availablePlatforms) myPlats = myPlats.concat(GameManager.company.availablePlatforms);
+        if (GameManager.company.licencedPlatforms) myPlats = myPlats.concat(GameManager.company.licencedPlatforms);
+        if (myPlats.length === 0) myPlats = Platforms.allPlatforms.slice(0, 3);
         
-        if (studio.sharesOwned > 0 && netProfit > 0) {
-            var dividend = Math.floor(netProfit * (studio.sharesOwned / 100));
-            GameManager.company.adjustCash(dividend, "Dividends: " + studio.name + " (" + proj.name + ")");
+        var selectedPlats = [];
+        var projPlats = proj.platforms || [proj.platform];
+        for (var i = 0; i < myPlats.length; i++) {
+            if (projPlats.indexOf(myPlats[i].name) !== -1) selectedPlats.push(myPlats[i]);
         }
+        if (selectedPlats.length === 0) selectedPlats.push(myPlats[0]);
 
-        if (proj.isPublishedByPlayer && netProfit > 0) {
-            var pubCut = Math.floor(revenue * 0.3); // 30% publishing cut
-            GameManager.company.adjustCash(pubCut, "Publishing Royalties: " + proj.name);
-            studio.valuation -= pubCut;
+        var game = new Game(GameManager.company);
+        game.id = (GameManager.getGUID ? GameManager.getGUID() : Math.random().toString(36));
+        game.title = proj.name + " (" + studio.name + ")";
+        game.topic = Topics.topics.filter(function(t){ return t.name === proj.topic; })[0] || Topics.topics[0];
+        game.genre = GameGenre.getAll().filter(function(g) { return g.name === proj.genre; })[0] || GameGenre.Action;
+        game.secondGenre = null;
+        game.platforms = selectedPlats;
+        
+        game.gameSize = proj.size; 
+        
+        var designAvg = 500;
+        var techAvg = 500;
+        if (game.gameSize === "Medium") { designAvg = 1500; techAvg = 1500; }
+        if (game.gameSize === "Large") { designAvg = 4000; techAvg = 4000; }
+        if (game.gameSize === "AAA") { designAvg = 10000; techAvg = 10000; }
+
+        game.designPoints = designAvg + Math.floor(Math.random() * 200);
+        game.technologyPoints = techAvg + Math.floor(Math.random() * 200);
+        game.bugs = 0;
+        game.score = score;
+        
+        if (typeof Sales !== 'undefined' && Sales.setUpSales) {
+            Sales.setUpSales(GameManager.company, game);
         }
+        
+        game.state = Game.states.onTheMarket;
+        game.releaseWeek = Math.floor(GameManager.company.currentWeek);
+
+        if (proj.isPublishedByPlayer) game.modIsPublishingDeal = true;
+        if (proj.isSubsidiaryDeal) game.modIsSubsidiaryDeal = true;
+
+        GameManager.company.games.push(game);
 
         store.data.releaseHistory.unshift({
-            week: GameManager.company.currentWeek,
+            week: game.releaseWeek,
             studioName: studio.name,
-            gameName: proj.name,
+            gameName: game.title,
             score: score,
-            units: units,
-            revenue: revenue,
-            netProfit: netProfit
+            units: game.unitsSold || 500000,
+            revenue: game.totalSalesCash || 1500000,
+            netProfit: (game.totalSalesCash || 1500000)
         });
-        
-        if (store.data.releaseHistory.length > 50) {
-            store.data.releaseHistory.pop();
-        }
+        if (store.data.releaseHistory.length > 20) store.data.releaseHistory.pop();
 
-        if (score >= 9 || proj.isPublishedByPlayer) {
-            var msgText = studio.name + " released a smash hit: " + proj.name + " (Score: " + score + "/10). It sold " + UI.getShortNumberString(units) + " units!";
-            if (proj.isPublishedByPlayer) msgText = "The game you published for " + studio.name + ", " + proj.name + ", was released! Score: " + score + "/10.";
+        if (proj.isPublishedByPlayer || proj.isSubsidiaryDeal || (score >= 9 && studio.sharesOwned >= 50)) {
+            var msgText = studio.name + " finished development. " + game.title + " (Score: " + score + "/10) has reached the market!";
+            if (proj.isPublishedByPlayer) msgText = "The publishing contract [" + game.title + "] has been released! Generating native weekly sales now.";
             GameManager.company.notifications.push(new Notification({
                 header: "Major Release",
                 text: msgText,
@@ -284,9 +333,7 @@
                 var ogGame = null;
                 for (var j=0; j<activeGames.length; j++) { if (activeGames[j].id === gameId) { ogGame = activeGames[j]; break; } }
                 
-                var baseScaling = (ogGame && ogGame.revenue) ? (ogGame.revenue * 0.05) : ((ogGame && ogGame.costs) ? ogGame.costs * 0.1 : 10000);
-                var successMod = (ogGame && ogGame.score) ? (ogGame.score / 5) : 1; 
-                var revenue = Math.floor(baseScaling * successMod * (Math.random() * 0.5 + 0.75));
+                var revenue = dlc.weeklyRevenue;
                 if (revenue < 5000) revenue = 5000;
 
                 GameManager.company.adjustCash(revenue, "DLC Sales: " + dlc.name);
@@ -301,10 +348,42 @@
         activeTab = activeTab || "market";
         Sound.click();
         
+        if ($('#modUI').length > 0) {
+            routeModMenu(activeTab);
+            return;
+        }
+
         // Build simplemodal dialog body with white native aesthetic
         var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50; padding: 0;"></div>');
-        
-        var header = $('<div style="display: flex; gap: 5px; border-bottom: 2px solid #bdc3c7; padding: 10px 10px 0 10px; background-color: #e0e6ed; border-top-left-radius: 8px; border-top-right-radius: 8px;"></div>');
+        var header = $('<div id="modUI_header" style="display: flex; gap: 5px; border-bottom: 2px solid #bdc3c7; padding: 10px 10px 0 10px; background-color: #e0e6ed; border-top-left-radius: 8px; border-top-right-radius: 8px;"></div>');
+        container.append(header);
+        var contentArea = $('<div id="modUI_content" style="height: 550px; overflow-y: auto; overflow-x: hidden; padding: 20px; background-color: #ecf0f1;"></div>');
+        container.append(contentArea);
+
+        var closeWrapper = $('<div class="centeredButtonWrapper" style="padding: 10px; border-top: 2px solid #bdc3c7; text-align: center;"></div>');
+        var closeBtn = $('<div class="okButton selectorButton orangeButton" style="width: 150px; display: inline-block;">Close</div>');
+        closeBtn.click(function () { $.modal.close(); });
+        closeWrapper.append(closeBtn);
+        container.append(closeWrapper);
+
+        container.modal({
+            overlayClose: false,
+            opacity: 80,
+            overlayCss: { backgroundColor: "#000" },
+            containerCss: { width: "1000px", height: "700px" }
+        });
+
+        routeModMenu(activeTab);
+    }
+
+    function routeModMenu(activeTab) {
+        var header = $('#modUI_header');
+        var contentArea = $('#modUI_content');
+        if (header.length === 0 || contentArea.length === 0) return;
+
+        header.empty();
+        contentArea.empty();
+
         var tabs = [
             { id: "market", label: "Stock Market" },
             { id: "subsidiaries", label: "My Studios" },
@@ -322,14 +401,11 @@
             }
             var tabDiv = $('<div style="'+tabStyle+'">'+t.label+'</div>');
             tabDiv.click(function() { 
-                $.modal.close(); 
-                showModMenu(t.id); 
+                Sound.click();
+                routeModMenu(t.id); 
             });
             header.append(tabDiv);
         });
-        container.append(header);
-
-        var contentArea = $('<div style="height: 550px; overflow-y: auto; overflow-x: hidden; padding: 20px; background-color: #ecf0f1;"></div>');
 
         if (activeTab === "market") {
             renderMarketTab(contentArea);
@@ -342,21 +418,6 @@
         } else if (activeTab === "dlc") {
             renderDLCTab(contentArea);
         }
-
-        container.append(contentArea);
-
-        var closeWrapper = $('<div class="centeredButtonWrapper" style="padding: 10px; border-top: 2px solid #555; text-align: center;"></div>');
-        var closeBtn = $('<div class="okButton selectorButton orangeButton" style="width: 150px; display: inline-block;">Close</div>');
-        closeBtn.click(function () { $.modal.close(); });
-        closeWrapper.append(closeBtn);
-        container.append(closeWrapper);
-
-        container.modal({
-            overlayClose: true,
-            opacity: 80,
-            overlayCss: { backgroundColor: "#000" },
-            containerCss: { width: "1000px", height: "700px" }
-        });
     }
 
     function renderMarketTab(container) {
@@ -374,7 +435,7 @@
                         if (GameManager.company.cash >= tenPercentValue) {
                             GameManager.company.adjustCash(-tenPercentValue, "Bought Stock: " + studio.name);
                             studio.sharesOwned += 10;
-                            $.modal.close(); showModMenu("market");
+                            routeModMenu("market");
                         } else { alert("Not enough cash!"); }
                     });
                     btnContainer.append(buyBtn);
@@ -385,7 +446,7 @@
                     sellBtn.click(function () {
                         GameManager.company.adjustCash(tenPercentValue, "Sold Stock: " + studio.name);
                         studio.sharesOwned -= 10;
-                        $.modal.close(); showModMenu("market");
+                        routeModMenu("market");
                     });
                     btnContainer.append(sellBtn);
                 }
@@ -411,15 +472,16 @@
         for (var i = 0; i < studios.length; i++) {
             (function (studio) {
                 var item = buildStudioCard(studio);
-                var btnContainer = $('<div style="margin-top: 10px;"></div>');
                 var tenPercentValue = Math.floor(studio.valuation * 0.1);
+
+                var btnContainer = $('<div style="margin-top: 10px;"></div>');
 
                 if (studio.sharesOwned > 0 && !studio.isFounded) {
                     var sellBtn = $('<button class="selectorButton deleteButton" style="padding: 5px 15px; font-size: 14pt; display: inline-block; margin-right: 10px;">Sell 10% (' + UI.getShortNumberString(tenPercentValue) + ')</button>');
                     sellBtn.click(function () {
                         GameManager.company.adjustCash(tenPercentValue, "Sold Stock: " + studio.name);
                         studio.sharesOwned -= 10;
-                        $.modal.close(); showModMenu("subsidiaries");
+                        routeModMenu("subsidiaries");
                     });
                     btnContainer.append(sellBtn);
                 }
@@ -449,7 +511,7 @@
                             }));
                             
                             studio.currentProject = { name: "Co-Dev Support", weeksRemaining: 10, isPublishedByPlayer: false };
-                            $.modal.close(); showModMenu("subsidiaries");
+                            routeModMenu("subsidiaries");
                         } else { alert("Not enough cash!"); }
                     });
                     btnContainer.append(coDevBtn);
@@ -471,7 +533,7 @@
                                 text: "You have fully absorbed " + studio.name + " into your company! Gained " + UI.getShortNumberString(fansGained) + " fans and " + rpGained + " RP.",
                                 image: ""
                             }));
-                            $.modal.close(); showModMenu("subsidiaries");
+                            routeModMenu("subsidiaries");
                         }
                     });
                     btnContainer.append(absorbBtn);
@@ -485,7 +547,9 @@
 
     function renderPublishingTab(container) {
         var createBtn = $('<div class="selectorButton orangeButton" style="display: block; width: 300px; margin: 0 auto 20px auto; text-align: center;">Post Publishing Deal</div>');
-        createBtn.click(createNewOfferModal);
+        createBtn.click(function() {
+            renderPublishingForm(container);
+        });
         container.append(createBtn);
 
         var offers = store.data.publishingOffers || [];
@@ -509,7 +573,7 @@
                     if (confirm("Cancel this offer and refund your advance?")) {
                         GameManager.company.adjustCash(offer.advance, "Refunded Publishing Advance");
                         store.data.publishingOffers.splice(index, 1);
-                        $.modal.close(); showModMenu("publishing");
+                        routeModMenu("publishing");
                     }
                 });
                 item.append(cancelBtn);
@@ -518,21 +582,54 @@
         }
     }
 
-    function createNewOfferModal() {
-        $.modal.close();
-        var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50;"></div>');
-        container.append('<div class="windowTitle" style="color: #d35400;">Create Publishing Offer</div>');
+    function renderPublishingForm(container) {
+        container.empty();
+        container.append('<h2 style="color: #d35400;">Create Publishing Offer</h2>');
 
         var formContainer = $('<div style="padding: 20px; font-size: 16pt; line-height: 2;"></div>');
         
+        formContainer.append('<div>Topic:</div>');
+        var topicSearch = $('<input type="text" placeholder="Search topics..." style="font-size: 14pt; width: 100%; margin-bottom: 5px; background: white; border: 1px solid #ccc; color: black; padding: 5px;">');
+        formContainer.append(topicSearch);
+
         var topicSelect = $('<select id="pub_topic" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
         Topics.topics.forEach(function(t) { topicSelect.append('<option value="' + t.name + '">' + t.name + '</option>'); });
-        formContainer.append('<div>Topic:</div>').append(topicSelect);
+        formContainer.append(topicSelect);
 
-        var genreSelect = $('<select id="pub_genre" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
-        var genres = ["Action", "Adventure", "RPG", "Simulation", "Strategy", "Casual"];
-        genres.forEach(function(g) { genreSelect.append('<option value="' + g + '">' + g + '</option>'); });
+        var genreSelect = $('<select id="pub_genre" style="font-size: 16pt; width: 100%; margin-bottom: 5px; color: black;"></select>');
+        var genres = GameGenre.getAll();
+        genres.forEach(function(g) { genreSelect.append('<option value="' + g.name + '">' + g.name + '</option>'); });
         formContainer.append('<div>Genre:</div>').append(genreSelect);
+
+        var matchContainer = $('<div style="font-size: 14pt; margin-bottom: 20px; text-align: right;">Match Quality: <span id="pub_match" style="font-weight: bold;"></span></div>');
+        formContainer.append(matchContainer);
+
+        function updatePubMatch() {
+            var selectedTopicName = $('#pub_topic').val();
+            var selectedGenreName = $('#pub_genre').val();
+            var t = Topics.topics.filter(function(x){ return x.name === selectedTopicName; })[0];
+            var g = GameGenre.getAll().filter(function(x){ return x.name === selectedGenreName; })[0];
+            if (t && g) {
+                var idx = GameGenre.getAll().indexOf(g);
+                var weight = t.genreWeightings[idx];
+                var ind = $('#pub_match');
+                if (weight >= 1.0) { ind.text("Great (+++)").css("color", "#27ae60"); }
+                else if (weight >= 0.8) { ind.text("Good (++)").css("color", "#f39c12"); }
+                else if (weight >= 0.7) { ind.text("Okay (+)").css("color", "#e67e22"); }
+                else { ind.text("Bad (-)").css("color", "#c0392b"); }
+            }
+        }
+        $('#pub_topic, #pub_genre').change(updatePubMatch);
+        topicSearch.on('input', function() {
+            var term = $(this).val().toLowerCase();
+            $('#pub_topic option').each(function() {
+                var text = $(this).text().toLowerCase();
+                if (text.indexOf(term) !== -1) $(this).show(); else $(this).hide();
+            });
+            $('#pub_topic').val($('#pub_topic option:visible:first').val());
+            updatePubMatch();
+        });
+        updatePubMatch();
 
         var pSizeSelect = $('<select id="pub_size" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
         pSizeSelect.append('<option value="Small" data-cost="500000">Small ($500K Advance)</option>');
@@ -541,9 +638,13 @@
         pSizeSelect.append('<option value="AAA" data-cost="50000000">AAA ($50M Advance)</option>');
         formContainer.append('<div>Game Size:</div>').append(pSizeSelect);
 
-        var platformSelect = $('<select id="pub_platform" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
-        Platforms.allPlatforms.forEach(function(p) { platformSelect.append('<option value="' + p.name + '">' + p.name + '</option>'); });
-        formContainer.append('<div>Platform:</div>').append(platformSelect);
+        var platformSelect = $('<select id="pub_platform" multiple style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black; height: 100px;"></select>');
+        var myPlats = [];
+        if (GameManager.company.availablePlatforms) myPlats = myPlats.concat(GameManager.company.availablePlatforms);
+        if (GameManager.company.licencedPlatforms) myPlats = myPlats.concat(GameManager.company.licencedPlatforms);
+        if (myPlats.length === 0) myPlats = Platforms.allPlatforms.slice(0, 3);
+        myPlats.forEach(function(p) { platformSelect.append('<option value="' + p.name + '">' + p.name + '</option>'); });
+        formContainer.append('<div>Platforms (CTRL+Select):</div>').append(platformSelect);
 
         container.append(formContainer);
 
@@ -552,6 +653,7 @@
         confirmBtn.click(function () {
             var selectedSize = $('#pub_size').val();
             var advance = parseInt($('#pub_size option:selected').attr('data-cost'));
+            var selectedPlats = $('#pub_platform').val() || [myPlats[0].name];
 
             if (GameManager.company.cash >= advance) {
                 GameManager.company.adjustCash(-advance, "Posted Publishing Deal");
@@ -560,24 +662,21 @@
                     topic: $('#pub_topic').val(),
                     genre: $('#pub_genre').val(),
                     size: selectedSize,
-                    platform: $('#pub_platform').val(),
+                    platforms: selectedPlats,
                     advance: advance
                 });
 
-                $.modal.close();
-                showModMenu("publishing");
+                routeModMenu("publishing");
             } else {
                 alert("You need at least $" + UI.getShortNumberString(advance) + " to fund this advance!");
             }
         });
         
         var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; width: 200px;">Cancel</div>');
-        cancelBtn.click(function() { $.modal.close(); showModMenu("publishing"); });
+        cancelBtn.click(function() { routeModMenu("publishing"); });
 
         actionContainer.append(confirmBtn).append(cancelBtn);
         container.append(actionContainer);
-
-        container.modal({ overlayClose: true, opacity: 80, overlayCss: { backgroundColor: "#000" }, containerCss: { width: "700px", height: "650px" } });
     }
 
     function renderScheduleTab(container) {
@@ -614,27 +713,57 @@
                     item.append('<h3 style="margin: 0; font-size: 18pt; color: #d35400;">' + game.title + '</h3>');
                     item.append('<div style="font-size: 14pt; color: #7f8c8d;">Original Cost: $' + UI.getShortNumberString(game.costs) + '</div>');
 
-                    var dlc = store.data.dlcData[game.id];
+                    var subDev = false;
+                    for(var s=0; s<store.data.studios.length; s++){
+                        if(store.data.studios[s].currentProject && store.data.studios[s].currentProject.isDLC && store.data.studios[s].currentProject.gameId === game.id) {
+                            subDev = store.data.studios[s]; break;
+                        }
+                    }
+
                     if (dlc) {
                         item.append('<div style="font-size: 16pt; margin-top: 10px; color: #27ae60; font-weight: bold;">[Active] ' + dlc.activeWeeksLeft + ' weeks of revenue remaining</div>');
+                    } else if (subDev) {
+                        item.append('<div style="font-size: 16pt; margin-top: 10px; color: #3498db; font-weight: bold;">[In Development by ' + subDev.name + '] ' + subDev.currentProject.weeksRemaining + ' weeks left</div>');
                     } else {
-                        var btn = $('<div class="selectorButton orangeButton" style="display: inline-block; margin-top: 10px; font-size: 14pt;">Develop DLC (' + UI.getShortNumberString(dlcCost) + ')</div>');
+                        var actionArea = $('<div style="display: flex; gap: 10px; margin-top: 10px;"></div>');
+                        
+                        var btn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 12pt;">Develop Personally (' + UI.getShortNumberString(dlcCost) + ')</div>');
                         btn.click(function () {
                             if (GameManager.company.cash >= dlcCost) {
-                                GameManager.company.adjustCash(-dlcCost, "DLC Dev: " + game.title);
-                                store.data.dlcData[game.id] = {
-                                    name: game.title + " DLC",
-                                    activeWeeksLeft: 20
-                                };
-                                GameManager.company.notifications.push(new Notification({
-                                    header: "DLC Released",
-                                    text: "Your DLC for " + game.title + " has launched successfully!",
-                                    image: ""
-                                }));
-                                $.modal.close(); showModMenu("dlc");
+                                GameManager.company.adjustCash(-dlcCost, "Developed DLC: " + game.title);
+                                store.data.dlcData[game.id] = { activeWeeksLeft: 20, weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.05) };
+                                routeModMenu("dlc");
                             } else { alert("Not enough cash!"); }
                         });
-                        item.append(btn);
+                        actionArea.append(btn);
+
+                        var availSubs = store.data.studios.filter(function(st) { return st.sharesOwned >= 50 && st.isFounded && !st.currentProject; });
+                        if (availSubs.length > 0) {
+                            var subWrapper = $('<div style="flex: 1; display: flex; gap: 5px;"></div>');
+                            var subSelect = $('<select style="font-size: 12pt; flex: 1;"></select>');
+                            availSubs.forEach(function(st, idx) { subSelect.append('<option value="'+idx+'">'+st.name+'</option>'); });
+                            subWrapper.append(subSelect);
+                            
+                            var subBtn = $('<div class="selectorButton whiteBoardButton" style="font-size: 12pt; flex: 1;">Assign to Sub</div>');
+                            subBtn.click(function () {
+                                if (GameManager.company.cash >= dlcCost) {
+                                    var sIdx = parseInt(subSelect.val());
+                                    var theSub = availSubs[sIdx];
+                                    GameManager.company.adjustCash(-dlcCost, "Funded DLC: " + game.title);
+                                    theSub.currentProject = {
+                                        name: "DLC: " + game.title,
+                                        isDLC: true,
+                                        gameId: game.id,
+                                        weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.05),
+                                        weeksRemaining: 10
+                                    };
+                                    routeModMenu("dlc");
+                                } else { alert("Not enough cash!"); }
+                            });
+                            subWrapper.append(subBtn);
+                            actionArea.append(subWrapper);
+                        }
+                        item.append(actionArea);
                     }
                     container.append(item);
                 })(games[i]);
@@ -685,22 +814,57 @@
     }
 
     function instructStudio(studio) {
-        $.modal.close();
+        var contentArea = $('#modUI_content');
+        if (contentArea.length === 0) return;
+        contentArea.empty();
         
-        var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50;"></div>');
-        container.append('<div class="windowTitle" style="color: #d35400;">Instruct ' + studio.name + '</div>');
+        contentArea.append('<h2 style="color: #d35400;">Instruct ' + studio.name + '</h2>');
 
         var formContainer = $('<div style="padding: 20px; font-size: 16pt; line-height: 2;"></div>');
         formContainer.append('<div>Project funding requirement: <strong style="color: #f39c12;">$1,000,000</strong></div>');
         
+        formContainer.append('<div>Topic:</div>');
+        var topicSearch = $('<input type="text" placeholder="Search topics..." style="font-size: 14pt; width: 100%; margin-bottom: 5px; background: white; border: 1px solid #ccc; color: black; padding: 5px;">');
+        formContainer.append(topicSearch);
+
         var topicSelect = $('<select id="inst_topic" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
         Topics.topics.forEach(function(t) { topicSelect.append('<option value="' + t.name + '">' + t.name + '</option>'); });
-        formContainer.append('<div>Topic:</div>').append(topicSelect);
+        formContainer.append(topicSelect);
 
-        var genreSelect = $('<select id="inst_genre" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
-        var genres = ["Action", "Adventure", "RPG", "Simulation", "Strategy", "Casual"];
-        genres.forEach(function(g) { genreSelect.append('<option value="' + g + '">' + g + '</option>'); });
+        var genreSelect = $('<select id="inst_genre" style="font-size: 16pt; width: 100%; margin-bottom: 5px; color: black;"></select>');
+        var genres = GameGenre.getAll();
+        genres.forEach(function(g) { genreSelect.append('<option value="' + g.name + '">' + g.name + '</option>'); });
         formContainer.append('<div>Genre:</div>').append(genreSelect);
+
+        var matchContainer = $('<div style="font-size: 14pt; margin-bottom: 20px; text-align: right;">Match Quality: <span id="inst_match" style="font-weight: bold;"></span></div>');
+        formContainer.append(matchContainer);
+
+        function updateInstMatch() {
+            var selectedTopicName = $('#inst_topic').val();
+            var selectedGenreName = $('#inst_genre').val();
+            var t = Topics.topics.filter(function(x){ return x.name === selectedTopicName; })[0];
+            var g = GameGenre.getAll().filter(function(x){ return x.name === selectedGenreName; })[0];
+            if (t && g) {
+                var idx = GameGenre.getAll().indexOf(g);
+                var weight = t.genreWeightings[idx];
+                var ind = $('#inst_match');
+                if (weight >= 1.0) { ind.text("Great (+++)").css("color", "#27ae60"); }
+                else if (weight >= 0.8) { ind.text("Good (++)").css("color", "#f39c12"); }
+                else if (weight >= 0.7) { ind.text("Okay (+)").css("color", "#e67e22"); }
+                else { ind.text("Bad (-)").css("color", "#c0392b"); }
+            }
+        }
+        $('#inst_topic, #inst_genre').change(updateInstMatch);
+        topicSearch.on('input', function() {
+            var term = $(this).val().toLowerCase();
+            $('#inst_topic option').each(function() {
+                var text = $(this).text().toLowerCase();
+                if (text.indexOf(term) !== -1) $(this).show(); else $(this).hide();
+            });
+            $('#inst_topic').val($('#inst_topic option:visible:first').val());
+            updateInstMatch();
+        });
+        updateInstMatch();
 
         var pSizeSelect = $('<select id="inst_size" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
         pSizeSelect.append('<option value="Small">Small</option>');
@@ -709,11 +873,15 @@
         pSizeSelect.append('<option value="AAA">AAA</option>');
         formContainer.append('<div>Game Size:</div>').append(pSizeSelect);
 
-        var platformSelect = $('<select id="inst_platform" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
-        Platforms.allPlatforms.forEach(function(p) { platformSelect.append('<option value="' + p.name + '">' + p.name + '</option>'); });
-        formContainer.append('<div>Platform:</div>').append(platformSelect);
+        var platformSelect = $('<select id="inst_platform" multiple style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black; height: 100px;"></select>');
+        var myPlats = [];
+        if (GameManager.company.availablePlatforms) myPlats = myPlats.concat(GameManager.company.availablePlatforms);
+        if (GameManager.company.licencedPlatforms) myPlats = myPlats.concat(GameManager.company.licencedPlatforms);
+        if (myPlats.length === 0) myPlats = Platforms.allPlatforms.slice(0, 3);
+        myPlats.forEach(function(p) { platformSelect.append('<option value="' + p.name + '">' + p.name + '</option>'); });
+        formContainer.append('<div>Platforms (CTRL+Select):</div>').append(platformSelect);
 
-        container.append(formContainer);
+        contentArea.append(formContainer);
 
         var actionContainer = $('<div class="centeredButtonWrapper" style="margin-top: 20px;"></div>');
         var confirmBtn = $('<div class="selectorButton orangeButton" style="display: inline-block; width: 200px;">Begin Development</div>');
@@ -722,7 +890,7 @@
                 var selectedTopic = $('#inst_topic').val();
                 var selectedGenre = $('#inst_genre').val();
                 var selectedSize = $('#inst_size').val();
-                var selectedPlatform = $('#inst_platform').val();
+                var selectedPlats = $('#inst_platform').val() || [myPlats[0].name];
 
                 GameManager.company.adjustCash(-1000000, "Subsidiary Funding: " + studio.name);
                 
@@ -731,35 +899,28 @@
                     topic: selectedTopic,
                     genre: selectedGenre,
                     size: selectedSize,
-                    weeksRemaining: (selectedSize==="Small"?10:(selectedSize==="Medium"?20:(selectedSize==="Large"?35:50))),
-                    isPublishedByPlayer: true // We count instructed subsideries as player published (full profits/dividends offset)
+                    platforms: selectedPlats,
+                    isSubsidiaryDeal: true,
+                    weeksRemaining: (selectedSize==="Small"?15:(selectedSize==="Medium"?30:(selectedSize==="Large"?50:80)))
                 };
 
-                var msg = studio.name + " has begun production on a " + selectedSize + " " + selectedTopic + " " + selectedGenre + " game for " + selectedPlatform + " per your instructions. They will release it soon!";
+                var msg = studio.name + " has begun production on a " + selectedSize + " " + selectedTopic + " " + selectedGenre + " game for " + selectedPlats.join(", ") + " per your instructions. They will release it soon!";
                 GameManager.company.notifications.push(new Notification({
                     header: "Subsidiary Tasked",
                     text: msg,
                     image: ""
                 }));
-                $.modal.close();
-                showModMenu("subsidiaries");
+                routeModMenu("subsidiaries");
             } else {
                 alert("You need at least $1M to fund a subsidiary project!");
             }
         });
         
         var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; width: 200px;">Cancel</div>');
-        cancelBtn.click(function() { $.modal.close(); showModMenu("subsidiaries"); });
+        cancelBtn.click(function() { routeModMenu("subsidiaries"); });
 
         actionContainer.append(confirmBtn).append(cancelBtn);
-        container.append(actionContainer);
-
-        container.modal({
-            overlayClose: true,
-            opacity: 80,
-            overlayCss: { backgroundColor: "#000" },
-            containerCss: { width: "700px", height: "650px" }
-        });
+        contentArea.append(actionContainer);
     }
 
     function foundNewStudio() {
@@ -776,8 +937,7 @@
                     isFounded: true,
                     currentProject: null
                 });
-                $.modal.close();
-                showModMenu("subsidiaries");
+                routeModMenu("subsidiaries");
             }
         } else {
             alert("You need at least $5M to found a new studio!");
