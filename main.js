@@ -58,6 +58,11 @@
         if (!store.data.publishingOffers) {
             store.data.publishingOffers = [];
         }
+        if (!store.data.modGameIds) {
+            store.data.modGameIds = {};
+        }
+        // Re-tag any mod games that lost their flags after save/load
+        retagModGames();
     }
 
     function generateGameName(topic, genre) {
@@ -216,7 +221,14 @@
         GameManager.company.notifications.push.isModPatched = true;
     }
 
-    // Continuous patching check removed (redundant)
+    // Continuous patching check to ensure it stays active through loads
+    setInterval(function () {
+        if (typeof GameManager !== 'undefined' && GameManager.company) {
+            patchNotifications();
+            patchSequelFilters();
+            retagModGames();
+        }
+    }, 2000);
 
     function processDividends() {
         if (!GameManager.company || !GameManager.company.gameLog) return;
@@ -228,6 +240,7 @@
             
             var studioWeeklyRevenue = 0;
             GameManager.company.gameLog.forEach(function(g) {
+                if (g.modIsPublishingDeal) return;
                 if (g.modStudioId === studio.id && g.releaseWeek < currentWeek && !g.soldOut) {
                     var delta = g.totalSalesCash - (g.modLastDividendCash || 0);
                     if (delta > 0) {
@@ -246,16 +259,34 @@
         });
     }
 
+    function isModGame(g) {
+        return g.modAI || (store.data.modGameIds && store.data.modGameIds[g.id]);
+    }
+
+    function retagModGames() {
+        if (!GameManager.company || !GameManager.company.gameLog || !store.data.modGameIds) return;
+        var map = store.data.modGameIds;
+        for (var i = 0; i < GameManager.company.gameLog.length; i++) {
+            var g = GameManager.company.gameLog[i];
+            var entry = map[g.id];
+            if (entry) {
+                g.modAI = true;
+                g.modStudioId = entry.studioId;
+                if (entry.isPublishingDeal) g.modIsPublishingDeal = true;
+                if (entry.isSubsidiaryDeal) g.modIsSubsidiaryDeal = true;
+            }
+        }
+    }
+
     function patchSequelFilters() {
         try {
             if (typeof Company === 'undefined' || !Company.prototype) return;
             
             var methodsToPatch = [
                 "getPossibleGamesForSequel", 
-                "getPossibleGamesForPack", 
+                "getPossibleGamesForPack",
                 "getGamesWithoutReport",
-                "getGamesForReport",
-                "getGames"
+                "getGamesForReport"
             ];
 
             methodsToPatch.forEach(function(m) {
@@ -264,13 +295,32 @@
                     Company.prototype[m] = function() {
                         var list = orig.apply(this, arguments);
                         if (list && list.filter) {
-                            return list.filter(function(g) { return !g.modAI; });
+                            return list.filter(function(g) { return !isModGame(g); });
                         }
                         return list;
                     };
                     Company.prototype[m].isModPatched = true;
                 }
             });
+
+            // Special isolated patch for getGames with stack sniffing
+            if (Company.prototype.getGames && !Company.prototype.getGames.isModPatched) {
+                var origGetG = Company.prototype.getGames;
+                Company.prototype.getGames = function() {
+                    var list = origGetG.apply(this, arguments);
+                    if (list && list.filter) {
+                        try {
+                            var stack = new Error().stack || "";
+                            // Allow Sales engine, saving, and stats to see AI games
+                            if (stack.indexOf("Sales") === -1 && stack.indexOf("save") === -1 && stack.indexOf("Math.floor") === -1 && stack.indexOf("Notification") === -1) {
+                                return list.filter(function(g) { return !isModGame(g); });
+                            }
+                        } catch(e) {}
+                    }
+                    return list;
+                };
+                Company.prototype.getGames.isModPatched = true;
+            }
         } catch(e) {
             // Silently fail — Company may not be fully loaded yet
         }
@@ -318,9 +368,7 @@
                 for (var t=1; t<=5; t++) maint += (starTiers[t].maint * studio.staff[t]);
                 maint *= 4; // Pay for 4 weeks
                 if (maint > 0) {
-                    GameManager.company.cash -= maint;
-                    if (!GameManager.company.cashLog) GameManager.company.cashLog = [];
-                    GameManager.company.cashLog.push({amount: -maint, label: "Upkeep: " + studio.name});
+                    GameManager.company.adjustCash(-maint, "Upkeep: " + studio.name);
                 }
             }
 
@@ -450,70 +498,136 @@
         isShowingDraft = true;
         Sound.click();
 
-        var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50; padding: 20px; text-align: center;"></div>');
-        
-        container.append('<h2 style="color: #d35400;">Project Draft from ' + studio.name + '</h2>');
-        container.append('<div style="font-size: 16pt; margin: 10px 0;">We are idling and calculated our optimal next project!</div>');
-        
-        var info = $('<div style="background: white; border: 1px solid #bdc3c7; border-radius: 8px; padding: 15px; margin: 20px; text-align: left; display: inline-block;"></div>');
-        info.append('<div style="font-size: 14pt;">Topic: <strong style="color: #2980b9;">' + draft.topic + '</strong></div>');
-        info.append('<div style="font-size: 14pt;">Genre: <strong style="color: #8e44ad;">' + draft.genre + '</strong></div>');
-        info.append('<div style="font-size: 14pt;">Size: <strong style="color: #e67e22;">' + draft.size + '</strong></div>');
-        info.append('<div style="font-size: 14pt;">Platform: <strong style="color: #27ae60;">' + draft.platforms.join(", ") + '</strong></div>');
-        info.append('<div style="font-size: 14pt;">Funding Needed: <strong style="color: #c0392b;">$' + UI.getShortNumberString(draft.cost) + '</strong></div>');
-        
-        container.append(info);
-        
-        var btnArea = $('<div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;"></div>');
-        
-        var btnAccept = $('<div class="selectorButton greenButton" style="flex: 1;">Accept & Fund</div>');
+        var genreIndexMap = {"Action":0, "Adventure":1, "RPG":2, "Simulation":3, "Strategy":4, "Casual":5};
+
+        var container = $('<div class="windowBorder tallWindow" style="background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%); color: #ecf0f1; padding: 0; border-radius: 10px; overflow: hidden;"></div>');
+
+        // Header
+        var header = $('<div style="background: linear-gradient(90deg, #d35400, #e67e22); padding: 18px 25px; text-align: left;"></div>');
+        header.append('<div style="font-size: 22pt; font-weight: bold; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">' + studio.name + '</div>');
+        header.append('<div style="font-size: 13pt; color: rgba(255,255,255,0.85); margin-top: 2px;">is idle and wants to start a new project</div>');
+        container.append(header);
+
+        // Body with form
+        var body = $('<div style="padding: 20px 25px;"></div>');
+
+        // Row helper
+        function makeRow(labelText, color, selectEl) {
+            var row = $('<div style="display: flex; align-items: center; margin-bottom: 12px;"></div>');
+            row.append('<div style="width: 80px; font-size: 13pt; font-weight: bold; color: ' + color + ';">' + labelText + '</div>');
+            selectEl.css({ "flex": "1", "font-size": "13pt", "padding": "6px 10px", "border-radius": "6px", "border": "1px solid #4a6274", "background": "#1a252f", "color": "#ecf0f1", "outline": "none", "cursor": "pointer" });
+            row.append(selectEl);
+            return row;
+        }
+
+        // Topic dropdown
+        var topicSelect = $('<select id="draft_topic"></select>');
+        Topics.topics.forEach(function(t) {
+            var opt = $('<option value="' + t.name + '">' + t.name + '</option>');
+            if (t.name === draft.topic) opt.attr("selected", true);
+            topicSelect.append(opt);
+        });
+        body.append(makeRow("Topic", "#3498db", topicSelect));
+
+        // Genre dropdown
+        var genreSelect = $('<select id="draft_genre"></select>');
+        GameGenre.getAll().forEach(function(g) {
+            var opt = $('<option value="' + g.name + '">' + g.name + '</option>');
+            if (g.name === draft.genre) opt.attr("selected", true);
+            genreSelect.append(opt);
+        });
+        body.append(makeRow("Genre", "#9b59b6", genreSelect));
+
+        // Size dropdown
+        var sizeSelect = $('<select id="draft_size"></select>');
+        ["Small", "Medium", "Large", "AAA"].forEach(function(s) {
+            var opt = $('<option value="' + s + '">' + s + '</option>');
+            if (s === draft.size) opt.attr("selected", true);
+            sizeSelect.append(opt);
+        });
+        body.append(makeRow("Size", "#e67e22", sizeSelect));
+
+        // Match quality indicator
+        var matchBar = $('<div style="display: flex; align-items: center; margin-top: 4px; margin-bottom: 8px;"></div>');
+        matchBar.append('<div style="width: 80px; font-size: 13pt; font-weight: bold; color: #7f8c8d;">Match</div>');
+        var matchLabel = $('<span id="draft_match" style="font-size: 13pt; font-weight: bold; padding: 3px 12px; border-radius: 4px;"></span>');
+        matchBar.append(matchLabel);
+        body.append(matchBar);
+
+        function updateDraftMatch() {
+            var selTopic = $('#draft_topic').val();
+            var selGenre = $('#draft_genre').val();
+            var t = Topics.topics.filter(function(x) { return x.name === selTopic; })[0];
+            var g = GameGenre.getAll().filter(function(x) { return x.name === selGenre; })[0];
+            if (t && g) {
+                var idx = genreIndexMap[g.name]; if (idx === undefined) idx = 0;
+                var w = t.genreWeightings[idx];
+                var el = $('#draft_match');
+                if (w >= 1.0) { el.text("Great ★★★").css({ "color": "#2ecc71", "background": "rgba(46,204,113,0.15)" }); }
+                else if (w >= 0.8) { el.text("Good ★★").css({ "color": "#f1c40f", "background": "rgba(241,196,15,0.15)" }); }
+                else if (w >= 0.7) { el.text("Okay ★").css({ "color": "#e67e22", "background": "rgba(230,126,34,0.15)" }); }
+                else { el.text("Bad ✗").css({ "color": "#e74c3c", "background": "rgba(231,76,60,0.15)" }); }
+            }
+        }
+
+        // Funding line
+        var costLine = $('<div style="text-align: center; margin-top: 14px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 14pt;">Funding: <strong style="color: #e74c3c;">$' + UI.getShortNumberString(draft.cost) + '</strong></div>');
+        body.append(costLine);
+
+        container.append(body);
+
+        // Buttons
+        var btnArea = $('<div style="display: flex; gap: 0; border-top: 1px solid #4a6274;"></div>');
+
+        var btnAccept = $('<div style="flex: 1; text-align: center; padding: 16px 0; font-size: 16pt; font-weight: bold; cursor: pointer; background: #27ae60; color: white; transition: background 0.2s;">Accept &amp; Fund</div>');
+        btnAccept.hover(function() { $(this).css("background", "#2ecc71"); }, function() { $(this).css("background", "#27ae60"); });
         btnAccept.click(function() {
-            if (GameManager.company.cash >= draft.cost) {
-                GameManager.company.adjustCash(-draft.cost, "Subsidiary Funding: " + studio.name);
+            var selTopic = $('#draft_topic').val();
+            var selGenre = $('#draft_genre').val();
+            var selSize = $('#draft_size').val();
+            var cost = draft.cost;
+            if (GameManager.company.cash >= cost) {
+                GameManager.company.adjustCash(-cost, "Subsidiary Funding: " + studio.name);
                 studio.currentProject = {
-                    name: generateGameName(draft.topic, draft.genre),
-                    topic: draft.topic,
-                    genre: draft.genre,
-                    size: draft.size,
+                    name: generateGameName(selTopic, selGenre),
+                    topic: selTopic,
+                    genre: selGenre,
+                    size: selSize,
                     platforms: draft.platforms,
                     isSubsidiaryDeal: true,
-                    weeksRemaining: (draft.size==="Small"?15:(draft.size==="Medium"?30:(draft.size==="Large"?50:80)))
+                    weeksRemaining: (selSize==="Small"?15:(selSize==="Medium"?30:(selSize==="Large"?50:80)))
                 };
-                var msg = studio.name + " has begun production per your accepted draft!";
-                GameManager.company.notifications.push(new Notification({ header: "Draft Accepted", text: msg, image: "" }));
                 isShowingDraft = false;
                 studio.draftCooldown = 4;
                 $.modal.close();
             } else {
-                alert("You need $" + UI.getShortNumberString(draft.cost) + " to fund this draft!");
+                alert("You need $" + UI.getShortNumberString(cost) + " to fund this draft!");
             }
         });
 
-        var btnModify = $('<div class="selectorButton orangeButton" style="flex: 1;">Modify/Instruct</div>');
-        btnModify.click(function() {
-            isShowingDraft = false;
-            studio.draftCooldown = 2;
-            $.modal.close();
-            if ($('#modUI').length === 0) showModMenu("subsidiaries");
-            else routeModMenu("subsidiaries");
-        });
-
-        var btnDecline = $('<div class="selectorButton deleteButton" style="flex: 1;">Decline (Wait)</div>');
+        var btnDecline = $('<div style="flex: 1; text-align: center; padding: 16px 0; font-size: 16pt; font-weight: bold; cursor: pointer; background: #c0392b; color: white; transition: background 0.2s;">Decline</div>');
+        btnDecline.hover(function() { $(this).css("background", "#e74c3c"); }, function() { $(this).css("background", "#c0392b"); });
         btnDecline.click(function() {
             isShowingDraft = false;
             studio.draftCooldown = 8;
             $.modal.close();
         });
-        
-        btnArea.append(btnAccept).append(btnModify).append(btnDecline);
+
+        btnArea.append(btnAccept).append(btnDecline);
         container.append(btnArea);
 
         container.modal({
             overlayClose: false,
             opacity: 80,
             overlayCss: { backgroundColor: "#000" },
-            containerCss: { width: "600px", height: "400px" }
+            containerCss: { width: "550px", height: "auto" }
         });
+
+        // Wire up change events after modal opens
+        setTimeout(function() {
+            $('#draft_topic, #draft_genre').change(updateDraftMatch);
+            updateDraftMatch();
+        }, 50);
     }
 
     // New: Process ongoing publishing projects
@@ -704,6 +818,14 @@
         if (proj.isSubsidiaryDeal) game.modIsSubsidiaryDeal = true;
         game.modAI = true;
 
+        // Persist all flags so they survive save/load
+        if (!store.data.modGameIds) store.data.modGameIds = {};
+        store.data.modGameIds[game.id] = {
+            studioId: studio.id,
+            isPublishingDeal: !!proj.isPublishedByPlayer,
+            isSubsidiaryDeal: !!proj.isSubsidiaryDeal
+        };
+
         GameManager.company.gameLog.push(game);
 
         store.data.releaseHistory.unshift({
@@ -745,7 +867,7 @@
             headerText = "Subsidiary Release";
         }
         
-        if (proj.isPublishedByPlayer || proj.isSubsidiaryDeal || score >= 9 || (studio.sharesOwned > 0)) {
+        if (proj.isPublishedByPlayer || proj.isSubsidiaryDeal || score >= 9) {
             GameManager.company.notifications.push(new Notification({
                 header: headerText,
                 text: msgText,
@@ -1023,14 +1145,20 @@
 
                     var cancelBtn = $('<div class="selectorButton deleteButton" style="font-size: 14pt; padding: 10px 20px;">' + (offer.status === "Approved" ? "Clear" : "Cancel Offer") + '</div>');
                     cancelBtn.click(function () {
-                        if (offer.status === "Approved") {
-                            // If approved, just clear the visual entry, the project is already ongoing
-                            store.data.publishingOffers.splice(index, 1);
-                            routeModMenu("publishing");
-                        } else if (confirm("Remove this offer? Advance will be refunded if pending/rejected.")) {
-                            if (offer.status !== "Approved") GameManager.company.adjustCash(offer.advance, "Refunded Publishing Advance");
-                            store.data.publishingOffers.splice(index, 1);
-                            routeModMenu("publishing");
+                        var oID = offer.id;
+                        var idx = -1;
+                        for (var x=0; x<store.data.publishingOffers.length; x++) {
+                            if (store.data.publishingOffers[x].id === oID) { idx = x; break; }
+                        }
+                        if (idx !== -1) {
+                            if (offer.status === "Approved") {
+                                store.data.publishingOffers.splice(idx, 1);
+                                routeModMenu("publishing");
+                            } else if (confirm("Remove this offer? Advance will be refunded if pending/rejected.")) {
+                                GameManager.company.adjustCash(offer.advance, "Refunded Publishing Advance");
+                                store.data.publishingOffers.splice(idx, 1);
+                                routeModMenu("publishing");
+                            }
                         }
                     });
                     item.append(cancelBtn);
@@ -1191,7 +1319,7 @@
         var allGames = GameManager.company.gameLog || [];
         var games = allGames.filter(function(g) {
             // ONLY explicitly player's direct titles
-            return !g.modAI && !g.modIsSubsidiaryDeal && !g.modIsPublishingDeal;
+            return !isModGame(g) && !g.modIsSubsidiaryDeal && !g.modIsPublishingDeal;
         });
         var sortedGames = games.slice().sort(function(a,b) { return b.releaseWeek - a.releaseWeek; });
 
@@ -1243,8 +1371,13 @@
                                 if (GameManager.company.cash >= 100000) {
                                     Sound.click();
                                     GameManager.company.adjustCash(-100000, "DLC Development: " + game.title);
+                                    var devWeeks = 10;
+                                    var sz = game.gameSize;
+                                    if (sz === "Medium") devWeeks = 15;
+                                    else if (sz === "Large") devWeeks = 25;
+                                    else if (sz === "AAA") devWeeks = 40;
                                     store.data.dlcData[game.id] = {
-                                        pendingPlayerDev: 10,
+                                        pendingPlayerDev: devWeeks,
                                         gameTitle: game.title,
                                         weeklyRevenue: Math.floor(((game.totalSalesCash || 1500000)) * 0.05)
                                     };
@@ -1304,7 +1437,7 @@
         item.append(pieContainer);
 
         var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1;"></div>');
-        detailsContainer.append('<div style="display: flex; justify-content: space-between;"><h3 style="margin: 0; font-size: 20pt; color: #d35400;">' + studio.name + '</h3><div style="font-size: 14pt; color: #34495e;">Total Staff: ' + totalEmps + '</div></div>');
+        detailsContainer.append('<div style="display: flex; justify-content: space-between;"><h3 style="margin: 0; font-size: 20pt; color: #d35400;">' + studio.name + '</h3><div style="font-size: 14pt; color: #34495e;">Total Staff: ' + totalEmps + ' ($' + UI.getShortNumberString(totalMaint) + '/wk)</div></div>');
         
         var breakdownStr = '<span style="font-size: 10pt; color: #7f8c8d;">[' + studio.staff[1] + '✩1 | ' + studio.staff[2] + '✩2 | ' + studio.staff[3] + '✩3 | ' + studio.staff[4] + '✩4 | ' + studio.staff[5] + '✩5]</span>';
         detailsContainer.append('<div style="font-size: 16pt; margin: 5px 0;">Valuation: <strong style="color: #27ae60;">$' + UI.getShortNumberString(studio.valuation) + '</strong> ' + breakdownStr + '</div>');
@@ -1317,6 +1450,14 @@
                 var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; margin-top: 5px; font-size: 12pt; padding: 5px 10px;">Cancel Project</div>');
                 cancelBtn.click(function () {
                     if (confirm("Are you sure you want to cancel " + studio.currentProject.name + "? All progress and investments will be permanently lost!")) {
+                        if (studio.currentProject.isPublishedByPlayer && store.data.publishingProjects) {
+                            for(var p=0; p<store.data.publishingProjects.length; p++) {
+                                if (store.data.publishingProjects[p].id === studio.currentProject.id) {
+                                    store.data.publishingProjects.splice(p, 1);
+                                    break;
+                                }
+                            }
+                        }
                         studio.currentProject = null;
                         GameManager.company.notifications.push(new Notification({ header: "Project Cancelled", text: studio.name + " has ceased development.", image: "" }));
                         routeModMenu("subsidiaries");
@@ -1341,6 +1482,11 @@
             sellBtn.click(function () {
                 GameManager.company.adjustCash(tenPercentValue, "Sold 10% of " + studio.name);
                 studio.sharesOwned -= 10;
+                if (studio.sharesOwned <= 0 && GameManager.company.gameLog) {
+                    GameManager.company.gameLog.forEach(function(g) {
+                        if (g.modStudioId === studio.id) delete g.modLastDividendCash;
+                    });
+                }
                 routeModMenu(getRoute(studio.sharesOwned));
             });
             topBtns.append(sellBtn);
@@ -1396,7 +1542,6 @@
             if (GameManager.company.currentGame && !studio.currentProject) {
                 var coDevBtn = $('<button class="selectorButton whiteBoardButton" style="flex: 1; font-size: 10pt;">Co-Dev (Free)</button>');
                 coDevBtn.click(function() {
-                    var cost = tenPercentValue * 2;
                     var playerGame = GameManager.company.currentGame;
                     if (playerGame) { 
                         // Free co-dev for owned/partnered studios
@@ -1639,15 +1784,19 @@
                         currentProject: null
                     });
                     $.modal.close();
-                    if ($('#modUI').length === 0) showModMenu("subsidiaries");
-                    else routeModMenu("subsidiaries");
+                    setTimeout(function() {
+                        if ($('#modUI').length === 0) showModMenu("subsidiaries");
+                        else routeModMenu("subsidiaries");
+                    }, 300);
                 }
             });
             var cancelBtn = $('<div class="selectorButton deleteButton" style="width: 150px;">Cancel</div>');
             cancelBtn.click(function() {
                 $.modal.close();
-                if ($('#modUI').length === 0) showModMenu("subsidiaries");
-                else routeModMenu("subsidiaries");
+                setTimeout(function() {
+                    if ($('#modUI').length === 0) showModMenu("subsidiaries");
+                    else routeModMenu("subsidiaries");
+                }, 300);
             });
             btnArea.append(confirmBtn).append(cancelBtn);
             container.append(btnArea);
