@@ -63,6 +63,7 @@
         }
         // Re-tag any mod games that lost their flags after save/load
         retagModGames();
+        patchSequelFilters();
     }
 
     function generateGameName(topic, genre) {
@@ -284,9 +285,7 @@
             
             var methodsToPatch = [
                 "getPossibleGamesForSequel", 
-                "getPossibleGamesForPack",
-                "getGamesWithoutReport",
-                "getGamesForReport"
+                "getPossibleGamesForPack"
             ];
 
             methodsToPatch.forEach(function(m) {
@@ -302,25 +301,6 @@
                     Company.prototype[m].isModPatched = true;
                 }
             });
-
-            // Special isolated patch for getGames with stack sniffing
-            if (Company.prototype.getGames && !Company.prototype.getGames.isModPatched) {
-                var origGetG = Company.prototype.getGames;
-                Company.prototype.getGames = function() {
-                    var list = origGetG.apply(this, arguments);
-                    if (list && list.filter) {
-                        try {
-                            var stack = new Error().stack || "";
-                            // Allow Sales engine, saving, and stats to see AI games
-                            if (stack.indexOf("Sales") === -1 && stack.indexOf("save") === -1 && stack.indexOf("Math.floor") === -1 && stack.indexOf("Notification") === -1) {
-                                return list.filter(function(g) { return !isModGame(g); });
-                            }
-                        } catch(e) {}
-                    }
-                    return list;
-                };
-                Company.prototype.getGames.isModPatched = true;
-            }
         } catch(e) {
             // Silently fail — Company may not be fully loaded yet
         }
@@ -586,6 +566,23 @@
             var selGenre = $('#draft_genre').val();
             var selSize = $('#draft_size').val();
             var cost = draft.cost;
+            
+            var currentWk = Math.floor(GameManager.company.currentWeek);
+            var activePlats = Platforms.allPlatforms.filter(function(p) {
+                return (p.published && p.published <= currentWk) &&
+                       (!p.retireDate || p.retireDate > currentWk);
+            });
+            activePlats.sort(function(a, b) { return b.marketShare - a.marketShare; });
+            var finalPlats = [];
+            if (activePlats.length > 0) {
+                finalPlats.push(activePlats[0].name);
+                if ((selSize === "Large" || selSize === "AAA") && activePlats.length > 1) {
+                    finalPlats.push(activePlats[1].name);
+                }
+            } else {
+                finalPlats.push(Platforms.allPlatforms[0].name);
+            }
+
             if (GameManager.company.cash >= cost) {
                 GameManager.company.adjustCash(-cost, "Subsidiary Funding: " + studio.name);
                 studio.currentProject = {
@@ -593,7 +590,7 @@
                     topic: selTopic,
                     genre: selGenre,
                     size: selSize,
-                    platforms: draft.platforms,
+                    platforms: finalPlats,
                     isSubsidiaryDeal: true,
                     weeksRemaining: (selSize==="Small"?15:(selSize==="Medium"?30:(selSize==="Large"?50:80)))
                 };
@@ -1106,7 +1103,7 @@
         // Display ongoing projects first
         if (store.data.publishingProjects && store.data.publishingProjects.length > 0) {
             container.append('<h3 style="color: #d35400; text-align: center; margin-top: 30px;">Ongoing Publishing Projects</h3>');
-            store.data.publishingProjects.forEach(function(project, index) {
+            store.data.publishingProjects.forEach(function(project) {
                 var studio = null;
                 for (var k = 0; k < store.data.studios.length; k++) {
                     if (store.data.studios[k].id === project.studioId) {
@@ -1393,12 +1390,18 @@
                                     var subBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; font-size: 12pt;">Assign: ' + store.data.studios[s].name + '</div>');
                                     (function(studio) {
                                         subBtn.click(function() {
+                                            var devWeeks = 10;
+                                            var sz = game.gameSize;
+                                            if (sz === "Medium") devWeeks = 15;
+                                            else if (sz === "Large") devWeeks = 25;
+                                            else if (sz === "AAA") devWeeks = 40;
+
                                             studio.currentProject = {
                                                 name: game.title + " DLC",
                                                 isDLC: true,
                                                 gameId: game.id,
                                                 weeklyRevenue: Math.floor(((game.totalSalesCash || 1500000)) * 0.05),
-                                                weeksRemaining: 10
+                                                weeksRemaining: devWeeks
                                             };
                                             routeModMenu("dlc");
                                         });
@@ -1565,6 +1568,17 @@
                         var fansGained = Math.floor(studio.valuation / 500);
                         var rpGained = Math.floor(studio.valuation / 100000);
                         GameManager.company.fans += fansGained; GameManager.company.researchPoints += rpGained;
+                        
+                        // Clean up modGameIds for the absorbed studio
+                        if (store.data.modGameIds) {
+                            var keys = Object.keys(store.data.modGameIds);
+                            for (var i = 0; i < keys.length; i++) {
+                                if (store.data.modGameIds[keys[i]].studioId === studio.id) {
+                                    delete store.data.modGameIds[keys[i]];
+                                }
+                            }
+                        }
+
                         store.data.studios = store.data.studios.filter(function(s) { return s.id !== studio.id; });
                         GameManager.company.notifications.push(new Notification({ header: "Takeover!", text: "Absorbed " + studio.name + "!" }));
                         routeModMenu("subsidiaries");
