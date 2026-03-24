@@ -106,22 +106,29 @@
             var playerGame = GameManager.company.currentGame;
             if (!playerGame) { originalFinishDevelopment.apply(this, arguments); return; }
             
+            // --- Feature Overload Malus Removal ---
+            if (store.data.disableOverloadMalus) {
+                playerGame.featureOverload = 0;
+                playerGame.featureOverloadScore = 0;
+                playerGame.featureOverloadPoints = 0;
+                if (playerGame.bugs > 50) {
+                    playerGame.bugs = Math.floor(playerGame.bugs * 0.2); // Scrub 80% of bugs if overload is disabled
+                }
+            }
+
             var scrubEntry = store.data.coDevScrubMap[playerGame.title];
-            
             
             originalFinishDevelopment.apply(this, arguments);
             
-            
             if (scrubEntry) {
                 var c = GameManager.company;
-                
                 var props = ["prevDesignPoints", "prevTechnologyPoints", "designBaseline", "technologyBaseline", "lastDesignPoints", "lastTechPoints"];
-                
                 if (typeof c.prevDesignPoints !== 'undefined') c.prevDesignPoints = Math.max(0, c.prevDesignPoints - scrubEntry.design);
                 if (typeof c.prevTechnologyPoints !== 'undefined') c.prevTechnologyPoints = Math.max(0, c.prevTechnologyPoints - scrubEntry.tech);
                 if (typeof c.designBaseline !== 'undefined') c.designBaseline = Math.max(0, c.designBaseline - scrubEntry.design);
                 if (typeof c.technologyBaseline !== 'undefined') c.technologyBaseline = Math.max(0, c.technologyBaseline - scrubEntry.tech);
-                
+                if (typeof c.lastDesignPoints !== 'undefined') c.lastDesignPoints = Math.max(0, c.lastDesignPoints - scrubEntry.design);
+                if (typeof c.lastTechPoints !== 'undefined') c.lastTechPoints = Math.max(0, c.lastTechPoints - scrubEntry.tech);
                 
                 if (c.gameLog && c.gameLog.length > 0) {
                     var lastG = c.gameLog[c.gameLog.length - 1];
@@ -131,12 +138,19 @@
                     }
                 }
                 
-                
                 delete store.data.coDevScrubMap[playerGame.title];
-                GDT.saveData("concurrent_studios", store.data);
+
+                if (scrubEntry.design > 0 || scrubEntry.tech > 0) {
+                    GameManager.company.notifications.push(new Notification({
+                        header: "Co-Dev Support Complete",
+                        text: "Subsidiary teams injected " + scrubEntry.design + " Design and " + scrubEntry.tech + " Technology points during development of " + playerGame.title + "!",
+                        image: ""
+                    }));
+                }
             }
         };
     }
+
 
     
     GDT.on(GDT.eventKeys.saves.loading, function (e) {
@@ -182,14 +196,35 @@
         if (!store.data.coDevScrubMap) {
             store.data.coDevScrubMap = {}; 
         }
+        if (typeof store.data.lastSpawnWeek === 'undefined') {
+            store.data.lastSpawnWeek = -1;
+        }
+        if (typeof store.data.disableOverloadMalus === 'undefined') {
+            store.data.disableOverloadMalus = false;
+        }
+        if (!store.data.activeCampaigns) {
+            store.data.activeCampaigns = [];
+        }
+
+        // --- Franchise & Media Empire System Initializers ---
+        if (!store.data.franchises) {
+            store.data.franchises = [];
+        }
+        if (!store.data.mediaProjects) {
+            store.data.mediaProjects = [];
+        }
+        if (!store.data.movieStudios || store.data.movieStudios.length === 0) {
+            store.data.movieStudios = generateMovieStudios();
+        }
+        if (typeof store.data.lastCrossoverWeek === 'undefined') {
+            store.data.lastCrossoverWeek = -20; // Allow first one immediately
+        }
 
         
         if (typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.gameLog) {
             GameManager.company.gameLog = GameManager.company.gameLog.filter(function(g) {
                 return !g.modAI && !(store.data.modGameIds && store.data.modGameIds[g.id]);
             });
-            
-            store.data.modGameIds = {};
         }
 
         
@@ -255,6 +290,28 @@
             name = topic + " " + genre + " " + post[Math.floor(Math.random() * post.length)];
         }
         return name;
+    }
+
+    function generateMovieStudios() {
+        var movieStudioNames = [
+            "Paramount Interactive", "Universal Pixels", "Warner Bros. Digital",
+            "Sony Pictures Gaming", "Disney Interactive Reborn", "Lionsgate Games",
+            "A24 Interactive", "Netflix Films & Games", "Apple TV+ Studios",
+            "MGM Digital", "Legendary Games", "Blumhouse Interactive"
+        ];
+        var studios = [];
+        for (var i = 0; i < movieStudioNames.length; i++) {
+            studios.push({
+                id: "MS_" + i,
+                name: movieStudioNames[i],
+                reputation: Math.floor(Math.random() * 5) + 1,
+                dealPending: false,
+                dealOffer: null,
+                currentDeal: null,
+                totalDealsCompleted: 0
+            });
+        }
+        return studios;
     }
 
     function generateInitialStudios() {
@@ -329,6 +386,39 @@
         try {
             processPublishingProjects();
         } catch(e) { console.error("[Mod] processPublishingProjects error:", e); }
+        try {
+            processCampaigns();
+        } catch(e) { console.error("[Mod] processCampaigns error:", e); }
+        
+        // --- New Studio Spawning ---
+        if (currentWeek > 0 && currentWeek % 12 === 0) {
+            // Check if we already spawned this week (using a simple flag in store.data)
+            if (store.data.lastSpawnWeek !== currentWeek) {
+                store.data.lastSpawnWeek = currentWeek;
+                if (Math.random() < 0.3) {
+                    var initialStudios = generateInitialStudios();
+                    var newStudio = initialStudios[Math.floor(Math.random() * initialStudios.length)];
+                    
+                    // Create a unique clone
+                    var spawn = {
+                        id: "S_SPAWN_" + Date.now(),
+                        name: newStudio.name + " " + (Math.random() > 0.5 ? "Interactive" : "Studios"),
+                        valuation: Math.floor(Math.random() * 5000000) + 1000000,
+                        sharesOwned: 0,
+                        currentProject: null,
+                        isFounded: false
+                    };
+                    
+                    store.data.studios.push(spawn);
+                    
+                    GameManager.company.notifications.push(new Notification({
+                        header: "New Studio Founded",
+                        text: "A new competitor, " + spawn.name + ", has entered the market! They are currently looking for investors.",
+                        image: ""
+                    }));
+                }
+            }
+        }
         
         
         for (var i = 0; i < GameManager.company.gameLog.length; i++) {
@@ -384,6 +474,7 @@
 
     function processAISales() {
         if (!store.data.activeAIGames) store.data.activeAIGames = [];
+        var totalDividends = 0;
         for (var i = store.data.activeAIGames.length - 1; i >= 0; i--) {
             var g = store.data.activeAIGames[i];
             if (typeof g.modSalesWeeks === 'undefined') g.modSalesWeeks = 0;
@@ -391,9 +482,8 @@
             
             g.modSalesWeeks++;
             
-            
             g.modCurrentWeeklySales = Math.floor(g.modCurrentWeeklySales * 0.85); 
-            var weeklyCash = g.modCurrentWeeklySales;
+            var weeklyCash = g.modCurrentWeeklySales * getCampaignBoost(g.id);
             g.modTotalSalesCash += weeklyCash;
 
             if (weeklyCash > 0) {
@@ -407,17 +497,24 @@
 
                 if (g.modIsPublishingDeal) {
                     var cut = weeklyCash * 0.70; 
-                    if (cut > 0) GameManager.company.adjustCash(cut, "Publishing Royalties: " + g.title);
+                    if (cut > 0) totalDividends += cut;
                 } else if (studio && studio.sharesOwned > 0) {
                     var div = weeklyCash * (studio.sharesOwned / 100);
-                    if (div > 0) GameManager.company.adjustCash(div, "Dividend: " + studio.name + " (" + studio.sharesOwned + "%)");
+                    if (div > 0) totalDividends += div;
+                }
+
+                // --- AI Revaluation based on success ---
+                if (studio && weeklyCash > 10000) {
+                    studio.valuation += Math.floor(weeklyCash * 0.05); 
                 }
             }
 
-            
             if (g.modSalesWeeks > 20 || g.modCurrentWeeklySales < 1000) {
                 store.data.activeAIGames.splice(i, 1);
             }
+        }
+        if (totalDividends > 0) {
+            GameManager.company.adjustCash(totalDividends, "Subsidiary Dividends");
         }
     }
 
@@ -444,13 +541,19 @@
 
         var total = studio.staff[1] + studio.staff[2] + studio.staff[3] + studio.staff[4] + studio.staff[5];
         if (total === 0) {
-            var initialEmp = studio.isFounded ? 5 : Math.floor(Math.random() * 10) + 5;
+            // Scaling worker count and quality based on valuation
+            var valFactor = studio.valuation / 20000000; 
+            if (valFactor > 2) valFactor = 2; // Cap at double quality/count for very rich studios
+
+            var initialEmp = studio.isFounded ? 5 : Math.floor(Math.random() * (5 + Math.floor(valFactor * 10))) + 5;
+            
             for (var i = 0; i < initialEmp; i++) {
                 var r = Math.random();
-                if (r < 0.2) studio.staff[1]++;
-                else if (r < 0.6) studio.staff[2]++;
-                else if (r < 0.85) studio.staff[3]++;
-                else if (r < 0.95) studio.staff[4]++;
+                // Shift distribution towards higher tiers based on valFactor
+                if (r < Math.max(0.05, 0.2 - (valFactor * 0.15))) studio.staff[1]++;
+                else if (r < Math.max(0.1, 0.6 - (valFactor * 0.25))) studio.staff[2]++;
+                else if (r < Math.max(0.2, 0.85 - (valFactor * 0.2))) studio.staff[3]++;
+                else if (r < Math.min(0.99, 0.95 + (valFactor * 0.05))) studio.staff[4]++;
                 else studio.staff[5]++;
             }
         }
@@ -459,19 +562,18 @@
     function processCompetitors() {
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         var studios = store.data.studios;
+        var totalMaint = 0;
+
         for (var i = 0; i < studios.length; i++) {
             var studio = studios[i];
             
             ensureStaffObj(studio);
 
-            
+            // Aggregate Upkeep
             if (studio.sharesOwned >= 50 && (currentWeek % 4 === 0)) {
                 var maint = 0;
                 for (var t=1; t<=5; t++) maint += (starTiers[t].maint * (studio.staff[t] || 0));
-                maint *= 4; 
-                if (maint > 0) {
-                    GameManager.company.adjustCash(-maint, "Upkeep: " + studio.name);
-                }
+                totalMaint += (maint * 4); 
             }
 
             if (studio.currentProject) {
@@ -480,24 +582,17 @@
                 if (studio.currentProject.isCoDev) {
                     var playerGame = GameManager.company.currentGame;
                     if (playerGame) { 
-                        
                         var dBonus = Math.floor(studio.valuation / 1000000) + 1;
                         var tBonus = Math.floor(studio.valuation / 1000000) + 1;
                         playerGame.designPoints += dBonus;
                         playerGame.technologyPoints += tBonus;
-                        
-                        
                         if (!store.data.coDevScrubMap[playerGame.title]) {
                             store.data.coDevScrubMap[playerGame.title] = { design: 0, tech: 0 };
                         }
                         store.data.coDevScrubMap[playerGame.title].design += dBonus;
                         store.data.coDevScrubMap[playerGame.title].tech += tBonus;
-                        
-                        
                     } else {
-                        
                         studio.currentProject = null;
-                        
                     }
                     continue; 
                 }
@@ -510,9 +605,50 @@
                     finishAndReleaseGame(studio);
                 }
             } else {
-                
+                // --- Specialization Implementation ---
                 if (studio.sharesOwned >= 50) {
-                    
+                    var spec = studio.specialization || "Any";
+                    var currentWk = GameManager.company.currentWeek;
+
+                    if (spec === "DLC") {
+                        // Find most profitable game < 10 years old with < 5 DLCs
+                        var games = (GameManager.company.gameLog || []).filter(function(g) {
+                            var age = currentWk - g.releaseWeek;
+                            var dlcInfo = store.data.dlcData[g.id] || { count: 0 };
+                            return age < 480 && dlcInfo.count < 5;
+                        });
+                        
+                        if (games.length > 0) {
+                            games.sort(function(a, b) { return (b.totalSalesCash || 0) - (a.totalSalesCash || 0); });
+                            var target = games[0];
+                            studio.currentProject = {
+                                name: target.title + " DLC",
+                                isDLC: true,
+                                gameId: target.id,
+                                weeklyRevenue: Math.floor((target.totalSalesCash || 1500000) * 0.05),
+                                weeksRemaining: 18
+                            };
+                            continue;
+                        }
+                    } else if (spec === "CoDev" && GameManager.company.currentGame) {
+                        studio.currentProject = { name: "Co-Dev Support", isCoDev: true, isPublishedByPlayer: false };
+                        continue;
+                    } else if (spec === "Games" && (currentWeek % 4 === 0)) {
+                        // Force a draft generation for "Games" specialization
+                        if (!isShowingDraft) {
+                            try {
+                                var draft = generateBestDraft(studio);
+                                promptDraft(studio, draft);
+                            } catch (e) {
+                                console.error("[Mod] Draft trigger error:", e);
+                                isShowingDraft = false;
+                            }
+                        }
+                        continue;
+                    }
+                }
+
+                if (studio.sharesOwned >= 50) {
                     if (isShowingDraft && $("#simplemodal-overlay").length === 0) {
                         isShowingDraft = false;
                     }
@@ -553,8 +689,10 @@
                                 store.data.publishingProjects.push({
                                     id: GameManager.getGUID(),
                                     studioId: studio.id,
+                                    title: offer.title || null,
                                     topic: offer.topic,
                                     genre: offer.genre,
+                                    genre2: offer.genre2 || null,
                                     size: offer.size,
                                     platforms: offer.platforms || [offer.platform],
                                     weeksRemaining: (offer.size==="Small"?15:(offer.size==="Medium"?30:(offer.size==="Large"?50:80))),
@@ -562,9 +700,10 @@
                                     publishedGameAdvance: offer.advance,
                                     offerId: offer.id
                                 });
+                                var gName = offer.title || (offer.size + " " + offer.genre);
                                 GameManager.company.notifications.push(new Notification({
                                     header: "Publishing Deal Accepted",
-                                    text: studio.name + " accepted your advance of $" + UI.getShortNumberString(offer.advance) + " and will develop a " + offer.size + " " + offer.genre + " game!",
+                                    text: studio.name + " accepted your deal for '" + gName + "' ($" + UI.getShortNumberString(offer.advance) + " advance) and started development!",
                                     image: ""
                                 }));
                                 acceptedOffer = true;
@@ -585,6 +724,10 @@
                     startAIProject(studio);
                 }
             }
+        }
+
+        if (totalMaint > 0) {
+            GameManager.company.adjustCash(-totalMaint, "Subsidiary Upkeep (Monthly)");
         }
     }
 
@@ -619,13 +762,40 @@
                 topic: t.name,
                 genre: bestG.name,
                 size: size,
-                platforms: [topPlat],
+                platforms: getSmartPlatforms(studio, t.name, bestG.name, size),
                 cost: (size === "AAA" ? 1000000 : (size === "Large" ? 400000 : (size === "Medium" ? 100000 : 25000)))
             };
         } catch (e) {
             console.error("[Mod] generateBestDraft error, using fallback:", e);
             return { topic: "Zombies", genre: "Action", size: "Small", platforms: ["PC"], cost: 20000 };
         }
+    }
+
+    function getSmartPlatforms(studio, topicName, genreName, size) {
+        var currentWk = GameManager.company.currentWeek;
+        var activePlats = Platforms.allPlatforms.filter(function(p) {
+            return (p.published && p.published <= currentWk) && (!p.retireDate || p.retireDate > currentWk);
+        });
+
+        if (activePlats.length === 0) return [Platforms.allPlatforms[0].name];
+
+        // Sort by a combination of market share and compatibility
+        activePlats.sort(function(a, b) {
+            var scoreA = a.marketShare || 0;
+            var scoreB = b.marketShare || 0;
+
+            // Simple heuristic for compatibility if genreWeightings exists
+            if (a.genreWeightings && a.genreWeightings[genreName]) scoreA *= (a.genreWeightings[genreName] + 0.5);
+            if (b.genreWeightings && b.genreWeightings[genreName]) scoreB *= (b.genreWeightings[genreName] + 0.5);
+            
+            return scoreB - scoreA;
+        });
+
+        var finalPlats = [activePlats[0].name];
+        if ((size === "Large" || size === "AAA") && activePlats.length > 1) {
+            finalPlats.push(activePlats[1].name);
+        }
+        return finalPlats;
     }
 
     function promptDraft(studio, draft) {
@@ -733,7 +903,7 @@
 
                 if (GameManager.company.cash >= cost) {
                     GameManager.company.adjustCash(-cost, "Subsidiary Funding: " + studio.name);
-                    studio.currentProject = { name: generateGameName(selTopic, selGenre), topic: selTopic, genre: selGenre, size: selSize, platforms: finalPlats, isSubsidiaryDeal: true, weeksRemaining: (selSize==="Small"?15:(selSize==="Medium"?30:(selSize==="Large"?50:80))) };
+                    studio.currentProject = { name: generateGameName(selTopic, selGenre), topic: selTopic, genre: selGenre, size: selSize, platforms: finalPlats, isSubsidiaryDeal: true, weeksRemaining: (selSize==="Small"?24:(selSize==="Medium"?36:(selSize==="Large"?48:52))) };
                     isShowingDraft = false;
                     studio.draftCooldown = 4;
                     $.modal.close();
@@ -787,9 +957,11 @@
             if (!studio.currentProject) {
                 studio.currentProject = {
                     id: project.id,
-                    name: generateGameName(project.topic, project.genre),
+                    name: project.title || generateGameName(project.topic, project.genre),
+                    title: project.title || null,
                     topic: project.topic,
                     genre: project.genre,
+                    genre2: project.genre2 || null,
                     size: project.size,
                     platforms: project.platforms,
                     weeksRemaining: project.weeksRemaining,
@@ -809,7 +981,6 @@
                 finishAndReleaseGame(studio);
                 
                 store.data.publishingProjects.splice(i, 1);
-                i--; 
                 
                 var offerIndex = -1;
                 for (var m = 0; m < store.data.publishingOffers.length; m++) {
@@ -829,11 +1000,11 @@
         var t = Topics.topics[Math.floor(Math.random() * Topics.topics.length)].name;
         var genres = ["Action", "Adventure", "RPG", "Simulation", "Strategy", "Casual"];
         var g = genres[Math.floor(Math.random() * genres.length)];
-        var sizeOptions = [{s:"Small", w:15}, {s:"Medium", w:30}, {s:"Large", w:50}, {s:"AAA", w:80}];
+        var sizeOptions = [{s:"Small", w:24}, {s:"Medium", w:36}, {s:"Large", w:48}, {s:"AAA", w:52}];
         
         var size = sizeOptions[0];
         if (studio.valuation > 50000000) size = sizeOptions[Math.floor(Math.random() * 4)];
-        else if (studio.valuation > 10000000) size = sizeOptions[Math.floor(Math.random() * 2)];
+        else if (studio.valuation > 10000000) size = sizeOptions[Math.floor(Math.random() * 3)];
 
         studio.currentProject = {
             name: generateGameName(t, g),
@@ -883,13 +1054,18 @@
         if (proj.size === "AAA") price = 40;
 
         if (proj.isDLC) {
-            store.data.dlcData[proj.gameId] = {
+            if (!store.data.dlcData[proj.gameId] || typeof store.data.dlcData[proj.gameId].count === 'undefined') {
+                store.data.dlcData[proj.gameId] = { count: 0, activeDLCs: [] };
+            }
+            store.data.dlcData[proj.gameId].count++;
+            store.data.dlcData[proj.gameId].activeDLCs.push({
                 activeWeeksLeft: 20,
                 weeklyRevenue: proj.weeklyRevenue
-            };
+            });
+
             GameManager.company.notifications.push(new Notification({
                 header: "Subsidiary DLC Released",
-                text: studio.name + " finished developing " + proj.name + "! It is now generating revenue.",
+                text: studio.name + " finished developing " + proj.name + " (#" + store.data.dlcData[proj.gameId].count + ")! It is now generating revenue.",
                 image: ""
             }));
             return;
@@ -926,10 +1102,10 @@
         var game = {
             modStudioId: studio.id,
             id: "MOD_" + Math.random().toString(36).substr(2, 9),
-            title: proj.name + " (" + studio.name + ")",
+            title: proj.title || (proj.name + " (" + studio.name + ")"),
             topic: Topics.topics.filter(function(t){ return t.name === proj.topic; })[0] || Topics.topics[0],
             genre: GameGenre.getAll().filter(function(g) { return g.name === proj.genre; })[0] || GameGenre.Action,
-            secondGenre: null,
+            secondGenre: (proj.genre2) ? GameGenre.getAll().filter(function(g) { return g.name === proj.genre2; })[0] : null,
             platforms: selectedPlats,
             gameSize: proj.size,
             designPoints: designAvg + Math.floor(Math.random() * 200),
@@ -1020,28 +1196,104 @@
         var dlcKeys = Object.keys(store.data.dlcData);
         for (var i = 0; i < dlcKeys.length; i++) {
             var gameId = dlcKeys[i];
-            var dlc = store.data.dlcData[gameId];
+            var dlcInfo = store.data.dlcData[gameId];
             
-            if (dlc.pendingPlayerDev > 0) {
-                dlc.pendingPlayerDev--;
-                if (dlc.pendingPlayerDev <= 0) {
-                    dlc.activeWeeksLeft = 20;
-                    GameManager.company.notifications.push(new Notification({ header: "DLC Finished", text: "You finished developing the DLC for " + (dlc.gameTitle || "a game") + "! It is now generating revenue.", image: "" }));
+            // Handle legacy structure for compatibility
+            if (dlcInfo.activeWeeksLeft !== undefined) {
+                store.data.dlcData[gameId] = { count: 1, activeDLCs: [{ 
+                    activeWeeksLeft: dlcInfo.activeWeeksLeft, 
+                    weeklyRevenue: dlcInfo.weeklyRevenue,
+                    pendingPlayerDev: dlcInfo.pendingPlayerDev || 0
+                }] };
+                dlcInfo = store.data.dlcData[gameId];
+            }
+
+            if (!dlcInfo.activeDLCs) continue;
+
+            for (var j = dlcInfo.activeDLCs.length - 1; j >= 0; j--) {
+                var dlc = dlcInfo.activeDLCs[j];
+
+                if (dlc.pendingPlayerDev > 0) {
+                    dlc.pendingPlayerDev--;
+                    if (dlc.pendingPlayerDev <= 0) {
+                        dlc.activeWeeksLeft = 20;
+                        GameManager.company.notifications.push(new Notification({ 
+                            header: "DLC Finished", 
+                            text: "You finished developing a DLC for " + (dlc.gameTitle || "a game") + "! It is now generating revenue.", 
+                            image: "" 
+                        }));
+                    }
+                } else if (dlc.activeWeeksLeft > 0) {
+                    var revenue = dlc.weeklyRevenue;
+                    revenue *= getCampaignBoost(gameId); // Apply Marketing Boost
+                    if (revenue < 5000) revenue = 5000;
+                    
+                    var ogGame = null;
+                    for (var k=0; k<activeGames.length; k++) { if (activeGames[k].id === gameId) { ogGame = activeGames[k]; break; } }
+                    
+                    GameManager.company.adjustCash(revenue, "DLC Sales: " + (ogGame ? ogGame.title : "Game"));
+                    dlc.activeWeeksLeft--;
+                } else {
+                    // Remove expired DLC
+                    dlcInfo.activeDLCs.splice(j, 1);
                 }
-            } else if (dlc.activeWeeksLeft > 0) {
-                var ogGame = null;
-                for (var j=0; j<activeGames.length; j++) { if (activeGames[j].id === gameId) { ogGame = activeGames[j]; break; } }
-                
-                var revenue = dlc.weeklyRevenue;
-                if (revenue < 5000) revenue = 5000;
-                GameManager.company.adjustCash(revenue, "DLC Sales: " + (ogGame ? ogGame.title : "Game"));
-                
-                dlc.activeWeeksLeft--;
+            }
+        }
+    }
+    function processCampaigns() {
+        if (!store.data.activeCampaigns) store.data.activeCampaigns = [];
+        
+        // --- Apply Boosts to Standard Games ---
+        processStandardMarketing();
+
+        for (var i = store.data.activeCampaigns.length - 1; i >= 0; i--) {
+            var c = store.data.activeCampaigns[i];
+            c.weeksLeft--;
+            
+            if (c.weeksLeft <= 0) {
+                GameManager.company.notifications.push(new Notification({
+                    header: "Campaign Finished",
+                    text: "Your marketing campaign for '" + c.targetName + "' has concluded.",
+                    image: ""
+                }));
+                store.data.activeCampaigns.splice(i, 1);
             }
         }
     }
 
+    function processStandardMarketing() {
+        var games = GameManager.company.gameLog || [];
+        var currentWk = GameManager.company.currentWeek;
+        for (var i = 0; i < games.length; i++) {
+            var g = games[i];
+            // Only boost standard games released in the last 20 weeks (sales window)
+            if (g.state === GameState.released && !g.isExtensionPack && (currentWk - g.releaseWeek < 20)) {
+                var boost = getCampaignBoost(g.id);
+                if (boost > 1.0) {
+                    var bonusBase = (g.score || 5) * 2000;
+                    if (g.size === "Medium") bonusBase *= 5;
+                    if (g.size === "Large") bonusBase *= 25;
+                    if (g.size === "AAA") bonusBase *= 120;
+                    
+                    var weeklyBonus = Math.floor(bonusBase * (boost - 1));
+                    if (weeklyBonus > 0) {
+                        GameManager.company.adjustCash(weeklyBonus, "Marketing Bonus: " + g.title);
+                    }
+                }
+            }
+        }
+    }
 
+    function getCampaignBoost(targetId) {
+        var boost = 1.0;
+        if (!store.data.activeCampaigns) return 1.0;
+        for (var i = 0; i < store.data.activeCampaigns.length; i++) {
+            if (store.data.activeCampaigns[i].targetId === targetId) {
+                boost *= store.data.activeCampaigns[i].boostFactor;
+            }
+        }
+        return boost;
+    }
 
     function showModMenu(activeTab) {
         activeTab = activeTab || "market";
@@ -1089,7 +1341,9 @@
             { id: "publishing", label: "Publishing" },
             { id: "schedule", label: "Releases" },
             { id: "leaderboard", label: "Leaderboard" },
-            { id: "dlc", label: "DLCs" }
+            { id: "dlc", label: "DLCs" },
+            { id: "marketing", label: "Marketing" },
+            { id: "settings", label: "Settings" }
         ];
 
         tabs.forEach(function(t) {
@@ -1119,6 +1373,10 @@
             renderLeaderboardTab(contentArea);
         } else if (activeTab === "dlc") {
             renderDLCTab(contentArea);
+        } else if (activeTab === "marketing") {
+            renderMarketingTab(contentArea);
+        } else if (activeTab === "settings") {
+            renderSettingsTab(contentArea);
         }
 
         
@@ -1136,6 +1394,63 @@
                 setTimeout(function() { el.css({ opacity: 1 }); }, 400);
             }, i * 40);
         });
+    }
+
+    function renderSettingsTab(container) {
+        container.append('<h2 style="color: #d35400; font-size: 14pt; margin: 0 0 15px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px;">Mod Settings</h2>');
+
+        // Overload Malus Toggle
+        var overloadDiv = $('<div class="cs-stagger-item" style="display: flex; align-items: center; margin-bottom: 20px; font-size: 12pt; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer;"></div>');
+        var overloadCheck = $('<input type="checkbox" style="margin-right: 15px; width: 22px; height: 22px; pointer-events: none;">');
+        overloadCheck.prop('checked', !!store.data.disableOverloadMalus);
+        
+        overloadDiv.click(function() {
+            store.data.disableOverloadMalus = !store.data.disableOverloadMalus;
+            overloadCheck.prop('checked', store.data.disableOverloadMalus);
+            Sound.click();
+        });
+        
+        var labelWrapper = $('<div style="flex: 1;"></div>');
+        labelWrapper.append('<div style="font-weight: bold; cursor: pointer;">Disable Feature Overload Malus</div>');
+        labelWrapper.append('<div style="font-size: 10pt; color: #7f8c8d; margin-top: 5px; display: block; border-top: 1px solid #eee; padding-top: 5px;">When enabled, this removes the penalty for having too many features in a game and proactively cleans up 80% of project bugs.</div>');
+        
+        overloadDiv.append(overloadCheck).append(labelWrapper);
+        container.append(overloadDiv);
+
+        // Baseline Healer Section
+        var healerDiv = $('<div class="cs-stagger-item" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
+        healerDiv.append('<h3 style="margin: 0 0 10px 0; font-size: 12pt; color: #d35400;">Baseline Recovery</h3>');
+        healerDiv.append('<p style="font-size: 10pt; color: #7f8c8d; margin-bottom: 12px;">Reset Design and Tech baselines based on your entire company history.</p>');
+        
+        var healGrid = $('<div style="display: flex; gap: 10px; margin-bottom: 15px;"></div>');
+        var dInput = $('<input type="number" placeholder="Design" value="500" style="flex: 1; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; color: black; box-sizing: border-box;">');
+        var tInput = $('<input type="number" placeholder="Tech" value="500" style="flex: 1; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; color: black; box-sizing: border-box;">');
+        healGrid.append(dInput).append(tInput);
+        healerDiv.append(healGrid);
+
+        var healBtn = $('<div class="selectorButton orangeButton" style="width: 100%; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 5px; font-weight: bold;">Heal Baselines Now</div>');
+        healBtn.click(function() {
+            var d = parseInt(dInput.val());
+            var t = parseInt(tInput.val());
+            if (isNaN(d) || isNaN(t)) { alert("Please enter valid numbers!"); return; }
+            
+            Sound.click();
+            var log = GameManager.company.gameLog;
+            if (!log) return;
+            
+            for (var i = 0; i < log.length; i++) {
+                log[i].designPoints = d;
+                log[i].technologyPoints = t;
+            }
+            GameManager.company.designBaseline = d;
+            GameManager.company.technologyBaseline = t;
+            if (typeof GameManager.company.prevDesignPoints !== 'undefined') GameManager.company.prevDesignPoints = d;
+            if (typeof GameManager.company.prevTechnologyPoints !== 'undefined') GameManager.company.prevTechnologyPoints = t;
+
+            alert("Baselines successfully recovered! Entire history adjusted to D:" + d + " / T:" + t + ".");
+        });
+        healerDiv.append(healBtn);
+        container.append(healerDiv);
     }
 
     function renderMarketTab(container) {
@@ -1325,134 +1640,195 @@
         }
     }
 
+    function showSearchableList(title, items, onSelect) {
+        var modal = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; padding: 15px; display: flex; flex-direction: column; overflow: hidden;"></div>');
+        modal.append('<h2 style="text-align: center; color: #2c3e50; margin: 0 0 10px 0; font-size: 15pt;">' + title + '</h2>');
+        
+        var searchInput = $('<input type="text" placeholder="Search..." style="width: 100%; padding: 10px; font-size: 12pt; margin-bottom: 10px; border: 1px solid #bdc3c7; border-radius: 4px; color: black; box-sizing: border-box;">');
+        modal.append(searchInput);
+
+        var listContainer = $('<div style="flex: 1; overflow-y: auto; background: white; border: 1px solid #bdc3c7; border-radius: 4px; padding: 5px;"></div>');
+        modal.append(listContainer);
+
+        function renderItems(filter) {
+            listContainer.empty();
+            var count = 0;
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var name = (typeof item === 'string') ? item : (item.name || item.id);
+                if (filter && name.toLowerCase().indexOf(filter.toLowerCase()) === -1) continue;
+
+                (function(n) {
+                    var row = $('<div class="selectorButton" style="padding: 8px 12px; margin-bottom: 4px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 11pt; color: black; background: #f9f9f9; border-radius: 3px;">' + n + '</div>');
+                    row.click(function() {
+                        Sound.click();
+                        onSelect(n);
+                        $.modal.close();
+                    });
+                    listContainer.append(row);
+                })(name);
+                count++;
+            }
+            if (count === 0) listContainer.append('<div style="padding: 10px; color: #7f8c8d; font-style: italic;">No results found.</div>');
+        }
+
+        searchInput.on('input', function() { renderItems($(this).val()); });
+        renderItems("");
+
+        var closeBtn = $('<div class="selectorButton orangeButton" style="width: 100px; margin: 10px auto 0 auto; text-align: center;">Close</div>');
+        closeBtn.click(function() { $.modal.close(); });
+        modal.append(closeBtn);
+
+        modal.modal({
+            overlayClose: true,
+            opacity: 80,
+            overlayCss: { backgroundColor: "#000" },
+            containerCss: { width: "400px", height: "500px" }
+        });
+        setTimeout(function() { searchInput.focus(); }, 100);
+    }
+
     function renderPublishingForm(container) {
         container.css({ opacity: 0 });
         container.empty();
-        container.append('<h2 style="color: #d35400; font-size: 13pt; margin: 0 0 10px 0;">Create Publishing Offer</h2>');
-
-        var formContainer = $('<div style="padding: 10px; font-size: 11pt; line-height: 1.8;"></div>');
         
-        formContainer.append('<div>Topic:</div>');
-        var topicSearch = $('<input type="text" placeholder="Search topics..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
-        formContainer.append(topicSearch);
-        var topicSelect = $('<select id="pub_topic" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
-        Topics.topics.forEach(function(t) { topicSelect.append('<option value="' + t.name + '">' + t.name + '</option>'); });
-        formContainer.append(topicSelect);
+        var formBox = $('<div style="background-color: #fdf6e3; border: 4px solid #f1c40f; border-radius: 12px; padding: 20px; position: relative; box-shadow: 0 8px 16px rgba(0,0,0,0.2); font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif;"></div>');
+        
+        var titleContainer = $('<div style="text-align: center; margin-bottom: 20px;"></div>');
+        titleContainer.append('<div style="font-size: 24pt; font-weight: bold; color: #2c3e50; margin-bottom: 5px;">Game Concept</div>');
+        titleContainer.append('<div style="height: 2px; background: linear-gradient(to right, transparent, #2980b9, transparent); width: 80%; margin: 0 auto;"></div>');
+        formBox.append(titleContainer);
 
-        var genreSearch = $('<input type="text" placeholder="Search genre..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
-        formContainer.append('<div>Genre:</div>').append(genreSearch);
-        var genreSelect = $('<select id="pub_genre" style="font-size: 11pt; width: 100%; margin-bottom: 4px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
-        var genres = GameGenre.getAll();
-        genres.forEach(function(g) { genreSelect.append('<option value="' + g.name + '">' + g.name + '</option>'); });
-        formContainer.append(genreSelect);
+        var row1 = $('<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"></div>');
+        var titleInput = $('<input type="text" id="pub_title" placeholder="Game #???" style="font-size: 16pt; width: 60%; background: white; border: 2px solid #d35400; color: #2c3e50; padding: 5px 10px; border-radius: 4px;">');
+        row1.append(titleInput);
+        row1.append('<div style="font-size: 14pt; color: #2c3e50;">Cost: <span id="pub_cost_disp" style="font-weight: bold;">$500K</span></div>');
+        formBox.append(row1);
 
-        var matchContainer = $('<div style="font-size: 10pt; margin-bottom: 10px; text-align: right;">Match: <span id="pub_match" style="font-weight: bold;"></span></div>');
-        formContainer.append(matchContainer);
+        var sizeShelf = $('<div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;"></div>');
+        var sizes = [
+            { id: "Small", label: "Small", cost: 500000, color: "#f39c12" },
+            { id: "Medium", label: "Medium", cost: 2000000, color: "#3498db" },
+            { id: "Large", label: "Large", cost: 10000000, color: "#2980b9" },
+            { id: "AAA", label: "AAA", cost: 50000000, color: "#1abc9c" }
+        ];
+        var selectedSize = "Small";
+        
+        sizes.forEach(function(s) {
+            var btn = $('<div class="selectorButton" style="flex: 1; text-align: center; padding: 10px 0; font-size: 12pt; font-weight: bold; background-color: #ecf0f1; border-radius: 6px; cursor: pointer; border-bottom: 3px solid #bdc3c7;">' + s.label + '</div>');
+            if (s.id === selectedSize) btn.css({ "background-color": s.color, "color": "white", "border-bottom": "3px solid #d35400" });
+            btn.click(function() {
+                Sound.click();
+                selectedSize = s.id;
+                sizeShelf.find('.selectorButton').css({ "background-color": "#ecf0f1", "color": "#2c3e50", "border-bottom": "3px solid #bdc3c7" });
+                btn.css({ "background-color": s.color, "color": "white", "border-bottom": "3px solid #d35400" });
+                $('#pub_cost_disp').text('$' + UI.getShortNumberString(s.cost));
+            });
+            sizeShelf.append(btn);
+        });
+        formBox.append(sizeShelf);
 
-        function updatePubMatch() {
-            var selectedTopicName = $('#pub_topic').val();
-            var selectedGenreName = $('#pub_genre').val();
-            var t = Topics.topics.filter(function(x){ return x.name === selectedTopicName; })[0];
-            var g = GameGenre.getAll().filter(function(x){ return x.name === selectedGenreName; })[0];
-            if (t && g) {
-                var genreIndexMap = {"Action":0, "Adventure":1, "RPG":2, "Simulation":3, "Strategy":4, "Casual":5};
-                var idx = genreIndexMap[g.name];
-                if (idx === undefined) idx = 0;
-                var weight = t.genreWeightings[idx];
-                var ind = $('#pub_match');
-                if (weight >= 1.0) { ind.text("Great (+++)").css("color", "#27ae60"); }
-                else if (weight >= 0.8) { ind.text("Good (++)").css("color", "#f39c12"); }
-                else if (weight >= 0.7) { ind.text("Okay (+)").css("color", "#e67e22"); }
-                else { ind.text("Bad (-)").css("color", "#c0392b"); }
-            }
+        // Selection Handlers (Topic/Genre/Plats)
+        var selectedTopic = Topics.topics[0].name;
+        var selectedGenre = GameGenre.getAll()[0].name;
+        var selectedGenre2 = "";
+        var selectedPlats = [];
+
+        var topicBtn = $('<div class="selectorButton lightBlueButton" style="display: block; width: 80%; margin: 0 auto 10px auto; text-align: center; font-size: 13pt; padding: 10px 0; border-radius: 6px;">Pick Topic (' + selectedTopic + ')</div>');
+        topicBtn.click(function() {
+            showSearchableList("Select Topic", Topics.topics, function(name) {
+                selectedTopic = name;
+                topicBtn.text('Pick Topic (' + selectedTopic + ')');
+            });
+        });
+        formBox.append(topicBtn);
+
+        var genreRow = $('<div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;"></div>');
+        var g1Btn = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 12pt; padding: 10px 0; border-radius: 6px;">Pick Genre (' + selectedGenre + ')</div>');
+        var g2Btn = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 12pt; padding: 10px 0; border-radius: 6px;">Pick Genre (None)</div>');
+        
+        g1Btn.click(function() {
+            showSearchableList("Select Main Genre", GameGenre.getAll(), function(name) {
+                selectedGenre = name;
+                g1Btn.text('Pick Genre (' + selectedGenre + ')');
+            });
+        });
+        g2Btn.click(function() {
+            var gList = [{name: "None"}].concat(GameGenre.getAll());
+            showSearchableList("Select Second Genre", gList, function(name) {
+                if (name === "None") {
+                    selectedGenre2 = "";
+                    g2Btn.text('Pick Genre (None)');
+                } else {
+                    selectedGenre2 = name;
+                    g2Btn.text('Pick Genre (' + selectedGenre2 + ')');
+                }
+            });
+        });
+        genreRow.append(g1Btn).append(g2Btn);
+        formBox.append(genreRow);
+
+        var platRow = $('<div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;"></div>');
+        var currentWk = GameManager.company.currentWeek;
+        var myPlats = Platforms.allPlatforms.filter(function(p) {
+            return (p.published && p.published <= currentWk) && (!p.retireDate || p.retireDate > currentWk);
+        });
+        if (myPlats.length === 0) myPlats = [Platforms.allPlatforms[0]]; // Absolute fallback
+
+        function updatePlatShelf() {
+            platRow.empty();
+            myPlats.slice(0, 6).forEach(function(p) {
+                var isSel = selectedPlats.indexOf(p.name) !== -1;
+                var pBtn = $('<div class="selectorButton" style="padding: 6px 12px; font-size: 10pt; border-radius: 4px; cursor: pointer; border: 1px solid #bdc3c7;">' + p.name + '</div>');
+                if (isSel) pBtn.css({ "background-color": "#3498db", "color": "white", "border-color": "#2980b9" });
+                else pBtn.css({ "background-color": "#ecf0f1", "color": "#2c3e50" });
+                
+                pBtn.click(function() {
+                    Sound.click();
+                    var idx = selectedPlats.indexOf(p.name);
+                    if (idx === -1) {
+                        if (selectedPlats.length < 3) selectedPlats.push(p.name);
+                    } else {
+                        selectedPlats.splice(idx, 1);
+                    }
+                    updatePlatShelf();
+                });
+                platRow.append(pBtn);
+            });
         }
-        $('#pub_topic, #pub_genre').change(updatePubMatch);
-        topicSearch.on('input', function() {
-            var term = $(this).val().toLowerCase();
-            $('#pub_topic').empty();
-            Topics.topics.forEach(function(t) {
-                if (t.name.toLowerCase().indexOf(term) !== -1) {
-                    $('#pub_topic').append('<option value="' + t.name + '">' + t.name + '</option>');
-                }
-            });
-            updatePubMatch();
-        });
+        updatePlatShelf();
+        formBox.append(platRow);
 
-        genreSearch.on('input', function() {
-            var term = $(this).val().toLowerCase();
-            $('#pub_genre').empty();
-            GameGenre.getAll().forEach(function(g) {
-                if (g.name.toLowerCase().indexOf(term) !== -1) {
-                    $('#pub_genre').append('<option value="' + g.name + '">' + g.name + '</option>');
-                }
-            });
-            updatePubMatch();
-        });
-
-        updatePubMatch();
-
-        var pSizeSelect = $('<select id="pub_size" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
-        pSizeSelect.append('<option value="Small" data-cost="500000">Small ($500K Advance)</option>');
-        pSizeSelect.append('<option value="Medium" data-cost="2000000">Medium ($2M Advance)</option>');
-        pSizeSelect.append('<option value="Large" data-cost="10000000">Large ($10M Advance)</option>');
-        pSizeSelect.append('<option value="AAA" data-cost="50000000">AAA ($50M Advance)</option>');
-        formContainer.append('<div>Game Size:</div>').append(pSizeSelect);
-
-        var platSearch = $('<input type="text" placeholder="Search platforms..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
-        formContainer.append('<div>Platforms (CTRL+Select):</div>').append(platSearch);
-        var platformSelect = $('<select id="pub_platform" multiple style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; height: 80px; border: 1px solid #bdc3c7; border-radius: 3px; box-sizing: border-box;"></select>');
-        var myPlats = [];
-        if (GameManager.company.availablePlatforms) myPlats = myPlats.concat(GameManager.company.availablePlatforms);
-        if (GameManager.company.licencedPlatforms) myPlats = myPlats.concat(GameManager.company.licencedPlatforms);
-        if (myPlats.length === 0) myPlats = Platforms.allPlatforms.slice(0, 3);
-        myPlats.forEach(function(p) { platformSelect.append('<option value="' + p.name + '">' + p.name + '</option>'); });
-        formContainer.append(platformSelect);
-
-        platSearch.on('input', function() {
-            var term = $(this).val().toLowerCase();
-            $('#pub_platform').empty();
-            myPlats.forEach(function(p) {
-                if (p.name.toLowerCase().indexOf(term) !== -1) {
-                    $('#pub_platform').append('<option value="' + p.name + '">' + p.name + '</option>');
-                }
-            });
-        });
-
-        container.append(formContainer);
-
-        var actionContainer = $('<div class="centeredButtonWrapper" style="margin-top: 10px;"></div>');
-        var confirmBtn = $('<div class="selectorButton orangeButton" style="display: inline-block; width: 160px; font-size: 11pt;">Post Offer</div>');
+        var footer = $('<div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;"></div>');
+        var cancelBtn = $('<div class="selectorButton deleteButton" style="width: 120px; text-align: center; font-size: 12pt; font-weight: bold; border-radius: 6px;">Cancel</div>');
+        cancelBtn.click(function() { routeModMenu("publishing"); });
+        
+        var confirmBtn = $('<div class="selectorButton orangeButton" style="width: 160px; text-align: center; font-size: 12pt; font-weight: bold; border-radius: 6px;">Post Offer</div>');
         confirmBtn.click(function () {
-            var selectedSize = $('#pub_size').val();
-            var advance = parseInt($('#pub_size option:selected').attr('data-cost'));
-            var selectedPlats = $('#pub_platform').val() || [myPlats[0].name];
+            var advance = sizes.filter(function(x) { return x.id === selectedSize; })[0].cost;
+            if (selectedPlats.length === 0) selectedPlats = [myPlats[0].name];
 
             if (GameManager.company.cash >= advance) {
                 GameManager.company.adjustCash(-advance, "Posted Publishing Deal");
-                
                 store.data.publishingOffers.push({
                     id: GameManager.getGUID(), 
-                    topic: $('#pub_topic').val(),
-                    genre: $('#pub_genre').val(),
+                    title: $('#pub_title').val() || null,
+                    topic: selectedTopic,
+                    genre: selectedGenre,
+                    genre2: selectedGenre2 || null,
                     size: selectedSize,
                     platforms: selectedPlats,
                     advance: advance,
                     status: "Pending Evaluation"
                 });
-
                 routeModMenu("publishing");
-            } else {
-                alert("You need at least $" + UI.getShortNumberString(advance) + " to fund this advance!");
-            }
+            } else { alert("You need at least $" + UI.getShortNumberString(advance) + " to fund this advance!"); }
         });
-        
-        var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; width: 160px; font-size: 11pt;">Cancel</div>');
-        cancelBtn.click(function() { routeModMenu("publishing"); });
 
-        actionContainer.append(confirmBtn).append(cancelBtn);
-        container.append(actionContainer);
-
+        footer.append(cancelBtn).append(confirmBtn);
+        formBox.append(footer);
         
+        container.append(formBox);
         container.animate({ opacity: 1 }, 250);
     }
 
@@ -1495,6 +1871,10 @@
                 for (var i = 0; i < sortedGames.length; i++) {
                     (function (game) {
                         if (term && game.title.toLowerCase().indexOf(term) === -1) return;
+                        
+                        var currentWk = GameManager.company.currentWeek;
+                        var age = currentWk - game.releaseWeek;
+                        if (age >= 480) return; // Hide games older than 10 years
 
                         var baseCosts = game.costs || 100000;
                         var dlcCost = Math.floor(baseCosts * 0.5);
@@ -1502,9 +1882,26 @@
 
                         var item = $('<div class="dlcItem" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
                         item.append('<h3 style="margin: 0 0 3px 0; font-size: 12pt; color: #8e44ad; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + game.title + '</h3>');
-                        item.append('<div style="font-size: 10pt; color: #7f8c8d;">Original Cost: $' + UI.getShortNumberString(game.costs || 100000) + '</div>');
+                        var rawDlcInfo = store.data.dlcData[game.id] || {};
+                        var dlcCount = rawDlcInfo.count || 0;
+                        var activeDLCs = rawDlcInfo.activeDLCs || [];
+                        var currentWk = GameManager.company.currentWeek;
+                        var age = currentWk - game.releaseWeek;
 
-                        var dlc = store.data.dlcData[game.id];
+                        item.append('<div style="font-size: 10pt; color: #7f8c8d;">Released: Week ' + game.releaseWeek + ' (Age: ' + Math.floor(age/48) + 'y) | DLCs: ' + dlcCount + '/5</div>');
+
+                        if (activeDLCs.length > 0) {
+                            var activeStatus = $('<div style="margin-top: 5px; border-left: 3px solid #8e44ad; padding-left: 8px;"></div>');
+                            activeDLCs.forEach(function(d, idx) {
+                                if (d.pendingPlayerDev > 0) {
+                                    activeStatus.append('<div style="font-size: 9pt; color: #f39c12;">DLC #' + (idx+1) + ': Dev In-Progress (' + Math.ceil(d.pendingPlayerDev) + 'w)</div>');
+                                } else {
+                                    activeStatus.append('<div style="font-size: 9pt; color: #27ae60;">DLC #' + (idx+1) + ': Active (+$' + UI.getShortNumberString(d.weeklyRevenue) + '/wk, ' + d.activeWeeksLeft + 'w left)</div>');
+                                }
+                            });
+                            item.append(activeStatus);
+                        }
+
                         var subDev = false;
                         for(var s=0; s<store.data.studios.length; s++){
                             if(store.data.studios[s].currentProject && store.data.studios[s].currentProject.isDLC && store.data.studios[s].currentProject.gameId === game.id) {
@@ -1512,33 +1909,30 @@
                             }
                         }
 
-                        if (dlc) {
-                            if (dlc.pendingPlayerDev > 0) {
-                                item.append('<div style="font-size: 10pt; margin-top: 3px; color: #f39c12; font-weight: bold;">Developing Personally (' + Math.ceil(dlc.pendingPlayerDev) + 'w left)</div>');
-                            } else if (dlc.activeWeeksLeft > 0) {
-                                item.append('<div style="font-size: 10pt; margin-top: 3px; color: #27ae60; font-weight: bold;">DLC Revenue: +$' + UI.getShortNumberString(dlc.weeklyRevenue) + '/wk (' + dlc.activeWeeksLeft + 'w left)</div>');
-                            } else {
-                                item.append('<div style="font-size: 10pt; margin-top: 3px; color: #7f8c8d; font-style: italic;">DLC Completed (' + UI.getShortNumberString(dlc.weeklyRevenue * 20) + ' earned)</div>');
-                            }
-                        } else if (subDev) {
+                        if (subDev) {
                             item.append('<div style="font-size: 10pt; margin-top: 3px; color: #2980b9; font-weight: bold;">In Dev by ' + subDev.name + ' (' + Math.ceil(subDev.currentProject.weeksRemaining) + 'w left)</div>');
-                        } else {
+                        } else if (dlcCount < 5 && age < 480) {
                             var dlcControls = $('<div class="dlccontrols" style="margin-top: 6px; display: flex; gap: 6px;"></div>');
-                            var btn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt;">Develop ($100K)</div>');
+                            var cost = Math.floor((game.costs || 100000) * 0.1); 
+                            if (cost < 20000) cost = 20000;
+
+                            var btn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt;">Develop ($' + UI.getShortNumberString(cost) + ')</div>');
                             btn.click(function () {
-                                if (GameManager.company.cash >= 100000) {
+                                if (GameManager.company.cash >= cost) {
                                     Sound.click();
-                                    GameManager.company.adjustCash(-100000, "DLC Development: " + game.title);
-                                    var devWeeks = 10;
-                                    var sz = game.gameSize;
-                                    if (sz === "Medium") devWeeks = 15;
-                                    else if (sz === "Large") devWeeks = 25;
-                                    else if (sz === "AAA") devWeeks = 40;
-                                    store.data.dlcData[game.id] = {
-                                        pendingPlayerDev: devWeeks,
+                                    GameManager.company.adjustCash(-cost, "DLC Development: " + game.title);
+                                    
+                                    if (!store.data.dlcData[game.id] || typeof store.data.dlcData[game.id].count === 'undefined') {
+                                        store.data.dlcData[game.id] = { count: 0, activeDLCs: [] };
+                                    }
+                                    store.data.dlcData[game.id].activeDLCs.push({
+                                        pendingPlayerDev: 10,
                                         gameTitle: game.title,
-                                        weeklyRevenue: Math.floor(((game.totalSalesCash || 1500000)) * 0.05)
-                                    };
+                                        weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.05)
+                                    });
+                                    // Note: count is incremented on release in processDLCs/finishAndReleaseGame but we should probably count it now to block spawns
+                                    store.data.dlcData[game.id].count++; 
+
                                     $.modal.close();
                                 } else {
                                     alert("Not enough funds!");
@@ -1551,18 +1945,12 @@
                                     var subBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; font-size: 10pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Assign: ' + store.data.studios[s].name + '</div>');
                                     (function(studio) {
                                         subBtn.click(function() {
-                                            var devWeeks = 10;
-                                            var sz = game.gameSize;
-                                            if (sz === "Medium") devWeeks = 15;
-                                            else if (sz === "Large") devWeeks = 25;
-                                            else if (sz === "AAA") devWeeks = 40;
-
                                             studio.currentProject = {
                                                 name: game.title + " DLC",
                                                 isDLC: true,
                                                 gameId: game.id,
-                                                weeklyRevenue: Math.floor(((game.totalSalesCash || 1500000)) * 0.05),
-                                                weeksRemaining: devWeeks
+                                                weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.05),
+                                                weeksRemaining: 18
                                             };
                                             routeModMenu("dlc");
                                         });
@@ -1571,6 +1959,10 @@
                                 }
                             }
                             item.append(dlcControls);
+                        } else if (age >= 480) {
+                            item.append('<div style="font-size: 10pt; margin-top: 3px; color: #c0392b; font-style: italic;">Game too old for new DLCs (10yr limit reached).</div>');
+                        } else {
+                            item.append('<div style="font-size: 10pt; margin-top: 3px; color: #7f8c8d; font-style: italic;">Maximum DLCs (5/5) reached for this title.</div>');
                         }
                         listContainer.append(item);
                     })(sortedGames[i]);
@@ -1584,6 +1976,116 @@
             
             renderDLCList("");
         }
+    }
+
+    function renderMarketingTab(container) {
+        container.append('<h2 style="color: #d35400; font-size: 14pt; margin: 0 0 15px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px;">Marketing Campaigns</h2>');
+
+        // --- Active Campaigns Section ---
+        var activeSection = $('<div class="cs-stagger-item" style="margin-bottom: 25px;"></div>');
+        activeSection.append('<h3 style="font-size: 12pt; color: #2c3e50; margin-bottom: 10px;">Ongoing Campaigns</h3>');
+        
+        if (store.data.activeCampaigns.length === 0) {
+            activeSection.append('<div style="font-size: 10pt; color: #7f8c8d; font-style: italic; background: #fff; padding: 10px; border-radius: 6px; border: 1px dashed #bdc3c7;">No active marketing campaigns.</div>');
+        } else {
+            store.data.activeCampaigns.forEach(function(c) {
+                var cCard = $('<div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #bdc3c7; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
+                cCard.append('<div><strong style="color: #2980b9;">' + c.targetName + '</strong><br><span style="font-size: 9pt; color: #7f8c8d;">' + c.campaignName + '</span></div>');
+                cCard.append('<div style="text-align: right;"><span style="color: #27ae60; font-weight: bold;">' + (Math.round((c.boostFactor - 1) * 100)) + '% Boost</span><br><span style="font-size: 9pt; color: #7f8c8d;">' + c.weeksLeft + ' weeks left</span></div>');
+                activeSection.append(cCard);
+            });
+        }
+        container.append(activeSection);
+
+        // --- New Campaign Form ---
+        var formBox = $('<div class="cs-stagger-item" style="background: #fdf6e3; border: 3px solid #f1c40f; border-radius: 12px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"></div>');
+        formBox.append('<h3 style="margin: 0 0 12px 0; font-size: 12pt; color: #d35400; text-align: center;">Launch New Campaign</h3>');
+
+        // Target Selection
+        formBox.append('<div style="font-size: 11pt; color: #2c3e50; margin-bottom: 5px;">Target Project:</div>');
+        var searchInput = $('<input type="text" placeholder="Search project..." style="width: 100%; font-size: 10pt; padding: 6px; margin-bottom: 8px; border: 1px solid #bdc3c7; border-radius: 4px; color: black; box-sizing: border-box;">');
+        formBox.append(searchInput);
+        
+        var targetSelect = $('<select style="width: 100%; font-size: 11pt; padding: 5px; margin-bottom: 15px; border: 1px solid #bdc3c7; border-radius: 4px; color: black;"></select>');
+        
+        // Populate Targets (Subsidiary Games & Player DLCs)
+        var targets = [];
+        store.data.activeAIGames.forEach(function(g) { targets.push({ id: g.id, name: g.title + " (Subsidiary)" }); });
+        
+        var games = GameManager.company.gameLog || [];
+        games.forEach(function(g) {
+            if (g.state === GameState.released) {
+                var label = g.isExtensionPack ? " (DLC Pack)" : " (Player Game)";
+                targets.push({ id: g.id, name: g.title + label });
+            }
+        });
+
+        function renderOptions(term) {
+            targetSelect.empty();
+            var filtered = targets.filter(function(t) { return t.name.toLowerCase().indexOf(term) !== -1; });
+            if (filtered.length === 0) {
+                targetSelect.append('<option disabled selected>No matching projects</option>');
+            } else {
+                filtered.forEach(function(t) { 
+                    targetSelect.append('<option value="' + t.id + '" data-name="' + t.name + '">' + t.name + '</option>'); 
+                });
+            }
+        }
+
+        searchInput.on('input', function() { renderOptions($(this).val().toLowerCase()); });
+        renderOptions("");
+        formBox.append(targetSelect);
+
+        // Campaign Options
+        formBox.append('<div style="font-size: 11pt; color: #2c3e50; margin-bottom: 8px;">Select Campaign Type:</div>');
+        var campaigns = [
+            { id: "social", name: "Social Media Blitz", cost: 50000, boost: 1.15, weeks: 4, color: "#3498db" },
+            { id: "viral", name: "Viral Video Ads", cost: 250000, boost: 1.35, weeks: 6, color: "#9b59b6" },
+            { id: "tv", name: "TV Star Feature", cost: 1000000, boost: 1.70, weeks: 8, color: "#e67e22" },
+            { id: "global", name: "Global Hype Event", cost: 5000000, boost: 2.50, weeks: 12, color: "#e74c3c" }
+        ];
+
+        var selectedC = campaigns[0];
+        var campShelf = $('<div style="display: flex; gap: 8px; margin-bottom: 20px;"></div>');
+        campaigns.forEach(function(camp) {
+            var btn = $('<div style="flex: 1; text-align: center; padding: 10px 5px; background: #fff; border: 2px solid #bdc3c7; border-radius: 8px; cursor: pointer;"></div>');
+            btn.append('<div style="font-size: 10pt; font-weight: bold; color: '+camp.color+'; margin-bottom: 3px;">' + camp.name + '</div>');
+            btn.append('<div style="font-size: 9pt; color: #7f8c8d;">$' + UI.getShortNumberString(camp.cost) + '</div>');
+            
+            if (camp.id === selectedC.id) btn.css({ "border-color": camp.color, "background": "#f0f0f0" });
+            
+            btn.click(function() {
+                Sound.click();
+                selectedC = camp;
+                campShelf.find('div').css({ "border-color": "#bdc3c7", "background": "#fff" });
+                btn.css({ "border-color": camp.color, "background": "#f0f0f0" });
+            });
+            campShelf.append(btn);
+        });
+        formBox.append(campShelf);
+
+        var launchBtn = $('<div class="selectorButton orangeButton" style="width: 200px; margin: 0 auto; display: block; text-align: center; padding: 10px 0; border-radius: 6px; font-weight: bold;">Launch Campaign</div>');
+        launchBtn.click(function() {
+            if (targets.length === 0) return;
+            var targetId = targetSelect.val();
+            var targetName = targetSelect.find('option:selected').attr('data-name');
+            
+            if (GameManager.company.cash >= selectedC.cost) {
+                Sound.click();
+                GameManager.company.adjustCash(-selectedC.cost, "Marketing: " + targetName);
+                store.data.activeCampaigns.push({
+                    targetId: targetId,
+                    targetName: targetName,
+                    campaignName: selectedC.name,
+                    weeksLeft: selectedC.weeks,
+                    boostFactor: selectedC.boost
+                });
+                routeModMenu("marketing");
+            } else { alert("Insufficient funds for this campaign!"); }
+        });
+        formBox.append(launchBtn);
+        
+        container.append(formBox);
     }
 
     function buildStudioCard(studio) {
@@ -1699,7 +2201,18 @@
             });
             middleBtns.append(staffSelect).append(hireBtn).append(fireBtn);
 
-            var instructBtn = $('<button class="selectorButton orangeButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Instruct</button>');
+            var specSelect = $('<select id="spec_' + studio.id + '" style="font-size: 10pt; padding: 3px; color: black; flex: 2; border-radius: 3px; border: 1px solid #bdc3c7; box-sizing: border-box; margin-left: 5px;"></select>');
+            specSelect.append('<option value="Any">General (Any)</option>');
+            specSelect.append('<option value="DLC">Always DLC</option>');
+            specSelect.append('<option value="CoDev">Always Co-Dev</option>');
+            specSelect.append('<option value="Games">Always Games</option>');
+            specSelect.val(studio.specialization || "Any");
+            specSelect.change(function() {
+                studio.specialization = $(this).val();
+            });
+            middleBtns.append(specSelect);
+
+            var instructBtn = $('<button class="selectorButton orangeButton" style="flex: 1.1; font-size: 10pt; padding: 4px 6px; white-space: nowrap;">Manage Dev</button>');
             instructBtn.click(function () {
                 if (studio.currentProject) { alert(studio.name + " is busy!"); return; }
                 instructStudio(studio);
@@ -2032,7 +2545,7 @@
         originalShowItemSelector.apply(this, arguments);
 
         
-        var isSequel = options.title && (options.title.indexOf("Sequel") !== -1 || options.title.indexOf("Game") !== -1);
+        var isSequel = options.title && options.title.indexOf("Sequel") !== -1;
         if (isSequel) {
             var modal = $('#screen-item-selector');
             if (modal.length > 0) {
