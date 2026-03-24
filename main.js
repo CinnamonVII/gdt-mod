@@ -1,13 +1,13 @@
 (function () {
     console.log("Concurrent Studios mod loaded.");
 
-    // Inject global UX easing styles
+    
     (function injectModStyles() {
         if (document.getElementById('cs-mod-styles')) return;
         var css = document.createElement('style');
         css.id = 'cs-mod-styles';
         css.textContent = [
-            /* Button hover transitions */
+            
             '#modUI .selectorButton, #modUI button, .simplemodal-data .selectorButton, .simplemodal-data button {',
             '  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease !important;',
             '}',
@@ -22,7 +22,7 @@
             '  filter: brightness(0.95) !important;',
             '}',
 
-            /* Studio card hover */
+            
             '.studioCard {',
             '  transition: transform 0.2s ease, box-shadow 0.2s ease !important;',
             '}',
@@ -31,7 +31,7 @@
             '  box-shadow: 0 4px 12px rgba(0,0,0,0.14) !important;',
             '}',
 
-            /* DLC item hover */
+            
             '.dlcItem {',
             '  transition: transform 0.2s ease, box-shadow 0.2s ease !important;',
             '}',
@@ -40,7 +40,7 @@
             '  box-shadow: 0 4px 12px rgba(0,0,0,0.14) !important;',
             '}',
 
-            /* Stagger item hover (schedule, publishing, leaderboard) */
+            
             '.cs-stagger-item {',
             '  transition: transform 0.2s ease, box-shadow 0.2s ease !important;',
             '}',
@@ -49,7 +49,7 @@
             '  box-shadow: 0 4px 12px rgba(0,0,0,0.14) !important;',
             '}',
 
-            /* Tab hover effect */
+            
             '#modUI_header > div {',
             '  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease !important;',
             '}',
@@ -58,7 +58,7 @@
             '  transform: translateY(-1px);',
             '}',
 
-            /* Form input focus glow */
+            
             '#modUI input:focus, #modUI select:focus, .simplemodal-data input:focus, .simplemodal-data select:focus {',
             '  border-color: #d35400 !important;',
             '  box-shadow: 0 0 0 2px rgba(211,84,0,0.15) !important;',
@@ -66,7 +66,7 @@
             '  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;',
             '}',
 
-            /* Content fade-in animation */
+            
             '@keyframes csFadeSlideIn {',
             '  from { opacity: 0; transform: translateY(8px); }',
             '  to { opacity: 1; transform: translateY(0); }',
@@ -75,7 +75,7 @@
             '  animation: csFadeSlideIn 0.25s ease-out forwards !important;',
             '}',
 
-            /* Staggered card entry */
+            
             '@keyframes csCardEnter {',
             '  from { opacity: 0; transform: translateX(-12px); }',
             '  to { opacity: 1; transform: translateX(0); }',
@@ -84,7 +84,7 @@
             '  animation: csCardEnter 0.3s ease-out forwards !important;',
             '}',
 
-            /* Smooth scrollbar for content area */
+            
             '#modUI_content { scroll-behavior: smooth; }',
             '#modUI_content::-webkit-scrollbar { width: 6px; }',
             '#modUI_content::-webkit-scrollbar-track { background: #ecf0f1; }',
@@ -95,11 +95,11 @@
     })();
 
 
-    // Data Store
+    
     var store = GDT.getDataStore("concurrent_studios");
     var isShowingDraft = false;
     
-    // FOOLPROOF CO-DEV ISOLATION: Patch the native finishDevelopment to scrub baselines immediately
+    
     var originalFinishDevelopment = (typeof GameManager !== 'undefined') ? GameManager.finishDevelopment : null;
     if (originalFinishDevelopment) {
         GameManager.finishDevelopment = function () {
@@ -108,13 +108,13 @@
             
             var scrubEntry = store.data.coDevScrubMap[playerGame.title];
             
-            // 1. Let the original engine process the release (Generates 10/10 scores and updates baselines)
+            
             originalFinishDevelopment.apply(this, arguments);
             
-            // 2. IMMEDIATELY surgical scrub the engine's cached benchmarking variables
+            
             if (scrubEntry) {
                 var c = GameManager.company;
-                // Native GDT Baseline names (varies by engine version)
+                
                 var props = ["prevDesignPoints", "prevTechnologyPoints", "designBaseline", "technologyBaseline", "lastDesignPoints", "lastTechPoints"];
                 
                 if (typeof c.prevDesignPoints !== 'undefined') c.prevDesignPoints = Math.max(0, c.prevDesignPoints - scrubEntry.design);
@@ -122,7 +122,7 @@
                 if (typeof c.designBaseline !== 'undefined') c.designBaseline = Math.max(0, c.designBaseline - scrubEntry.design);
                 if (typeof c.technologyBaseline !== 'undefined') c.technologyBaseline = Math.max(0, c.technologyBaseline - scrubEntry.tech);
                 
-                // Also scrub the gameLog entry immediately so it's clean for history and manual logic
+                
                 if (c.gameLog && c.gameLog.length > 0) {
                     var lastG = c.gameLog[c.gameLog.length - 1];
                     if (lastG.title === playerGame.title || lastG.name === playerGame.title) {
@@ -131,14 +131,14 @@
                     }
                 }
                 
-                // Clear map after use
+                
                 delete store.data.coDevScrubMap[playerGame.title];
                 GDT.saveData("concurrent_studios", store.data);
             }
         };
     }
 
-    // Initialization hook
+    
     GDT.on(GDT.eventKeys.saves.loading, function (e) {
         initData();
     });
@@ -171,34 +171,34 @@
             store.data.lastWeekProcessed = -1;
         }
         if (!store.data.releaseHistory) {
-            store.data.releaseHistory = []; // Tracks released AI games for the schedule UI
+            store.data.releaseHistory = []; 
         }
         if (!store.data.publishingOffers) {
             store.data.publishingOffers = [];
         }
         if (!store.data.activeAIGames) {
-            store.data.activeAIGames = []; // Tracks isolated AI games for custom background sales
+            store.data.activeAIGames = []; 
         }
         if (!store.data.coDevScrubMap) {
-            store.data.coDevScrubMap = {}; // Tracks gameTitle -> { design: X, tech: Y }
+            store.data.coDevScrubMap = {}; 
         }
 
-        // Cleanup routine: Purge old mod games from the native player gameLog to fix UI bleeding on older saves
+        
         if (typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.gameLog) {
             GameManager.company.gameLog = GameManager.company.gameLog.filter(function(g) {
                 return !g.modAI && !(store.data.modGameIds && store.data.modGameIds[g.id]);
             });
-            // Free the memory since we no longer use it
+            
             store.data.modGameIds = {};
         }
 
-        // HEURISTIC BASELINE REPAIR: Fix 2/10 sequel scores and "Ghost" inflation from old versions
+        
         if (typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.gameLog) {
             var c = GameManager.company;
             var log = c.gameLog;
             var repairedCount = 0;
             
-            // Calculate a "Reasonable Max Solo Points" based on current team capacity
+            
             var staffCount = (c.staff ? c.staff.length : 0) + 1; 
             var techBonus = (c.techLevel || 1) * 20;
             var maxReasonable = (staffCount * 300) + techBonus + 500; 
@@ -208,7 +208,7 @@
                 var scrub = store.data.coDevScrubMap[g.title] || store.data.coDevScrubMap[g.name];
                 
                 var wasScrubbed = false;
-                // 1. Explicit Scrubbing (Tagged games)
+                
                 if (g.modCoDevDesignAdded || g.modCoDevTechAdded || scrub) {
                     var d = (g.modCoDevDesignAdded || 0) + (scrub ? scrub.design : 0);
                     var t = (g.modCoDevTechAdded || 0) + (scrub ? scrub.tech : 0);
@@ -218,14 +218,14 @@
                     repairedCount++; wasScrubbed = true;
                 }
                 
-                // 2. Heuristic Capping (Untagged Ghost inflation)
+                
                 if (!wasScrubbed) {
                     if (g.designPoints > (maxReasonable * 2.5)) { g.designPoints = Math.min(g.designPoints, maxReasonable); repairedCount++; }
                     if (g.technologyPoints > (maxReasonable * 2.5)) { g.technologyPoints = Math.min(g.technologyPoints, maxReasonable); repairedCount++; }
                 }
             }
             
-            // 3. Always force-reset benchmarks to the last scrubbed game to fix immediate solo/sequel potential
+            
             if (log.length > 0) {
                 var lastG = log[log.length - 1];
                 if (typeof c.prevDesignPoints !== 'undefined') c.prevDesignPoints = lastG.designPoints;
@@ -285,7 +285,7 @@
         
         var generated = [];
         for (var i = 0; i < baseNames.length; i++) {
-            // Valuation between 2M and 150M loosely based on popularity / random
+            
             var val = Math.floor((Math.random() * 148000000) + 2000000);
             generated.push({ 
                 id: "S_" + i, 
@@ -299,9 +299,9 @@
         return generated;
     }
 
-    // Global interval to check the game week and inject UI
+    
     setInterval(function () {
-        // Wait until GameManager and UI are loaded
+        
         if (typeof GameManager === 'undefined' || typeof UI === 'undefined' || !GameManager.company) {
             return;
         }
@@ -316,7 +316,7 @@
         }
         store.data.lastWeekProcessed = currentWeek;
 
-        // Perform weekly simulation for studios and active DLC
+        
         try {
             processCompetitors();
         } catch(e) { console.error("[Mod] processCompetitors error:", e); }
@@ -330,14 +330,14 @@
             processPublishingProjects();
         } catch(e) { console.error("[Mod] processPublishingProjects error:", e); }
         
-        // Revive massive sales surges for Base Games when a native DLC finishes!
+        
         for (var i = 0; i < GameManager.company.gameLog.length; i++) {
             var g = GameManager.company.gameLog[i];
             if (g.flags && g.flags.isExtensionPack && g.sequelTo && !g.modDlcRevived) {
                 g.modDlcRevived = true;
                 var baseGame = GameManager.company.getGameById(g.sequelTo);
                 if (baseGame && !baseGame.flags.mmo) {
-                    var dlcBonus = (g.score || 5) * 250000; // Surge scales with review score!
+                    var dlcBonus = (g.score || 5) * 250000; 
                     GameManager.company.adjustCash(dlcBonus, "Base Game Surge: " + baseGame.title);
                     GameManager.company.notifications.push(new Notification({
                         header: "Storefront Surge",
@@ -348,7 +348,7 @@
             }
         }
         
-        // Split Revenue Intercept: remove 70% of gross from Published Games so player only nets 30% contract cut!
+        
         for (var i = 0; i < GameManager.company.gameLog.length; i++) {
             var g = GameManager.company.gameLog[i];
             if (g.state === GameState.released && g.modIsPublishingDeal) {
@@ -365,7 +365,7 @@
             }
         }
 
-        // Co-Dev Baseline Scrubber: Use a separate map to track points (more robust against engine property stripping)
+        
         for (var i = 0; i < GameManager.company.gameLog.length; i++) {
             var g = GameManager.company.gameLog[i];
             var scrubEntry = store.data.coDevScrubMap[g.title];
@@ -376,7 +376,7 @@
                 if (scrubEntry.tech) {
                     g.technologyPoints = Math.max(0, g.technologyPoints - scrubEntry.tech);
                 }
-                // Once scrubbed, remove from map so it never happens again for this game
+                
                 delete store.data.coDevScrubMap[g.title];
             }
         }
@@ -391,7 +391,7 @@
             
             g.modSalesWeeks++;
             
-            // Decay sales each week gracefully
+            
             g.modCurrentWeeklySales = Math.floor(g.modCurrentWeeklySales * 0.85); 
             var weeklyCash = g.modCurrentWeeklySales;
             g.modTotalSalesCash += weeklyCash;
@@ -406,7 +406,7 @@
                 }
 
                 if (g.modIsPublishingDeal) {
-                    var cut = weeklyCash * 0.70; // 70% cut for Publishing Contracts
+                    var cut = weeklyCash * 0.70; 
                     if (cut > 0) GameManager.company.adjustCash(cut, "Publishing Royalties: " + g.title);
                 } else if (studio && studio.sharesOwned > 0) {
                     var div = weeklyCash * (studio.sharesOwned / 100);
@@ -414,7 +414,7 @@
                 }
             }
 
-            // Remove from active background processing after 20 weeks or when sales drop too low
+            
             if (g.modSalesWeeks > 20 || g.modCurrentWeeklySales < 1000) {
                 store.data.activeAIGames.splice(i, 1);
             }
@@ -433,7 +433,7 @@
         if (!studio.staff) {
             studio.staff = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
             if (typeof studio.employees === "number") {
-                studio.staff[2] = studio.employees; // Migrate old employees to 2-Star
+                studio.staff[2] = studio.employees; 
                 delete studio.employees;
             } else {
                 var initialEmp = studio.isFounded ? 5 : Math.floor(Math.random() * 10) + 5;
@@ -457,11 +457,11 @@
             
             ensureStaffObj(studio);
 
-            // Maintenance for owned/founded studios (Monthly)
+            
             if (studio.sharesOwned >= 50 && (currentWeek % 4 === 0)) {
                 var maint = 0;
                 for (var t=1; t<=5; t++) maint += (starTiers[t].maint * (studio.staff[t] || 0));
-                maint *= 4; // Pay for 4 weeks
+                maint *= 4; 
                 if (maint > 0) {
                     GameManager.company.adjustCash(-maint, "Upkeep: " + studio.name);
                 }
@@ -472,35 +472,27 @@
 
                 if (studio.currentProject.isCoDev) {
                     var playerGame = GameManager.company.currentGame;
-                    if (playerGame) { // Don't check GameState softly because engine behavior fluctuates 
-                        // Weekly co-dev bonus
+                    if (playerGame) { 
+                        
                         var dBonus = Math.floor(studio.valuation / 1000000) + 1;
                         var tBonus = Math.floor(studio.valuation / 1000000) + 1;
                         playerGame.designPoints += dBonus;
                         playerGame.technologyPoints += tBonus;
                         
-                        // Robust Scrubber Map initialization
+                        
                         if (!store.data.coDevScrubMap[playerGame.title]) {
                             store.data.coDevScrubMap[playerGame.title] = { design: 0, tech: 0 };
                         }
                         store.data.coDevScrubMap[playerGame.title].design += dBonus;
                         store.data.coDevScrubMap[playerGame.title].tech += tBonus;
                         
-                        /* if (currentWeek % 4 === 0) {
-                            GameManager.company.notifications.push(new Notification({ 
-                                header: "Co-Dev Progress", 
-                                text: studio.name + " generated " + store.data.coDevScrubMap[playerGame.title].design + " Design and " + store.data.coDevScrubMap[playerGame.title].tech + " Tech points so far this project." 
-                            }));
-                        } */
+                        
                     } else {
-                        // Player is not developing anymore, or game released
+                        
                         studio.currentProject = null;
-                        /* GameManager.company.notifications.push(new Notification({ 
-                            header: "Co-Dev Finished", 
-                            text: studio.name + " has finished assisting your project." 
-                        })); */
+                        
                     }
-                    continue; // Skip normal project processing
+                    continue; 
                 }
 
                 var speedMultiplier = 1;
@@ -511,9 +503,9 @@
                     finishAndReleaseGame(studio);
                 }
             } else {
-                // If they don't have a current project
+                
                 if (studio.sharesOwned >= 50) {
-                    // Watchdog: If flag is stuck but no modal is visible, reset it.
+                    
                     if (isShowingDraft && $("#simplemodal-overlay").length === 0) {
                         isShowingDraft = false;
                     }
@@ -530,10 +522,10 @@
                             isShowingDraft = false;
                         }
                     }
-                    continue; // Skip normal AI offer evaluation
+                    continue; 
                 }
 
-                // If independent, evaluate publishing offers first
+                
                 var acceptedOffer = false;
                 if (!studio.isFounded && store.data.publishingOffers && store.data.publishingOffers.length > 0) {
                     for (var j = 0; j < store.data.publishingOffers.length; j++) {
@@ -545,7 +537,7 @@
                         if (offer.size === "Large" && studio.valuation > 20000000) canHandle = true;
                         if (offer.size === "AAA" && studio.valuation > 50000000) canHandle = true;
 
-                        // AI has a 10% chance per week to accept an offer they can handle
+                        
                         if (canHandle && Math.random() < 0.1) {
                             var chance = Math.random();
                             if (chance > 0.5) {
@@ -575,7 +567,7 @@
                     }
                 }
                 
-                // If didn't accept an offer, chance to start normal AI project
+                
                 var hasActivePublishing = false;
                 if (store.data.publishingProjects) {
                     for (var p=0; p<store.data.publishingProjects.length; p++) {
@@ -638,13 +630,13 @@
             var genreIndexMap = {"Action":0, "Adventure":1, "RPG":2, "Simulation":3, "Strategy":4, "Casual":5};
             var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50; padding: 0; overflow: hidden;"></div>');
 
-            // Header
+            
             var header = $('<div style="background-color: #d35400; padding: 12px 18px;"></div>');
             header.append('<div style="font-size: 14pt; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + studio.name + '</div>');
             header.append('<div style="font-size: 11pt; color: rgba(255,255,255,0.9); margin-top: 2px;">is idle and wants to start a new project</div>');
             container.append(header);
 
-            // Body with form
+            
             var body = $('<div style="padding: 14px 18px;"></div>');
             function makeRow(labelText, color, selectEl) {
                 var row = $('<div style="display: flex; align-items: center; margin-bottom: 8px;"></div>');
@@ -741,7 +733,7 @@
         }
     }
 
-    // New: Process ongoing publishing projects
+    
     function processPublishingProjects() {
         if (!store.data.publishingProjects) store.data.publishingProjects = [];
         for (var i = store.data.publishingProjects.length - 1; i >= 0; i--) {
@@ -754,17 +746,17 @@
                 }
             }
 
-            if (!studio) { // Studio might have been absorbed or removed
+            if (!studio) { 
                 store.data.publishingProjects.splice(i, 1);
                 continue;
             }
 
-            // If the studio is busy with something else, put this project on hold
+            
             if (studio.currentProject && studio.currentProject.id !== project.id) {
                 continue;
             }
 
-            // Assign project to studio if not already assigned
+            
             if (!studio.currentProject) {
                 studio.currentProject = {
                     id: project.id,
@@ -779,7 +771,7 @@
                 };
             }
 
-            // Simulate progress (same as normal studio project)
+            
             ensureStaffObj(studio);
             var speedMultiplier = 1;
             for (var t=1; t<=5; t++) speedMultiplier += (starTiers[t].speed * (studio.staff[t] || 0));
@@ -788,10 +780,10 @@
 
             if (studio.currentProject.weeksRemaining <= 0) {
                 finishAndReleaseGame(studio);
-                // Remove the project from publishingProjects list
+                
                 store.data.publishingProjects.splice(i, 1);
-                i--; // Decrement index after splice
-                // Remove the accepted offer from publishingOffers
+                i--; 
+                
                 var offerIndex = -1;
                 for (var m = 0; m < store.data.publishingOffers.length; m++) {
                     if (store.data.publishingOffers[m].id === project.offerId) {
@@ -830,7 +822,7 @@
     function finishAndReleaseGame(studio) {
         var proj = studio.currentProject;
         studio.currentProject = null;
-        studio.draftCooldown = 4; // Reset draft cooldown for owned studios
+        studio.draftCooldown = 4; 
 
         ensureStaffObj(studio);
         var teamQuality = 0;
@@ -841,7 +833,7 @@
         var baseScore = 4 + (avgQuality * 2.5);
         if (proj.size === "AAA") baseScore += 1;
         
-        var randomFactor = (Math.random() * 4) - 2; // -2 to +2
+        var randomFactor = (Math.random() * 4) - 2; 
         var score = Math.floor(baseScore + randomFactor);
         
         if (score > 10) score = 10;
@@ -899,11 +891,11 @@
                     selectedPlats.push(activePlats[1]); 
                 }
             } else {
-                selectedPlats.push(Platforms.allPlatforms[0]); // fallback
+                selectedPlats.push(Platforms.allPlatforms[0]); 
             }
         }
 
-        // Create a 'virtual' json object instead of instantiating new Game() so we don't increment the global player ID sequencer
+        
         var game = {
             modStudioId: studio.id,
             id: "MOD_" + Math.random().toString(36).substr(2, 9),
@@ -957,7 +949,7 @@
             if (store.data.leaderboardGames.length > 10) store.data.leaderboardGames.pop();
         }
 
-        // Adjust valuation based on score
+        
         var valImpact = 0;
         if (score >= 8) valImpact = studio.valuation * 0.1;
         else if (score === 7) valImpact = studio.valuation * 0.05;
@@ -1033,7 +1025,7 @@
             return;
         }
 
-        // Build simplemodal dialog body with GDT-native aesthetic
+        
         var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50; padding: 0;"></div>');
         var header = $('<div id="modUI_header" style="display: flex; gap: 3px; border-bottom: 2px solid #bdc3c7; padding: 6px 8px 0 8px; background-color: #e0e6ed;"></div>');
         container.append(header);
@@ -1102,12 +1094,12 @@
             renderDLCTab(contentArea);
         }
 
-        // Animate content in
+        
         contentArea.removeClass('cs-animate-in');
-        void contentArea[0].offsetWidth; // force reflow
+        void contentArea[0].offsetWidth; 
         contentArea.addClass('cs-animate-in');
 
-        // Stagger card entries
+        
         contentArea.find('.studioCard, .dlcItem, .cs-stagger-item').each(function(i) {
             var el = $(this);
             el.css({ opacity: 0 });
@@ -1239,7 +1231,7 @@
 
         container.append('<div style="font-size: 11pt; margin-bottom: 12px; text-align: center; color: #7f8c8d;">Studios evaluate your offers weekly. Once accepted, you receive 30% of gross revenue!</div>');
 
-        // Display ongoing projects first
+        
         if (store.data.publishingProjects && store.data.publishingProjects.length > 0) {
             container.append('<h3 style="color: #d35400; text-align: center; margin-top: 16px; font-size: 12pt;">Ongoing Publishing Projects</h3>');
             store.data.publishingProjects.forEach(function(project) {
@@ -1261,7 +1253,7 @@
             });
         }
 
-        // Display offers
+        
         if (offers.length > 0) {
             container.append('<h3 style="color: #d35400; text-align: center; margin-top: 16px; font-size: 12pt;">Current Publishing Offers</h3>');
             for (var i = 0; i < offers.length; i++) {
@@ -1410,7 +1402,7 @@
                 GameManager.company.adjustCash(-advance, "Posted Publishing Deal");
                 
                 store.data.publishingOffers.push({
-                    id: GameManager.getGUID(), // Add an ID for tracking
+                    id: GameManager.getGUID(), 
                     topic: $('#pub_topic').val(),
                     genre: $('#pub_genre').val(),
                     size: selectedSize,
@@ -1431,7 +1423,7 @@
         actionContainer.append(confirmBtn).append(cancelBtn);
         container.append(actionContainer);
 
-        // Animate form in
+        
         container.animate({ opacity: 1 }, 250);
     }
 
@@ -1457,7 +1449,7 @@
 
     function renderDLCTab(container) {
         var allGames = GameManager.company.gameLog || [];
-        var games = allGames; // No need to filter UI anymore, AI games are excluded from gameLog globally!
+        var games = allGames; 
         var sortedGames = games.slice().sort(function(a,b) { return b.releaseWeek - a.releaseWeek; });
 
         if (sortedGames.length === 0) {
@@ -1690,18 +1682,15 @@
                 coDevBtn.click(function() {
                     var playerGame = GameManager.company.currentGame;
                     if (playerGame) { 
-                        // Initial small boost for immediate feedback
+                        
                         var dPts = Math.floor(studio.valuation / 1000000) + 1;
                         var tPts = Math.floor(studio.valuation / 1000000) + 1;
                         playerGame.designPoints += dPts;
                         playerGame.technologyPoints += tPts;
                         
-                        /* GameManager.company.notifications.push(new Notification({ 
-                            header: "Co-Development Started", 
-                            text: studio.name + " is now assisting your project until completion!" 
-                        })); */
                         
-                        // Set persistent co-dev state
+                        
+                        
                         studio.currentProject = { name: "Co-Dev Support", isCoDev: true, isPublishedByPlayer: false };
                         routeModMenu("subsidiaries");
                     } else { alert("You need an active game in development to co-develop!"); }
@@ -1717,7 +1706,7 @@
                         var rpGained = Math.floor(studio.valuation / 100000);
                         GameManager.company.fans += fansGained; GameManager.company.researchPoints += rpGained;
                         
-                        // Clean up modGameIds for the absorbed studio
+                        
                         if (store.data.modGameIds) {
                             var keys = Object.keys(store.data.modGameIds);
                             for (var i = 0; i < keys.length; i++) {
@@ -1921,7 +1910,7 @@
         actionContainer.append(confirmBtn).append(cancelBtn);
         contentArea.append(actionContainer);
 
-        // Animate form in
+        
         contentArea.animate({ opacity: 1 }, 250);
     }
 
@@ -2008,19 +1997,19 @@
         });
     }
 
-    // Patch Native UI: Add Search Bar to Sequel Selection
+    
     var originalShowItemSelector = UI._showItemSelector;
     UI._showItemSelector = function (options) {
         originalShowItemSelector.apply(this, arguments);
 
-        // Check if this is a sequel or platform selection where search is useful
+        
         var isSequel = options.title && (options.title.indexOf("Sequel") !== -1 || options.title.indexOf("Game") !== -1);
         if (isSequel) {
             var modal = $('#screen-item-selector');
             if (modal.length > 0) {
                 var searchBar = $('<input type="text" placeholder="Search games..." style="width: 80%; display: block; margin: 10px auto; padding: 10px; font-size: 14pt; border-radius: 5px; border: 1px solid #ccc; color: black; background: white;">');
                 
-                // Inject after the header
+                
                 var header = modal.find('.window-header');
                 if (header.length > 0) {
                     header.after(searchBar);
@@ -2040,7 +2029,7 @@
                     });
                 });
                 
-                // Focus the search bar
+                
                 setTimeout(function() { searchBar.focus(); }, 100);
             }
         }
