@@ -1,9 +1,142 @@
 (function () {
     console.log("Concurrent Studios mod loaded.");
 
+    // Inject global UX easing styles
+    (function injectModStyles() {
+        if (document.getElementById('cs-mod-styles')) return;
+        var css = document.createElement('style');
+        css.id = 'cs-mod-styles';
+        css.textContent = [
+            /* Button hover transitions */
+            '#modUI .selectorButton, #modUI button, .simplemodal-data .selectorButton, .simplemodal-data button {',
+            '  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease !important;',
+            '}',
+            '#modUI .selectorButton:hover, #modUI button:hover, .simplemodal-data .selectorButton:hover, .simplemodal-data button:hover {',
+            '  transform: translateY(-1px) !important;',
+            '  box-shadow: 0 3px 8px rgba(0,0,0,0.18) !important;',
+            '  filter: brightness(1.08) !important;',
+            '}',
+            '#modUI .selectorButton:active, #modUI button:active, .simplemodal-data .selectorButton:active, .simplemodal-data button:active {',
+            '  transform: translateY(0px) scale(0.97) !important;',
+            '  box-shadow: 0 1px 2px rgba(0,0,0,0.15) !important;',
+            '  filter: brightness(0.95) !important;',
+            '}',
+
+            /* Studio card hover */
+            '.studioCard {',
+            '  transition: transform 0.2s ease, box-shadow 0.2s ease !important;',
+            '}',
+            '.studioCard:hover {',
+            '  transform: translateY(-2px) !important;',
+            '  box-shadow: 0 4px 12px rgba(0,0,0,0.14) !important;',
+            '}',
+
+            /* DLC item hover */
+            '.dlcItem {',
+            '  transition: transform 0.2s ease, box-shadow 0.2s ease !important;',
+            '}',
+            '.dlcItem:hover {',
+            '  transform: translateY(-2px) !important;',
+            '  box-shadow: 0 4px 12px rgba(0,0,0,0.14) !important;',
+            '}',
+
+            /* Stagger item hover (schedule, publishing, leaderboard) */
+            '.cs-stagger-item {',
+            '  transition: transform 0.2s ease, box-shadow 0.2s ease !important;',
+            '}',
+            '.cs-stagger-item:hover {',
+            '  transform: translateY(-2px) !important;',
+            '  box-shadow: 0 4px 12px rgba(0,0,0,0.14) !important;',
+            '}',
+
+            /* Tab hover effect */
+            '#modUI_header > div {',
+            '  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease !important;',
+            '}',
+            '#modUI_header > div:hover {',
+            '  filter: brightness(1.06);',
+            '  transform: translateY(-1px);',
+            '}',
+
+            /* Form input focus glow */
+            '#modUI input:focus, #modUI select:focus, .simplemodal-data input:focus, .simplemodal-data select:focus {',
+            '  border-color: #d35400 !important;',
+            '  box-shadow: 0 0 0 2px rgba(211,84,0,0.15) !important;',
+            '  outline: none !important;',
+            '  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;',
+            '}',
+
+            /* Content fade-in animation */
+            '@keyframes csFadeSlideIn {',
+            '  from { opacity: 0; transform: translateY(8px); }',
+            '  to { opacity: 1; transform: translateY(0); }',
+            '}',
+            '.cs-animate-in {',
+            '  animation: csFadeSlideIn 0.25s ease-out forwards !important;',
+            '}',
+
+            /* Staggered card entry */
+            '@keyframes csCardEnter {',
+            '  from { opacity: 0; transform: translateX(-12px); }',
+            '  to { opacity: 1; transform: translateX(0); }',
+            '}',
+            '.cs-card-enter {',
+            '  animation: csCardEnter 0.3s ease-out forwards !important;',
+            '}',
+
+            /* Smooth scrollbar for content area */
+            '#modUI_content { scroll-behavior: smooth; }',
+            '#modUI_content::-webkit-scrollbar { width: 6px; }',
+            '#modUI_content::-webkit-scrollbar-track { background: #ecf0f1; }',
+            '#modUI_content::-webkit-scrollbar-thumb { background: #bdc3c7; border-radius: 3px; }',
+            '#modUI_content::-webkit-scrollbar-thumb:hover { background: #95a5a6; }'
+        ].join('\n');
+        document.head.appendChild(css);
+    })();
+
+
     // Data Store
     var store = GDT.getDataStore("concurrent_studios");
     var isShowingDraft = false;
+    
+    // FOOLPROOF CO-DEV ISOLATION: Patch the native finishDevelopment to scrub baselines immediately
+    var originalFinishDevelopment = (typeof GameManager !== 'undefined') ? GameManager.finishDevelopment : null;
+    if (originalFinishDevelopment) {
+        GameManager.finishDevelopment = function () {
+            var playerGame = GameManager.company.currentGame;
+            if (!playerGame) { originalFinishDevelopment.apply(this, arguments); return; }
+            
+            var scrubEntry = store.data.coDevScrubMap[playerGame.title];
+            
+            // 1. Let the original engine process the release (Generates 10/10 scores and updates baselines)
+            originalFinishDevelopment.apply(this, arguments);
+            
+            // 2. IMMEDIATELY surgical scrub the engine's cached benchmarking variables
+            if (scrubEntry) {
+                var c = GameManager.company;
+                // Native GDT Baseline names (varies by engine version)
+                var props = ["prevDesignPoints", "prevTechnologyPoints", "designBaseline", "technologyBaseline", "lastDesignPoints", "lastTechPoints"];
+                
+                if (typeof c.prevDesignPoints !== 'undefined') c.prevDesignPoints = Math.max(0, c.prevDesignPoints - scrubEntry.design);
+                if (typeof c.prevTechnologyPoints !== 'undefined') c.prevTechnologyPoints = Math.max(0, c.prevTechnologyPoints - scrubEntry.tech);
+                if (typeof c.designBaseline !== 'undefined') c.designBaseline = Math.max(0, c.designBaseline - scrubEntry.design);
+                if (typeof c.technologyBaseline !== 'undefined') c.technologyBaseline = Math.max(0, c.technologyBaseline - scrubEntry.tech);
+                
+                // Also scrub the gameLog entry immediately so it's clean for history and manual logic
+                if (c.gameLog && c.gameLog.length > 0) {
+                    var lastG = c.gameLog[c.gameLog.length - 1];
+                    if (lastG.title === playerGame.title || lastG.name === playerGame.title) {
+                        lastG.designPoints = Math.max(0, lastG.designPoints - scrubEntry.design);
+                        lastG.technologyPoints = Math.max(0, lastG.technologyPoints - scrubEntry.tech);
+                    }
+                }
+                
+                // Clear map after use
+                delete store.data.coDevScrubMap[playerGame.title];
+                GDT.saveData("concurrent_studios", store.data);
+            }
+        };
+    }
 
     // Initialization hook
     GDT.on(GDT.eventKeys.saves.loading, function (e) {
@@ -23,22 +156,7 @@
                     showModMenu("market");
                 }
             });
-            e.items.push({
-                label: "Post Publishing Deal...",
-                action: function () {
-                    Sound.click();
-                    showModMenu("publishing");
-                }
-            });
-            if (GameManager.company.gameLog && GameManager.company.gameLog.length > 0) {
-                e.items.push({
-                    label: "Develop DLC...",
-                    action: function () {
-                        Sound.click();
-                        showModMenu("dlc");
-                    }
-                });
-            }
+
         }
     });
 
@@ -58,12 +176,66 @@
         if (!store.data.publishingOffers) {
             store.data.publishingOffers = [];
         }
-        if (!store.data.modGameIds) {
+        if (!store.data.activeAIGames) {
+            store.data.activeAIGames = []; // Tracks isolated AI games for custom background sales
+        }
+        if (!store.data.coDevScrubMap) {
+            store.data.coDevScrubMap = {}; // Tracks gameTitle -> { design: X, tech: Y }
+        }
+
+        // Cleanup routine: Purge old mod games from the native player gameLog to fix UI bleeding on older saves
+        if (typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.gameLog) {
+            GameManager.company.gameLog = GameManager.company.gameLog.filter(function(g) {
+                return !g.modAI && !(store.data.modGameIds && store.data.modGameIds[g.id]);
+            });
+            // Free the memory since we no longer use it
             store.data.modGameIds = {};
         }
-        // Re-tag any mod games that lost their flags after save/load
-        retagModGames();
-        patchSequelFilters();
+
+        // HEURISTIC BASELINE REPAIR: Fix 2/10 sequel scores and "Ghost" inflation from old versions
+        if (typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.gameLog) {
+            var c = GameManager.company;
+            var log = c.gameLog;
+            var repairedCount = 0;
+            
+            // Calculate a "Reasonable Max Solo Points" based on current team capacity
+            var staffCount = (c.staff ? c.staff.length : 0) + 1; 
+            var techBonus = (c.techLevel || 1) * 20;
+            var maxReasonable = (staffCount * 300) + techBonus + 500; 
+            
+            for (var i = 0; i < log.length; i++) {
+                var g = log[i];
+                var scrub = store.data.coDevScrubMap[g.title] || store.data.coDevScrubMap[g.name];
+                
+                var wasScrubbed = false;
+                // 1. Explicit Scrubbing (Tagged games)
+                if (g.modCoDevDesignAdded || g.modCoDevTechAdded || scrub) {
+                    var d = (g.modCoDevDesignAdded || 0) + (scrub ? scrub.design : 0);
+                    var t = (g.modCoDevTechAdded || 0) + (scrub ? scrub.tech : 0);
+                    g.designPoints = Math.max(0, g.designPoints - d);
+                    g.technologyPoints = Math.max(0, g.technologyPoints - t);
+                    delete g.modCoDevDesignAdded; delete g.modCoDevTechAdded;
+                    repairedCount++; wasScrubbed = true;
+                }
+                
+                // 2. Heuristic Capping (Untagged Ghost inflation)
+                if (!wasScrubbed) {
+                    if (g.designPoints > (maxReasonable * 2.5)) { g.designPoints = Math.min(g.designPoints, maxReasonable); repairedCount++; }
+                    if (g.technologyPoints > (maxReasonable * 2.5)) { g.technologyPoints = Math.min(g.technologyPoints, maxReasonable); repairedCount++; }
+                }
+            }
+            
+            // 3. Always force-reset benchmarks to the last scrubbed game to fix immediate solo/sequel potential
+            if (log.length > 0) {
+                var lastG = log[log.length - 1];
+                if (typeof c.prevDesignPoints !== 'undefined') c.prevDesignPoints = lastG.designPoints;
+                if (typeof c.prevTechnologyPoints !== 'undefined') c.prevTechnologyPoints = lastG.technologyPoints;
+                if (typeof c.designBaseline !== 'undefined') c.designBaseline = lastG.designPoints;
+                if (typeof c.technologyBaseline !== 'undefined') c.technologyBaseline = lastG.technologyPoints;
+                
+                if (repairedCount > 0) console.log("[Mod] Heuristic Baseline Repair: Scrubbed " + repairedCount + " data-points. Solo potential restored.");
+            }
+        }
     }
 
     function generateGameName(topic, genre) {
@@ -152,17 +324,11 @@
             processDLCs();
         } catch(e) { console.error("[Mod] processDLCs error:", e); }
         try {
-            processDividends();
-        } catch(e) { console.error("[Mod] processDividends error:", e); }
+            processAISales();
+        } catch(e) { console.error("[Mod] processAISales error:", e); }
         try {
             processPublishingProjects();
         } catch(e) { console.error("[Mod] processPublishingProjects error:", e); }
-
-        // Sync Interceptor for Notifications (Stops the visual flicker spam)
-        try {
-            patchNotifications();
-            patchSequelFilters();
-        } catch(e) { console.error("[Mod] patching error:", e); }
         
         // Revive massive sales surges for Base Games when a native DLC finishes!
         for (var i = 0; i < GameManager.company.gameLog.length; i++) {
@@ -198,120 +364,69 @@
                 }
             }
         }
-    }
 
-    // Sync Interceptor for Notifications (Stops the visual flicker spam)
-    function patchNotifications() {
-        if (!GameManager.company || !GameManager.company.notifications) return;
-        var originalPush = GameManager.company.notifications.push;
-        if (originalPush.isModPatched) return;
-
-        GameManager.company.notifications.push = function (n) {
-            if (n && n.header === "Game off the market.".localize("heading")) {
-                var isModGame = false;
-                for (var j = 0; j < GameManager.company.gameLog.length; j++) {
-                    var g = GameManager.company.gameLog[j];
-                    if (g.modAI && n.text.indexOf(g.title) !== -1) {
-                        isModGame = true; break;
-                    }
-                }
-                if (isModGame) return 1; // Discard!
-            }
-            return originalPush.apply(this, arguments);
-        };
-        GameManager.company.notifications.push.isModPatched = true;
-    }
-
-    // Continuous patching check to ensure it stays active through loads
-    setInterval(function () {
-        if (typeof GameManager !== 'undefined' && GameManager.company) {
-            patchNotifications();
-            patchSequelFilters();
-            retagModGames();
-        }
-    }, 2000);
-
-    function processDividends() {
-        if (!GameManager.company || !GameManager.company.gameLog) return;
-        var currentWeek = Math.floor(GameManager.company.currentWeek);
-        var studios = store.data.studios || [];
-        
-        studios.forEach(function(studio) {
-            if ((studio.sharesOwned || 0) <= 0) return;
-            
-            var studioWeeklyRevenue = 0;
-            GameManager.company.gameLog.forEach(function(g) {
-                if (g.modIsPublishingDeal) return;
-                if (g.modStudioId === studio.id && g.releaseWeek < currentWeek && !g.soldOut) {
-                    var delta = g.totalSalesCash - (g.modLastDividendCash || 0);
-                    if (delta > 0) {
-                        studioWeeklyRevenue += delta;
-                        g.modLastDividendCash = g.totalSalesCash;
-                    }
-                }
-            });
-
-            if (studioWeeklyRevenue > 0) {
-                var dividend = studioWeeklyRevenue * (studio.sharesOwned / 100);
-                if (dividend > 0) {
-                    GameManager.company.adjustCash(dividend, "Dividend: " + studio.name + " (" + studio.sharesOwned + "%)");
-                }
-            }
-        });
-    }
-
-    function isModGame(g) {
-        return g.modAI || (store.data.modGameIds && store.data.modGameIds[g.id]);
-    }
-
-    function retagModGames() {
-        if (!GameManager.company || !GameManager.company.gameLog || !store.data.modGameIds) return;
-        var map = store.data.modGameIds;
+        // Co-Dev Baseline Scrubber: Use a separate map to track points (more robust against engine property stripping)
         for (var i = 0; i < GameManager.company.gameLog.length; i++) {
             var g = GameManager.company.gameLog[i];
-            var entry = map[g.id];
-            if (entry) {
-                g.modAI = true;
-                g.modStudioId = entry.studioId;
-                if (entry.isPublishingDeal) g.modIsPublishingDeal = true;
-                if (entry.isSubsidiaryDeal) g.modIsSubsidiaryDeal = true;
+            var scrubEntry = store.data.coDevScrubMap[g.title];
+            if (scrubEntry) {
+                if (scrubEntry.design) {
+                    g.designPoints = Math.max(0, g.designPoints - scrubEntry.design);
+                }
+                if (scrubEntry.tech) {
+                    g.technologyPoints = Math.max(0, g.technologyPoints - scrubEntry.tech);
+                }
+                // Once scrubbed, remove from map so it never happens again for this game
+                delete store.data.coDevScrubMap[g.title];
             }
         }
     }
 
-    function patchSequelFilters() {
-        try {
-            if (typeof Company === 'undefined' || !Company.prototype) return;
+    function processAISales() {
+        if (!store.data.activeAIGames) store.data.activeAIGames = [];
+        for (var i = store.data.activeAIGames.length - 1; i >= 0; i--) {
+            var g = store.data.activeAIGames[i];
+            if (typeof g.modSalesWeeks === 'undefined') g.modSalesWeeks = 0;
+            if (typeof g.modTotalSalesCash === 'undefined') g.modTotalSalesCash = 0;
             
-            var methodsToPatch = [
-                "getPossibleGamesForSequel", 
-                "getPossibleGamesForPack"
-            ];
+            g.modSalesWeeks++;
+            
+            // Decay sales each week gracefully
+            g.modCurrentWeeklySales = Math.floor(g.modCurrentWeeklySales * 0.85); 
+            var weeklyCash = g.modCurrentWeeklySales;
+            g.modTotalSalesCash += weeklyCash;
 
-            methodsToPatch.forEach(function(m) {
-                if (Company.prototype[m] && !Company.prototype[m].isModPatched) {
-                    var orig = Company.prototype[m];
-                    Company.prototype[m] = function() {
-                        var list = orig.apply(this, arguments);
-                        if (list && list.filter) {
-                            return list.filter(function(g) { return !isModGame(g); });
-                        }
-                        return list;
-                    };
-                    Company.prototype[m].isModPatched = true;
+            if (weeklyCash > 0) {
+                var studio = null;
+                for (var s = 0; s < store.data.studios.length; s++) {
+                    if (store.data.studios[s].id === g.modStudioId) {
+                        studio = store.data.studios[s];
+                        break;
+                    }
                 }
-            });
-        } catch(e) {
-            // Silently fail — Company may not be fully loaded yet
+
+                if (g.modIsPublishingDeal) {
+                    var cut = weeklyCash * 0.70; // 70% cut for Publishing Contracts
+                    if (cut > 0) GameManager.company.adjustCash(cut, "Publishing Royalties: " + g.title);
+                } else if (studio && studio.sharesOwned > 0) {
+                    var div = weeklyCash * (studio.sharesOwned / 100);
+                    if (div > 0) GameManager.company.adjustCash(div, "Dividend: " + studio.name + " (" + studio.sharesOwned + "%)");
+                }
+            }
+
+            // Remove from active background processing after 20 weeks or when sales drop too low
+            if (g.modSalesWeeks > 20 || g.modCurrentWeeklySales < 1000) {
+                store.data.activeAIGames.splice(i, 1);
+            }
         }
     }
 
     var starTiers = {
-        1: { hire: 50000, fire: 25000, maint: 4000, speed: 0.02, score: 0.2, label: "1-Star" },
-        2: { hire: 100000, fire: 50000, maint: 8000, speed: 0.05, score: 0.5, label: "2-Star" },
-        3: { hire: 250000, fire: 125000, maint: 20000, speed: 0.10, score: 1.0, label: "3-Star" },
-        4: { hire: 1000000, fire: 500000, maint: 50000, speed: 0.20, score: 1.5, label: "4-Star" },
-        5: { hire: 5000000, fire: 2500000, maint: 150000, speed: 0.40, score: 2.5, label: "5-Star" }
+        1: { hire: 2000, fire: 1000, maint: 200, speed: 0.02, score: 0.2, label: "1-Star" },
+        2: { hire: 5000, fire: 2500, maint: 500, speed: 0.05, score: 0.5, label: "2-Star" },
+        3: { hire: 15000, fire: 7500, maint: 1500, speed: 0.10, score: 1.0, label: "3-Star" },
+        4: { hire: 50000, fire: 25000, maint: 5000, speed: 0.20, score: 1.5, label: "4-Star" },
+        5: { hire: 200000, fire: 100000, maint: 15000, speed: 0.40, score: 2.5, label: "5-Star" }
     };
 
     function ensureStaffObj(studio) {
@@ -342,10 +457,10 @@
             
             ensureStaffObj(studio);
 
-            // Maintenance for founded studios
-            if (studio.sharesOwned >= 50 && (currentWeek % 4 === 0) && studio.isFounded) {
+            // Maintenance for owned/founded studios (Monthly)
+            if (studio.sharesOwned >= 50 && (currentWeek % 4 === 0)) {
                 var maint = 0;
-                for (var t=1; t<=5; t++) maint += (starTiers[t].maint * studio.staff[t]);
+                for (var t=1; t<=5; t++) maint += (starTiers[t].maint * (studio.staff[t] || 0));
                 maint *= 4; // Pay for 4 weeks
                 if (maint > 0) {
                     GameManager.company.adjustCash(-maint, "Upkeep: " + studio.name);
@@ -354,6 +469,40 @@
 
             if (studio.currentProject) {
                 if (studio.currentProject.isPublishedByPlayer) continue;
+
+                if (studio.currentProject.isCoDev) {
+                    var playerGame = GameManager.company.currentGame;
+                    if (playerGame) { // Don't check GameState softly because engine behavior fluctuates 
+                        // Weekly co-dev bonus
+                        var dBonus = Math.floor(studio.valuation / 1000000) + 1;
+                        var tBonus = Math.floor(studio.valuation / 1000000) + 1;
+                        playerGame.designPoints += dBonus;
+                        playerGame.technologyPoints += tBonus;
+                        
+                        // Robust Scrubber Map initialization
+                        if (!store.data.coDevScrubMap[playerGame.title]) {
+                            store.data.coDevScrubMap[playerGame.title] = { design: 0, tech: 0 };
+                        }
+                        store.data.coDevScrubMap[playerGame.title].design += dBonus;
+                        store.data.coDevScrubMap[playerGame.title].tech += tBonus;
+                        
+                        /* if (currentWeek % 4 === 0) {
+                            GameManager.company.notifications.push(new Notification({ 
+                                header: "Co-Dev Progress", 
+                                text: studio.name + " generated " + store.data.coDevScrubMap[playerGame.title].design + " Design and " + store.data.coDevScrubMap[playerGame.title].tech + " Tech points so far this project." 
+                            }));
+                        } */
+                    } else {
+                        // Player is not developing anymore, or game released
+                        studio.currentProject = null;
+                        /* GameManager.company.notifications.push(new Notification({ 
+                            header: "Co-Dev Finished", 
+                            text: studio.name + " has finished assisting your project." 
+                        })); */
+                    }
+                    continue; // Skip normal project processing
+                }
+
                 var speedMultiplier = 1;
                 for (var t=1; t<=5; t++) speedMultiplier += (starTiers[t].speed * studio.staff[t]);
 
@@ -363,13 +512,23 @@
                 }
             } else {
                 // If they don't have a current project
-                if (studio.sharesOwned >= 50 && typeof studio.isFounded !== 'undefined') {
-                    if (typeof studio.draftCooldown === 'undefined') studio.draftCooldown = Math.floor(Math.random() * 4) + 2;
+                if (studio.sharesOwned >= 50) {
+                    // Watchdog: If flag is stuck but no modal is visible, reset it.
+                    if (isShowingDraft && $("#simplemodal-overlay").length === 0) {
+                        isShowingDraft = false;
+                    }
+
+                    if (typeof studio.draftCooldown === 'undefined') studio.draftCooldown = 4;
                     if (studio.draftCooldown > 0) {
                         studio.draftCooldown--;
-                    } else if (typeof isShowingDraft !== 'undefined' && !isShowingDraft) {
-                        var draft = generateBestDraft(studio);
-                        promptDraft(studio, draft);
+                    } else if (!isShowingDraft) {
+                        try {
+                            var draft = generateBestDraft(studio);
+                            promptDraft(studio, draft);
+                        } catch (e) {
+                            console.error("[Mod] Draft trigger error:", e);
+                            isShowingDraft = false;
+                        }
                     }
                     continue; // Skip normal AI offer evaluation
                 }
@@ -389,15 +548,7 @@
                         // AI has a 10% chance per week to accept an offer they can handle
                         if (canHandle && Math.random() < 0.1) {
                             var chance = Math.random();
-                            if (chance < 0.2) {
-                                offer.status = "Rejected";
-                                GameManager.company.adjustCash(offer.advance, "Offer Refunded (Rejected)");
-                                GameManager.company.notifications.push(new Notification({
-                                    header: "Publishing Deal Rejected",
-                                    text: studio.name + " rejected your advance of $" + UI.getShortNumberString(offer.advance) + " for a " + offer.size + " " + offer.genre + " game. Advance refunded.",
-                                    image: ""
-                                }));
-                            } else if (chance > 0.6) {
+                            if (chance > 0.5) {
                                 offer.status = "Approved";
                                 if (!store.data.publishingProjects) store.data.publishingProjects = [];
                                 store.data.publishingProjects.push({
@@ -439,192 +590,155 @@
     }
 
     function generateBestDraft(studio) {
-        var currentWk = GameManager.company.currentWeek;
-        var activePlats = Platforms.allPlatforms.filter(function(p) {
-            return (p.published && p.published <= currentWk) &&
-                   (!p.retireDate || p.retireDate > currentWk);
-        });
-        activePlats.sort(function(a, b) { return b.marketShare - a.marketShare; });
-        var topPlat = activePlats[0] ? activePlats[0].name : Platforms.allPlatforms[0].name;
-        
-        var t = Topics.topics[Math.floor(Math.random() * Topics.topics.length)];
-        var bestG = GameGenre.getAll()[0];
-        var bestW = -1;
-        var genreIndexMap = {"Action":0, "Adventure":1, "RPG":2, "Simulation":3, "Strategy":4, "Casual":5};
-        var gList = GameGenre.getAll();
-        for(var i=0; i<gList.length; i++) {
-            var g = gList[i];
-            var idx = genreIndexMap[g.name];
-            var w = t.genreWeightings[idx] || 0;
-            if (w > bestW) { bestW = w; bestG = g; }
-        }
-        
-        var size = "Small";
-        if (studio.valuation > 50000000) size = "AAA";
-        else if (studio.valuation > 20000000) size = "Large";
-        else if (studio.valuation > 5000000) size = "Medium";
-
-        return {
-            topic: t.name,
-            genre: bestG.name,
-            size: size,
-            platforms: [topPlat],
-            cost: 1000000
-        };
-    }
-
-    function promptDraft(studio, draft) {
-        if (isShowingDraft) return; 
-        isShowingDraft = true;
-        Sound.click();
-
-        var genreIndexMap = {"Action":0, "Adventure":1, "RPG":2, "Simulation":3, "Strategy":4, "Casual":5};
-
-        var container = $('<div class="windowBorder tallWindow" style="background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%); color: #ecf0f1; padding: 0; border-radius: 10px; overflow: hidden;"></div>');
-
-        // Header
-        var header = $('<div style="background: linear-gradient(90deg, #d35400, #e67e22); padding: 18px 25px; text-align: left;"></div>');
-        header.append('<div style="font-size: 22pt; font-weight: bold; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">' + studio.name + '</div>');
-        header.append('<div style="font-size: 13pt; color: rgba(255,255,255,0.85); margin-top: 2px;">is idle and wants to start a new project</div>');
-        container.append(header);
-
-        // Body with form
-        var body = $('<div style="padding: 20px 25px;"></div>');
-
-        // Row helper
-        function makeRow(labelText, color, selectEl) {
-            var row = $('<div style="display: flex; align-items: center; margin-bottom: 12px;"></div>');
-            row.append('<div style="width: 80px; font-size: 13pt; font-weight: bold; color: ' + color + ';">' + labelText + '</div>');
-            selectEl.css({ "flex": "1", "font-size": "13pt", "padding": "6px 10px", "border-radius": "6px", "border": "1px solid #4a6274", "background": "#1a252f", "color": "#ecf0f1", "outline": "none", "cursor": "pointer" });
-            row.append(selectEl);
-            return row;
-        }
-
-        // Topic dropdown
-        var topicSelect = $('<select id="draft_topic"></select>');
-        Topics.topics.forEach(function(t) {
-            var opt = $('<option value="' + t.name + '">' + t.name + '</option>');
-            if (t.name === draft.topic) opt.attr("selected", true);
-            topicSelect.append(opt);
-        });
-        body.append(makeRow("Topic", "#3498db", topicSelect));
-
-        // Genre dropdown
-        var genreSelect = $('<select id="draft_genre"></select>');
-        GameGenre.getAll().forEach(function(g) {
-            var opt = $('<option value="' + g.name + '">' + g.name + '</option>');
-            if (g.name === draft.genre) opt.attr("selected", true);
-            genreSelect.append(opt);
-        });
-        body.append(makeRow("Genre", "#9b59b6", genreSelect));
-
-        // Size dropdown
-        var sizeSelect = $('<select id="draft_size"></select>');
-        ["Small", "Medium", "Large", "AAA"].forEach(function(s) {
-            var opt = $('<option value="' + s + '">' + s + '</option>');
-            if (s === draft.size) opt.attr("selected", true);
-            sizeSelect.append(opt);
-        });
-        body.append(makeRow("Size", "#e67e22", sizeSelect));
-
-        // Match quality indicator
-        var matchBar = $('<div style="display: flex; align-items: center; margin-top: 4px; margin-bottom: 8px;"></div>');
-        matchBar.append('<div style="width: 80px; font-size: 13pt; font-weight: bold; color: #7f8c8d;">Match</div>');
-        var matchLabel = $('<span id="draft_match" style="font-size: 13pt; font-weight: bold; padding: 3px 12px; border-radius: 4px;"></span>');
-        matchBar.append(matchLabel);
-        body.append(matchBar);
-
-        function updateDraftMatch() {
-            var selTopic = $('#draft_topic').val();
-            var selGenre = $('#draft_genre').val();
-            var t = Topics.topics.filter(function(x) { return x.name === selTopic; })[0];
-            var g = GameGenre.getAll().filter(function(x) { return x.name === selGenre; })[0];
-            if (t && g) {
-                var idx = genreIndexMap[g.name]; if (idx === undefined) idx = 0;
-                var w = t.genreWeightings[idx];
-                var el = $('#draft_match');
-                if (w >= 1.0) { el.text("Great ★★★").css({ "color": "#2ecc71", "background": "rgba(46,204,113,0.15)" }); }
-                else if (w >= 0.8) { el.text("Good ★★").css({ "color": "#f1c40f", "background": "rgba(241,196,15,0.15)" }); }
-                else if (w >= 0.7) { el.text("Okay ★").css({ "color": "#e67e22", "background": "rgba(230,126,34,0.15)" }); }
-                else { el.text("Bad ✗").css({ "color": "#e74c3c", "background": "rgba(231,76,60,0.15)" }); }
-            }
-        }
-
-        // Funding line
-        var costLine = $('<div style="text-align: center; margin-top: 14px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 14pt;">Funding: <strong style="color: #e74c3c;">$' + UI.getShortNumberString(draft.cost) + '</strong></div>');
-        body.append(costLine);
-
-        container.append(body);
-
-        // Buttons
-        var btnArea = $('<div style="display: flex; gap: 0; border-top: 1px solid #4a6274;"></div>');
-
-        var btnAccept = $('<div style="flex: 1; text-align: center; padding: 16px 0; font-size: 16pt; font-weight: bold; cursor: pointer; background: #27ae60; color: white; transition: background 0.2s;">Accept &amp; Fund</div>');
-        btnAccept.hover(function() { $(this).css("background", "#2ecc71"); }, function() { $(this).css("background", "#27ae60"); });
-        btnAccept.click(function() {
-            var selTopic = $('#draft_topic').val();
-            var selGenre = $('#draft_genre').val();
-            var selSize = $('#draft_size').val();
-            var cost = draft.cost;
-            
-            var currentWk = Math.floor(GameManager.company.currentWeek);
+        try {
+            var currentWk = GameManager.company.currentWeek;
             var activePlats = Platforms.allPlatforms.filter(function(p) {
                 return (p.published && p.published <= currentWk) &&
                        (!p.retireDate || p.retireDate > currentWk);
             });
             activePlats.sort(function(a, b) { return b.marketShare - a.marketShare; });
-            var finalPlats = [];
-            if (activePlats.length > 0) {
-                finalPlats.push(activePlats[0].name);
-                if ((selSize === "Large" || selSize === "AAA") && activePlats.length > 1) {
-                    finalPlats.push(activePlats[1].name);
+            var topPlat = activePlats[0] ? activePlats[0].name : Platforms.allPlatforms[0].name;
+            
+            var t = Topics.topics[Math.floor(Math.random() * Topics.topics.length)];
+            var bestG = GameGenre.getAll()[0];
+            var bestW = -1;
+            var genreIndexMap = {"Action":0, "Adventure":1, "RPG":2, "Simulation":3, "Strategy":4, "Casual":5};
+            var gList = GameGenre.getAll();
+            for(var i=0; i<gList.length; i++) {
+                var g = gList[i];
+                var idx = genreIndexMap[g.name];
+                var w = (t.genreWeightings && t.genreWeightings[idx]) || 0;
+                if (w > bestW) { bestW = w; bestG = g; }
+            }
+            
+            var size = "Small";
+            if (studio.valuation > 50000000) size = "AAA";
+            else if (studio.valuation > 20000000) size = "Large";
+            else if (studio.valuation > 5000000) size = "Medium";
+
+            return {
+                topic: t.name,
+                genre: bestG.name,
+                size: size,
+                platforms: [topPlat],
+                cost: (size === "AAA" ? 1000000 : (size === "Large" ? 400000 : (size === "Medium" ? 100000 : 25000)))
+            };
+        } catch (e) {
+            console.error("[Mod] generateBestDraft error, using fallback:", e);
+            return { topic: "Zombies", genre: "Action", size: "Small", platforms: ["PC"], cost: 20000 };
+        }
+    }
+
+    function promptDraft(studio, draft) {
+        if (isShowingDraft) return; 
+        try {
+            isShowingDraft = true;
+            Sound.click();
+
+            var genreIndexMap = {"Action":0, "Adventure":1, "RPG":2, "Simulation":3, "Strategy":4, "Casual":5};
+            var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50; padding: 0; overflow: hidden;"></div>');
+
+            // Header
+            var header = $('<div style="background-color: #d35400; padding: 12px 18px;"></div>');
+            header.append('<div style="font-size: 14pt; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + studio.name + '</div>');
+            header.append('<div style="font-size: 11pt; color: rgba(255,255,255,0.9); margin-top: 2px;">is idle and wants to start a new project</div>');
+            container.append(header);
+
+            // Body with form
+            var body = $('<div style="padding: 14px 18px;"></div>');
+            function makeRow(labelText, color, selectEl) {
+                var row = $('<div style="display: flex; align-items: center; margin-bottom: 8px;"></div>');
+                row.append('<div style="width: 60px; font-size: 11pt; font-weight: bold; color: ' + color + ';">' + labelText + '</div>');
+                selectEl.css({ "flex": "1", "min-width": "0", "font-size": "11pt", "padding": "4px 8px", "border-radius": "4px", "border": "1px solid #bdc3c7", "background": "white", "color": "#2c3e50", "outline": "none", "cursor": "pointer", "box-sizing": "border-box" });
+                row.append(selectEl);
+                return row;
+            }
+
+            var topicSelect = $('<select id="draft_topic"></select>');
+            Topics.topics.forEach(function(t) {
+                var opt = $('<option value="' + t.name + '">' + t.name + '</option>');
+                if (t.name === draft.topic) opt.attr("selected", true);
+                topicSelect.append(opt);
+            });
+            body.append(makeRow("Topic", "#2980b9", topicSelect));
+
+            var genreSelect = $('<select id="draft_genre"></select>');
+            GameGenre.getAll().forEach(function(g) {
+                var opt = $('<option value="' + g.name + '">' + g.name + '</option>');
+                if (g.name === draft.genre) opt.attr("selected", true);
+                genreSelect.append(opt);
+            });
+            body.append(makeRow("Genre", "#8e44ad", genreSelect));
+
+            var sizeSelect = $('<select id="draft_size"></select>');
+            ["Small", "Medium", "Large", "AAA"].forEach(function(s) {
+                var opt = $('<option value="' + s + '">' + s + '</option>');
+                if (s === draft.size) opt.attr("selected", true);
+                sizeSelect.append(opt);
+            });
+            body.append(makeRow("Size", "#d35400", sizeSelect));
+
+            var matchBar = $('<div style="display: flex; align-items: center; margin-top: 2px; margin-bottom: 6px;"></div>');
+            matchBar.append('<div style="width: 60px; font-size: 11pt; font-weight: bold; color: #7f8c8d;">Match</div>');
+            var matchLabel = $('<span id="draft_match" style="font-size: 11pt; font-weight: bold; padding: 2px 8px; border-radius: 3px;"></span>');
+            matchBar.append(matchLabel);
+            body.append(matchBar);
+
+            function updateDraftMatch() {
+                var selTopic = $('#draft_topic').val();
+                var selGenre = $('#draft_genre').val();
+                var t = Topics.topics.filter(function(x) { return x.name === selTopic; })[0];
+                var g = GameGenre.getAll().filter(function(x) { return x.name === selGenre; })[0];
+                if (t && g) {
+                    var idx = genreIndexMap[g.name]; if (idx === undefined) idx = 0;
+                    var w = (t.genreWeightings && t.genreWeightings[idx]) || 0;
+                    var el = $('#draft_match');
+                    if (w >= 1.0) { el.text("Great ★★★").css({ "color": "#27ae60", "background": "rgba(39,174,96,0.12)" }); }
+                    else if (w >= 0.8) { el.text("Good ★★").css({ "color": "#f39c12", "background": "rgba(243,156,18,0.12)" }); }
+                    else if (w >= 0.7) { el.text("Okay ★").css({ "color": "#e67e22", "background": "rgba(230,126,34,0.12)" }); }
+                    else { el.text("Bad ✗").css({ "color": "#c0392b", "background": "rgba(192,57,43,0.12)" }); }
                 }
-            } else {
-                finalPlats.push(Platforms.allPlatforms[0].name);
             }
 
-            if (GameManager.company.cash >= cost) {
-                GameManager.company.adjustCash(-cost, "Subsidiary Funding: " + studio.name);
-                studio.currentProject = {
-                    name: generateGameName(selTopic, selGenre),
-                    topic: selTopic,
-                    genre: selGenre,
-                    size: selSize,
-                    platforms: finalPlats,
-                    isSubsidiaryDeal: true,
-                    weeksRemaining: (selSize==="Small"?15:(selSize==="Medium"?30:(selSize==="Large"?50:80)))
-                };
-                isShowingDraft = false;
-                studio.draftCooldown = 4;
-                $.modal.close();
-            } else {
-                alert("You need $" + UI.getShortNumberString(cost) + " to fund this draft!");
-            }
-        });
+            var costLine = $('<div style="text-align: center; margin-top: 10px; padding: 8px; background: #f9f9f9; border: 1px solid #bdc3c7; border-radius: 5px; font-size: 12pt;">Funding: <strong style="color: #c0392b;">$' + UI.getShortNumberString(draft.cost) + '</strong></div>');
+            body.append(costLine);
+            container.append(body);
 
-        var btnDecline = $('<div style="flex: 1; text-align: center; padding: 16px 0; font-size: 16pt; font-weight: bold; cursor: pointer; background: #c0392b; color: white; transition: background 0.2s;">Decline</div>');
-        btnDecline.hover(function() { $(this).css("background", "#e74c3c"); }, function() { $(this).css("background", "#c0392b"); });
-        btnDecline.click(function() {
+            var btnArea = $('<div style="display: flex; gap: 0; border-top: 1px solid #bdc3c7;"></div>');
+            var btnAccept = $('<div class="selectorButton greenButton" style="flex: 1; text-align: center; padding: 10px 0; font-size: 12pt; font-weight: bold; cursor: pointer; border-radius: 0; margin: 0;">Accept &amp; Fund</div>');
+            btnAccept.click(function() {
+                var selTopic = $('#draft_topic').val();
+                var selGenre = $('#draft_genre').val();
+                var selSize = $('#draft_size').val();
+                var cost = draft.cost;
+                var currentWk = Math.floor(GameManager.company.currentWeek);
+                var activePlats = Platforms.allPlatforms.filter(function(p) { return (p.published && p.published <= currentWk) && (!p.retireDate || p.retireDate > currentWk); });
+                activePlats.sort(function(a, b) { return b.marketShare - a.marketShare; });
+                var finalPlats = [];
+                if (activePlats.length > 0) { finalPlats.push(activePlats[0].name); if ((selSize === "Large" || selSize === "AAA") && activePlats.length > 1) finalPlats.push(activePlats[1].name); }
+                else { finalPlats.push(Platforms.allPlatforms[0].name); }
+
+                if (GameManager.company.cash >= cost) {
+                    GameManager.company.adjustCash(-cost, "Subsidiary Funding: " + studio.name);
+                    studio.currentProject = { name: generateGameName(selTopic, selGenre), topic: selTopic, genre: selGenre, size: selSize, platforms: finalPlats, isSubsidiaryDeal: true, weeksRemaining: (selSize==="Small"?15:(selSize==="Medium"?30:(selSize==="Large"?50:80))) };
+                    isShowingDraft = false;
+                    studio.draftCooldown = 4;
+                    $.modal.close();
+                } else { alert("You need $" + UI.getShortNumberString(cost) + " to fund this draft!"); }
+            });
+
+            var btnDecline = $('<div class="selectorButton deleteButton" style="flex: 1; text-align: center; padding: 10px 0; font-size: 12pt; font-weight: bold; cursor: pointer; border-radius: 0; margin: 0;">Decline</div>');
+            btnDecline.click(function() { isShowingDraft = false; studio.draftCooldown = 8; $.modal.close(); });
+
+            btnArea.append(btnAccept).append(btnDecline);
+            container.append(btnArea);
+            container.modal({ overlayClose: false, opacity: 80, overlayCss: { backgroundColor: "#000" }, containerCss: { width: "480px", height: "auto" } });
+
+            setTimeout(function() { $('#draft_topic, #draft_genre').change(updateDraftMatch); updateDraftMatch(); }, 50);
+        } catch (e) {
+            console.error("[Mod] promptDraft fatal error:", e);
             isShowingDraft = false;
-            studio.draftCooldown = 8;
-            $.modal.close();
-        });
-
-        btnArea.append(btnAccept).append(btnDecline);
-        container.append(btnArea);
-
-        container.modal({
-            overlayClose: false,
-            opacity: 80,
-            overlayCss: { backgroundColor: "#000" },
-            containerCss: { width: "550px", height: "auto" }
-        });
-
-        // Wire up change events after modal opens
-        setTimeout(function() {
-            $('#draft_topic, #draft_genre').change(updateDraftMatch);
-            updateDraftMatch();
-        }, 50);
+        }
     }
 
     // New: Process ongoing publishing projects
@@ -676,6 +790,7 @@
                 finishAndReleaseGame(studio);
                 // Remove the project from publishingProjects list
                 store.data.publishingProjects.splice(i, 1);
+                i--; // Decrement index after splice
                 // Remove the accepted offer from publishingOffers
                 var offerIndex = -1;
                 for (var m = 0; m < store.data.publishingOffers.length; m++) {
@@ -707,7 +822,8 @@
             genre: g,
             size: size.s,
             weeksRemaining: size.w,
-            isPublishedByPlayer: false
+            isPublishedByPlayer: false,
+            isSubsidiaryDeal: (studio.sharesOwned > 0)
         };
     }
 
@@ -735,6 +851,12 @@
         var units = Math.floor(Math.random() * 50000 * multiplier) + 5000;
         if (proj.size === "AAA") units *= 5;
         if (proj.size === "Large") units *= 3;
+        
+        var designAvg = 500;
+        var techAvg = 500;
+        if (proj.size === "Medium") { designAvg = 1500; techAvg = 1500; }
+        if (proj.size === "Large") { designAvg = 4000; techAvg = 4000; }
+        if (proj.size === "AAA") { designAvg = 10000; techAvg = 10000; }
         
         var price = 10;
         if (proj.size === "Medium") price = 15;
@@ -781,60 +903,59 @@
             }
         }
 
-        var game = new Game(GameManager.company);
-        game.modStudioId = studio.id;
-        game.id = (GameManager.getGUID ? GameManager.getGUID() : Math.random().toString(36));
-        game.title = proj.name + " (" + studio.name + ")";
-        game.topic = Topics.topics.filter(function(t){ return t.name === proj.topic; })[0] || Topics.topics[0];
-        game.genre = GameGenre.getAll().filter(function(g) { return g.name === proj.genre; })[0] || GameGenre.Action;
-        game.secondGenre = null;
-        game.platforms = selectedPlats;
-        
-        game.gameSize = proj.size; 
-        
-        var designAvg = 500;
-        var techAvg = 500;
-        if (game.gameSize === "Medium") { designAvg = 1500; techAvg = 1500; }
-        if (game.gameSize === "Large") { designAvg = 4000; techAvg = 4000; }
-        if (game.gameSize === "AAA") { designAvg = 10000; techAvg = 10000; }
-
-        game.designPoints = designAvg + Math.floor(Math.random() * 200);
-        game.technologyPoints = techAvg + Math.floor(Math.random() * 200);
-        game.bugs = 0;
-        game.score = score;
-        game.costs = 100000 * (proj.size === "AAA" ? 80 : (proj.size === "Large" ? 20 : (proj.size === "Medium" ? 5 : 1)));
-        
-        if (typeof Sales !== 'undefined' && Sales.setUpSales) {
-            Sales.setUpSales(GameManager.company, game);
-        }
-        
-        game.state = GameState.released;
-        game.releaseWeek = Math.floor(GameManager.company.currentWeek);
-
-        if (proj.isPublishedByPlayer) game.modIsPublishingDeal = true;
-        if (proj.isSubsidiaryDeal) game.modIsSubsidiaryDeal = true;
-        game.modAI = true;
-
-        // Persist all flags so they survive save/load
-        if (!store.data.modGameIds) store.data.modGameIds = {};
-        store.data.modGameIds[game.id] = {
-            studioId: studio.id,
-            isPublishingDeal: !!proj.isPublishedByPlayer,
-            isSubsidiaryDeal: !!proj.isSubsidiaryDeal
+        // Create a 'virtual' json object instead of instantiating new Game() so we don't increment the global player ID sequencer
+        var game = {
+            modStudioId: studio.id,
+            id: "MOD_" + Math.random().toString(36).substr(2, 9),
+            title: proj.name + " (" + studio.name + ")",
+            topic: Topics.topics.filter(function(t){ return t.name === proj.topic; })[0] || Topics.topics[0],
+            genre: GameGenre.getAll().filter(function(g) { return g.name === proj.genre; })[0] || GameGenre.Action,
+            secondGenre: null,
+            platforms: selectedPlats,
+            gameSize: proj.size,
+            designPoints: designAvg + Math.floor(Math.random() * 200),
+            technologyPoints: techAvg + Math.floor(Math.random() * 200),
+            bugs: 0,
+            score: score,
+            costs: 100000 * (proj.size === "AAA" ? 80 : (proj.size === "Large" ? 20 : (proj.size === "Medium" ? 5 : 1))),
+            state: GameState.released,
+            releaseWeek: Math.floor(GameManager.company.currentWeek),
+            modIsPublishingDeal: !!proj.isPublishedByPlayer,
+            modIsSubsidiaryDeal: !!proj.isSubsidiaryDeal,
+            modAI: true
         };
 
-        GameManager.company.gameLog.push(game);
+        var popMultiplier = 1;
+        if (proj.size === "Medium") popMultiplier = 2;
+        if (proj.size === "Large") popMultiplier = 5;
+        if (proj.size === "AAA") popMultiplier = 10;
+        game.modCurrentWeeklySales = Math.floor((score * score) * 40000 * popMultiplier);
 
-        store.data.releaseHistory.unshift({
+        if (!store.data.activeAIGames) store.data.activeAIGames = [];
+        store.data.activeAIGames.push(game);
+
+        var historyRecord = {
             week: game.releaseWeek,
             studioName: studio.name,
             gameName: game.title,
             score: score,
-            units: game.unitsSold || 500000,
-            revenue: game.totalSalesCash || 1500000,
-            netProfit: (game.totalSalesCash || 1500000)
-        });
+            units: units,
+            revenue: units * price,
+            netProfit: (units * price)
+        };
+
+        store.data.releaseHistory.unshift(historyRecord);
         if (store.data.releaseHistory.length > 20) store.data.releaseHistory.pop();
+
+        if (score >= 7) {
+            if (!store.data.leaderboardGames) store.data.leaderboardGames = [];
+            store.data.leaderboardGames.push(historyRecord);
+            store.data.leaderboardGames.sort(function(a, b) {
+                if (b.score !== a.score) return b.score - a.score;
+                return b.revenue - a.revenue;
+            });
+            if (store.data.leaderboardGames.length > 10) store.data.leaderboardGames.pop();
+        }
 
         // Adjust valuation based on score
         var valImpact = 0;
@@ -854,7 +975,7 @@
         if (proj.isPublishedByPlayer) {
             headerText = "Publishing Deal Release";
             if (score < 5) {
-                var penalty = Math.floor(proj.publishedGameAdvance * 0.5);
+                var penalty = Math.floor((proj.publishedGameAdvance || 0) * 0.5);
                 GameManager.company.adjustCash(-penalty, "Publishing Flop Penalty: " + game.title);
                 msgText = "The publishing contract [" + game.title + "] flopped (Score: " + score + "/10). You were penalized " + UI.getShortNumberString(penalty) + " for the disaster.";
             } else {
@@ -862,9 +983,10 @@
             }
         } else if (proj.isSubsidiaryDeal) {
             headerText = "Subsidiary Release";
+            msgText = studio.name + " released " + game.title + " on " + platsStr + " (Score: " + score + "/10)! You will receive " + studio.sharesOwned + "% of the weekly native dividends.";
         }
         
-        if (proj.isPublishedByPlayer || proj.isSubsidiaryDeal || score >= 9) {
+        if (proj.isPublishedByPlayer || proj.isSubsidiaryDeal || score >= 9 || studio.sharesOwned > 0) {
             GameManager.company.notifications.push(new Notification({
                 header: headerText,
                 text: msgText,
@@ -911,15 +1033,15 @@
             return;
         }
 
-        // Build simplemodal dialog body with white native aesthetic
+        // Build simplemodal dialog body with GDT-native aesthetic
         var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50; padding: 0;"></div>');
-        var header = $('<div id="modUI_header" style="display: flex; gap: 5px; border-bottom: 2px solid #bdc3c7; padding: 10px 10px 0 10px; background-color: #e0e6ed; border-top-left-radius: 8px; border-top-right-radius: 8px;"></div>');
+        var header = $('<div id="modUI_header" style="display: flex; gap: 3px; border-bottom: 2px solid #bdc3c7; padding: 6px 8px 0 8px; background-color: #e0e6ed;"></div>');
         container.append(header);
-        var contentArea = $('<div id="modUI_content" style="height: 550px; overflow-y: auto; overflow-x: hidden; padding: 20px; background-color: #ecf0f1;"></div>');
+        var contentArea = $('<div id="modUI_content" style="height: 480px; overflow-y: auto; overflow-x: hidden; padding: 14px; background-color: #ecf0f1; box-sizing: border-box;"></div>');
         container.append(contentArea);
 
-        var closeWrapper = $('<div class="centeredButtonWrapper" style="padding: 10px; border-top: 2px solid #bdc3c7; text-align: center;"></div>');
-        var closeBtn = $('<div class="okButton selectorButton orangeButton" style="width: 150px; display: inline-block;">Close</div>');
+        var closeWrapper = $('<div class="centeredButtonWrapper" style="padding: 8px; border-top: 2px solid #bdc3c7; text-align: center;"></div>');
+        var closeBtn = $('<div class="okButton selectorButton orangeButton" style="width: 120px; display: inline-block;">Close</div>');
         closeBtn.click(function () { $.modal.close(); });
         closeWrapper.append(closeBtn);
         container.append(closeWrapper);
@@ -928,7 +1050,7 @@
             overlayClose: false,
             opacity: 80,
             overlayCss: { backgroundColor: "#000" },
-            containerCss: { width: "1000px", height: "700px" }
+            containerCss: { width: "850px", height: "580px" }
         });
 
         routeModMenu(activeTab);
@@ -943,15 +1065,16 @@
         contentArea.empty();
 
         var tabs = [
-            { id: "market", label: "Stock Market" },
-            { id: "subsidiaries", label: "My Studios" },
+            { id: "market", label: "Market" },
+            { id: "subsidiaries", label: "Studios" },
             { id: "publishing", label: "Publishing" },
             { id: "schedule", label: "Releases" },
+            { id: "leaderboard", label: "Leaderboard" },
             { id: "dlc", label: "DLCs" }
         ];
 
         tabs.forEach(function(t) {
-            var tabStyle = "flex: 1; text-align: center; padding: 12px 0; cursor: pointer; font-size: 15pt; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px; border: 1px solid #bdc3c7; border-bottom: none;";
+            var tabStyle = "flex: 1; text-align: center; padding: 8px 0; cursor: pointer; font-size: 11pt; font-weight: bold; border-top-left-radius: 5px; border-top-right-radius: 5px; border: 1px solid #bdc3c7; border-bottom: none; white-space: nowrap;";
             if (t.id === activeTab) {
                 tabStyle += " background-color: #ecf0f1; color: #d35400; margin-bottom: -2px; border-bottom: 2px solid #ecf0f1;";
             } else {
@@ -973,9 +1096,25 @@
             renderPublishingTab(contentArea);
         } else if (activeTab === "schedule") {
             renderScheduleTab(contentArea);
+        } else if (activeTab === "leaderboard") {
+            renderLeaderboardTab(contentArea);
         } else if (activeTab === "dlc") {
             renderDLCTab(contentArea);
         }
+
+        // Animate content in
+        contentArea.removeClass('cs-animate-in');
+        void contentArea[0].offsetWidth; // force reflow
+        contentArea.addClass('cs-animate-in');
+
+        // Stagger card entries
+        contentArea.find('.studioCard, .dlcItem, .cs-stagger-item').each(function(i) {
+            var el = $(this);
+            el.css({ opacity: 0 });
+            setTimeout(function() {
+                el.addClass('cs-card-enter');
+            }, i * 50);
+        });
     }
 
     function renderMarketTab(container) {
@@ -1003,9 +1142,9 @@
             return b.sharesOwned - a.sharesOwned;
         });
 
-        var sortContainer = $('<div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;"></div>');
-        sortContainer.append('<div style="font-size: 14pt; color: #2c3e50; font-weight: bold;">Sort List By:</div>');
-        var sortSelect = $('<select style="font-size: 14pt; flex: 1; padding: 5px; color: black;"></select>');
+        var sortContainer = $('<div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;"></div>');
+        sortContainer.append('<div style="font-size: 11pt; color: #2c3e50; font-weight: bold;">Sort:</div>');
+        var sortSelect = $('<select style="font-size: 11pt; flex: 1; padding: 4px; color: black; border: 1px solid #bdc3c7; border-radius: 4px; box-sizing: border-box;"></select>');
         sortSelect.append('<option value="owned">Ownership (Default)</option>');
         sortSelect.append('<option value="val">Valuation</option>');
         sortSelect.append('<option value="emps">Total Employees</option>');
@@ -1052,13 +1191,13 @@
             return b.sharesOwned - a.sharesOwned;
         });
 
-        var foundBtn = $('<div id="btnFoundStudio" class="selectorButton orangeButton" style="display: block; width: 300px; margin: 0 auto 20px auto; text-align: center;">Found New Studio ($5M)</div>');
+        var foundBtn = $('<div id="btnFoundStudio" class="selectorButton orangeButton" style="display: block; width: 220px; margin: 0 auto 12px auto; text-align: center; font-size: 11pt;">Found New Studio ($5M)</div>');
         foundBtn.click(foundNewStudio);
         container.append(foundBtn);
 
-        var sortContainer = $('<div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;"></div>');
-        sortContainer.append('<div style="font-size: 14pt; color: #2c3e50; font-weight: bold;">Sort List By:</div>');
-        var sortSelect = $('<select style="font-size: 14pt; flex: 1; padding: 5px; color: black;"></select>');
+        var sortContainer = $('<div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;"></div>');
+        sortContainer.append('<div style="font-size: 11pt; color: #2c3e50; font-weight: bold;">Sort:</div>');
+        var sortSelect = $('<select style="font-size: 11pt; flex: 1; padding: 4px; color: black; border: 1px solid #bdc3c7; border-radius: 4px; box-sizing: border-box;"></select>');
         sortSelect.append('<option value="owned">Ownership (Default)</option>');
         sortSelect.append('<option value="val">Valuation</option>');
         sortSelect.append('<option value="emps">Total Employees</option>');
@@ -1073,7 +1212,7 @@
         container.append(sortContainer);
 
         if (studios.length === 0) {
-            container.append('<div style="font-size: 18pt; text-align: center; margin-top: 50px;">You do not own any controlling stakes in studios.</div>');
+            container.append('<div style="font-size: 12pt; text-align: center; margin-top: 30px; color: #7f8c8d;">You do not own any controlling stakes in studios.</div>');
             return;
         }
 
@@ -1086,7 +1225,7 @@
     }
 
     function renderPublishingTab(container) {
-        var createBtn = $('<div class="selectorButton orangeButton" style="display: block; width: 300px; margin: 0 auto 20px auto; text-align: center;">Post Publishing Deal</div>');
+        var createBtn = $('<div class="selectorButton orangeButton" style="display: block; width: 220px; margin: 0 auto 12px auto; text-align: center; font-size: 11pt;">Post Publishing Deal</div>');
         createBtn.click(function() {
             renderPublishingForm(container);
         });
@@ -1094,15 +1233,15 @@
 
         var offers = store.data.publishingOffers || [];
         if (offers.length === 0 && (!store.data.publishingProjects || store.data.publishingProjects.length === 0)) {
-            container.append('<div style="font-size: 18pt; text-align: center; margin-top: 50px;">You have no active publishing deals on the market.</div>');
+            container.append('<div style="font-size: 12pt; text-align: center; margin-top: 30px; color: #7f8c8d;">You have no active publishing deals on the market.</div>');
             return;
         }
 
-        container.append('<div style="font-size: 14pt; margin-bottom: 20px; text-align: center;">Independent studios will evaluate your offers weekly. Once accepted, they will begin development and you will receive 30% of gross revenue!</div>');
+        container.append('<div style="font-size: 11pt; margin-bottom: 12px; text-align: center; color: #7f8c8d;">Studios evaluate your offers weekly. Once accepted, you receive 30% of gross revenue!</div>');
 
         // Display ongoing projects first
         if (store.data.publishingProjects && store.data.publishingProjects.length > 0) {
-            container.append('<h3 style="color: #d35400; text-align: center; margin-top: 30px;">Ongoing Publishing Projects</h3>');
+            container.append('<h3 style="color: #d35400; text-align: center; margin-top: 16px; font-size: 12pt;">Ongoing Publishing Projects</h3>');
             store.data.publishingProjects.forEach(function(project) {
                 var studio = null;
                 for (var k = 0; k < store.data.studios.length; k++) {
@@ -1112,11 +1251,11 @@
                     }
                 }
                 var studioName = studio ? studio.name : "Unknown Studio";
-                var item = $('<div style="border: 2px solid #bdc3c7; background-color: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 8px; display: flex; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
-                var details = $('<div style="flex-grow: 1;"></div>');
-                details.append('<h3 style="margin: 0; font-size: 20pt; color: #2980b9;">Project: ' + project.size + ' ' + project.genre + ' by ' + studioName + '</h3>');
-                details.append('<div style="font-size: 16pt; margin: 5px 0;">Topic: ' + project.topic + ' | Weeks Remaining: <strong style="color: #f39c12;">' + Math.ceil(project.weeksRemaining) + '</strong></div>');
-                details.append('<div style="font-size: 14pt;">Status: <strong style="color:#27ae60;">In Development</strong></div>');
+                var item = $('<div class="cs-stagger-item" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
+                var details = $('<div style="flex-grow: 1; min-width: 0;"></div>');
+                details.append('<h3 style="margin: 0; font-size: 12pt; color: #2980b9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Project: ' + project.size + ' ' + project.genre + ' by ' + studioName + '</h3>');
+                details.append('<div style="font-size: 10pt; margin: 3px 0;">Topic: ' + project.topic + ' | Weeks Left: <strong style="color: #f39c12;">' + Math.ceil(project.weeksRemaining) + '</strong></div>');
+                details.append('<div style="font-size: 10pt;">Status: <strong style="color:#27ae60;">In Development</strong></div>');
                 item.append(details);
                 container.append(item);
             });
@@ -1124,23 +1263,23 @@
 
         // Display offers
         if (offers.length > 0) {
-            container.append('<h3 style="color: #d35400; text-align: center; margin-top: 30px;">Current Publishing Offers</h3>');
+            container.append('<h3 style="color: #d35400; text-align: center; margin-top: 16px; font-size: 12pt;">Current Publishing Offers</h3>');
             for (var i = 0; i < offers.length; i++) {
-                (function (offer, index) {
-                    var item = $('<div style="border: 2px solid #bdc3c7; background-color: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 8px; display: flex; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
-                    var details = $('<div style="flex-grow: 1;"></div>');
-                    details.append('<h3 style="margin: 0; font-size: 20pt; color: #d35400;">Contract: ' + offer.size + ' ' + offer.genre + '</h3>');
-                    details.append('<div style="font-size: 16pt; margin: 5px 0;">Advance: <strong style="color: #27ae60;">$' + UI.getShortNumberString(offer.advance) + '</strong> | Topic: ' + offer.topic + '</div>');
+                (function (offer) {
+                    var item = $('<div class="cs-stagger-item" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
+                    var details = $('<div style="flex-grow: 1; min-width: 0;"></div>');
+                    details.append('<h3 style="margin: 0; font-size: 12pt; color: #d35400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Contract: ' + offer.size + ' ' + offer.genre + '</h3>');
+                    details.append('<div style="font-size: 10pt; margin: 3px 0;">Advance: <strong style="color: #27ae60;">$' + UI.getShortNumberString(offer.advance) + '</strong> | Topic: ' + offer.topic + '</div>');
                     
                     var statusText = offer.status || "Pending Evaluation";
                     var sCol = "#2980b9";
                     if (statusText === "Approved") sCol = "#27ae60";
                     if (statusText === "Rejected") sCol = "#c0392b";
-                    details.append('<div style="font-size: 14pt;">Status: <strong style="color:' + sCol + ';">' + statusText + '</strong></div>');
+                    details.append('<div style="font-size: 10pt;">Status: <strong style="color:' + sCol + ';">' + statusText + '</strong></div>');
                     
                     item.append(details);
 
-                    var cancelBtn = $('<div class="selectorButton deleteButton" style="font-size: 14pt; padding: 10px 20px;">' + (offer.status === "Approved" ? "Clear" : "Cancel Offer") + '</div>');
+                    var cancelBtn = $('<div class="selectorButton deleteButton" style="font-size: 10pt; padding: 6px 12px;">' + (offer.status === "Approved" ? "Clear" : "Cancel") + '</div>');
                     cancelBtn.click(function () {
                         var oID = offer.id;
                         var idx = -1;
@@ -1160,32 +1299,33 @@
                     });
                     item.append(cancelBtn);
                     container.append(item);
-                })(offers[i], i);
+                })(offers[i]);
             }
         }
     }
 
     function renderPublishingForm(container) {
+        container.css({ opacity: 0 });
         container.empty();
-        container.append('<h2 style="color: #d35400;">Create Publishing Offer</h2>');
+        container.append('<h2 style="color: #d35400; font-size: 13pt; margin: 0 0 10px 0;">Create Publishing Offer</h2>');
 
-        var formContainer = $('<div style="padding: 20px; font-size: 16pt; line-height: 2;"></div>');
+        var formContainer = $('<div style="padding: 10px; font-size: 11pt; line-height: 1.8;"></div>');
         
         formContainer.append('<div>Topic:</div>');
-        var topicSearch = $('<input type="text" placeholder="Search topics..." style="font-size: 14pt; width: 100%; margin-bottom: 5px; background: white; border: 1px solid #ccc; color: black; padding: 5px;">');
+        var topicSearch = $('<input type="text" placeholder="Search topics..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
         formContainer.append(topicSearch);
-        var topicSelect = $('<select id="pub_topic" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
+        var topicSelect = $('<select id="pub_topic" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
         Topics.topics.forEach(function(t) { topicSelect.append('<option value="' + t.name + '">' + t.name + '</option>'); });
         formContainer.append(topicSelect);
 
-        var genreSearch = $('<input type="text" placeholder="Search genre..." style="font-size: 14pt; width: 100%; margin-bottom: 5px; background: white; border: 1px solid #ccc; color: black; padding: 5px;">');
+        var genreSearch = $('<input type="text" placeholder="Search genre..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
         formContainer.append('<div>Genre:</div>').append(genreSearch);
-        var genreSelect = $('<select id="pub_genre" style="font-size: 16pt; width: 100%; margin-bottom: 5px; color: black;"></select>');
+        var genreSelect = $('<select id="pub_genre" style="font-size: 11pt; width: 100%; margin-bottom: 4px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
         var genres = GameGenre.getAll();
         genres.forEach(function(g) { genreSelect.append('<option value="' + g.name + '">' + g.name + '</option>'); });
         formContainer.append(genreSelect);
 
-        var matchContainer = $('<div style="font-size: 14pt; margin-bottom: 20px; text-align: right;">Match Quality: <span id="pub_match" style="font-weight: bold;"></span></div>');
+        var matchContainer = $('<div style="font-size: 10pt; margin-bottom: 10px; text-align: right;">Match: <span id="pub_match" style="font-weight: bold;"></span></div>');
         formContainer.append(matchContainer);
 
         function updatePubMatch() {
@@ -1230,16 +1370,16 @@
 
         updatePubMatch();
 
-        var pSizeSelect = $('<select id="pub_size" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
+        var pSizeSelect = $('<select id="pub_size" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
         pSizeSelect.append('<option value="Small" data-cost="500000">Small ($500K Advance)</option>');
         pSizeSelect.append('<option value="Medium" data-cost="2000000">Medium ($2M Advance)</option>');
         pSizeSelect.append('<option value="Large" data-cost="10000000">Large ($10M Advance)</option>');
         pSizeSelect.append('<option value="AAA" data-cost="50000000">AAA ($50M Advance)</option>');
         formContainer.append('<div>Game Size:</div>').append(pSizeSelect);
 
-        var platSearch = $('<input type="text" placeholder="Search platforms..." style="font-size: 14pt; width: 100%; margin-bottom: 5px; background: white; border: 1px solid #ccc; color: black; padding: 5px;">');
+        var platSearch = $('<input type="text" placeholder="Search platforms..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
         formContainer.append('<div>Platforms (CTRL+Select):</div>').append(platSearch);
-        var platformSelect = $('<select id="pub_platform" multiple style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black; height: 100px;"></select>');
+        var platformSelect = $('<select id="pub_platform" multiple style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; height: 80px; border: 1px solid #bdc3c7; border-radius: 3px; box-sizing: border-box;"></select>');
         var myPlats = [];
         if (GameManager.company.availablePlatforms) myPlats = myPlats.concat(GameManager.company.availablePlatforms);
         if (GameManager.company.licencedPlatforms) myPlats = myPlats.concat(GameManager.company.licencedPlatforms);
@@ -1259,8 +1399,8 @@
 
         container.append(formContainer);
 
-        var actionContainer = $('<div class="centeredButtonWrapper" style="margin-top: 20px;"></div>');
-        var confirmBtn = $('<div class="selectorButton orangeButton" style="display: inline-block; width: 200px;">Post Offer</div>');
+        var actionContainer = $('<div class="centeredButtonWrapper" style="margin-top: 10px;"></div>');
+        var confirmBtn = $('<div class="selectorButton orangeButton" style="display: inline-block; width: 160px; font-size: 11pt;">Post Offer</div>');
         confirmBtn.click(function () {
             var selectedSize = $('#pub_size').val();
             var advance = parseInt($('#pub_size option:selected').attr('data-cost'));
@@ -1285,28 +1425,31 @@
             }
         });
         
-        var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; width: 200px;">Cancel</div>');
+        var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; width: 160px; font-size: 11pt;">Cancel</div>');
         cancelBtn.click(function() { routeModMenu("publishing"); });
 
         actionContainer.append(confirmBtn).append(cancelBtn);
         container.append(actionContainer);
+
+        // Animate form in
+        container.animate({ opacity: 1 }, 250);
     }
 
     function renderScheduleTab(container) {
         var hist = store.data.releaseHistory || [];
         if (hist.length === 0) {
-            container.append('<div style="font-size: 18pt; text-align: center; margin-top: 50px;">No games have been released by competitors recently.</div>');
+            container.append('<div style="font-size: 12pt; text-align: center; margin-top: 30px; color: #7f8c8d;">No games have been released by competitors recently.</div>');
             return;
         }
 
         hist.forEach(function(r) {
-            var item = $('<div style="border: 2px solid #bdc3c7; background-color: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
-            var header = $('<h3 style="margin: 0; font-size: 18pt; color: #d35400;">' + r.gameName + ' <span style="font-size:14pt;color:#7f8c8d;">by ' + r.studioName + '</span></h3>');
+            var item = $('<div class="cs-stagger-item" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
+            var header = $('<h3 style="margin: 0; font-size: 12pt; color: #d35400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + r.gameName + ' <span style="font-size:10pt;color:#7f8c8d;">by ' + r.studioName + '</span></h3>');
             item.append(header);
 
             var wText = "Week " + r.week;
-            item.append('<div style="font-size: 14pt; margin-top: 5px;">Released: ' + wText + ' | Review Score: <strong style="color:#27ae60;">' + r.score + '/10</strong></div>');
-            item.append('<div style="font-size: 14pt; margin-top: 5px;">Sales: <strong style="color: #2980b9;">' + UI.getShortNumberString(r.units) + '</strong> | Gross: $' + UI.getShortNumberString(r.revenue) + ' | Net Profit: $' + UI.getShortNumberString(r.netProfit) + '</div>');
+            item.append('<div style="font-size: 10pt; margin-top: 3px;">Released: ' + wText + ' | Score: <strong style="color:#27ae60;">' + r.score + '/10</strong></div>');
+            item.append('<div style="font-size: 10pt; margin-top: 2px;">Sales: <strong style="color: #2980b9;">' + UI.getShortNumberString(r.units) + '</strong> | Gross: $' + UI.getShortNumberString(r.revenue) + ' | Net: $' + UI.getShortNumberString(r.netProfit) + '</div>');
 
             container.append(item);
         });
@@ -1314,16 +1457,13 @@
 
     function renderDLCTab(container) {
         var allGames = GameManager.company.gameLog || [];
-        var games = allGames.filter(function(g) {
-            // ONLY explicitly player's direct titles
-            return !isModGame(g) && !g.modIsSubsidiaryDeal && !g.modIsPublishingDeal;
-        });
+        var games = allGames; // No need to filter UI anymore, AI games are excluded from gameLog globally!
         var sortedGames = games.slice().sort(function(a,b) { return b.releaseWeek - a.releaseWeek; });
 
         if (sortedGames.length === 0) {
-            container.append('<div style="font-size: 18pt; text-align: center; margin-top: 50px;">You have not released any games yet.</div>');
+            container.append('<div style="font-size: 12pt; text-align: center; margin-top: 30px; color: #7f8c8d;">You have not released any games yet.</div>');
         } else {
-            var searchBar = $('<input type="text" placeholder="Search released games..." style="font-size: 14pt; width: 100%; margin-bottom: 20px; background: white; border: 1px solid #ccc; color: black; padding: 10px; border-radius: 5px;">');
+            var searchBar = $('<input type="text" placeholder="Search released games..." style="font-size: 11pt; width: 100%; margin-bottom: 12px; background: white; border: 1px solid #bdc3c7; color: black; padding: 6px 8px; border-radius: 4px; box-sizing: border-box;">');
             container.append(searchBar);
             
             var listContainer = $('<div id="dlc_list_container"></div>');
@@ -1339,9 +1479,9 @@
                         var dlcCost = Math.floor(baseCosts * 0.5);
                         if (dlcCost < 50000) dlcCost = 50000;
 
-                        var item = $('<div class="dlcItem" style="border: 2px solid #bdc3c7; background-color: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
-                        item.append('<h3 style="margin: 0 0 5px 0; font-size: 18pt; color: #8e44ad;">' + game.title + '</h3>');
-                        item.append('<div style="font-size: 14pt; color: #7f8c8d;">Original Cost: $' + UI.getShortNumberString(game.costs || 100000) + '</div>');
+                        var item = $('<div class="dlcItem" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
+                        item.append('<h3 style="margin: 0 0 3px 0; font-size: 12pt; color: #8e44ad; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + game.title + '</h3>');
+                        item.append('<div style="font-size: 10pt; color: #7f8c8d;">Original Cost: $' + UI.getShortNumberString(game.costs || 100000) + '</div>');
 
                         var dlc = store.data.dlcData[game.id];
                         var subDev = false;
@@ -1353,17 +1493,17 @@
 
                         if (dlc) {
                             if (dlc.pendingPlayerDev > 0) {
-                                item.append('<div style="font-size: 14pt; margin-top: 5px; color: #f39c12; font-weight: bold;">Developing Personally (' + Math.ceil(dlc.pendingPlayerDev) + 'w left)</div>');
+                                item.append('<div style="font-size: 10pt; margin-top: 3px; color: #f39c12; font-weight: bold;">Developing Personally (' + Math.ceil(dlc.pendingPlayerDev) + 'w left)</div>');
                             } else if (dlc.activeWeeksLeft > 0) {
-                                item.append('<div style="font-size: 14pt; margin-top: 5px; color: #27ae60; font-weight: bold;">Active DLC Revenue: +$' + UI.getShortNumberString(dlc.weeklyRevenue) + '/wk (' + dlc.activeWeeksLeft + 'w left)</div>');
+                                item.append('<div style="font-size: 10pt; margin-top: 3px; color: #27ae60; font-weight: bold;">DLC Revenue: +$' + UI.getShortNumberString(dlc.weeklyRevenue) + '/wk (' + dlc.activeWeeksLeft + 'w left)</div>');
                             } else {
-                                item.append('<div style="font-size: 14pt; margin-top: 5px; color: #7f8c8d; font-style: italic;">DLC Run Completed (' + UI.getShortNumberString(dlc.weeklyRevenue * 20) + ' earned)</div>');
+                                item.append('<div style="font-size: 10pt; margin-top: 3px; color: #7f8c8d; font-style: italic;">DLC Completed (' + UI.getShortNumberString(dlc.weeklyRevenue * 20) + ' earned)</div>');
                             }
                         } else if (subDev) {
-                            item.append('<div style="font-size: 14pt; margin-top: 5px; color: #2980b9; font-weight: bold;">In Development by ' + subDev.name + ' (' + Math.ceil(subDev.currentProject.weeksRemaining) + 'w left)</div>');
+                            item.append('<div style="font-size: 10pt; margin-top: 3px; color: #2980b9; font-weight: bold;">In Dev by ' + subDev.name + ' (' + Math.ceil(subDev.currentProject.weeksRemaining) + 'w left)</div>');
                         } else {
-                            var dlcControls = $('<div class="dlccontrols" style="margin-top: 10px; display: flex; gap: 10px;"></div>');
-                            var btn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 12pt;">Develop Personally ($100K)</div>');
+                            var dlcControls = $('<div class="dlccontrols" style="margin-top: 6px; display: flex; gap: 6px;"></div>');
+                            var btn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt;">Develop ($100K)</div>');
                             btn.click(function () {
                                 if (GameManager.company.cash >= 100000) {
                                     Sound.click();
@@ -1387,7 +1527,7 @@
 
                             for(var s=0; s<store.data.studios.length; s++){
                                 if(store.data.studios[s].sharesOwned >= 50 && !store.data.studios[s].currentProject) {
-                                    var subBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; font-size: 12pt;">Assign: ' + store.data.studios[s].name + '</div>');
+                                    var subBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; font-size: 10pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Assign: ' + store.data.studios[s].name + '</div>');
                                     (function(studio) {
                                         subBtn.click(function() {
                                             var devWeeks = 10;
@@ -1431,26 +1571,29 @@
         var totalMaint = 0;
         for (var t=1; t<=5; t++) totalMaint += (starTiers[t].maint * studio.staff[t]);
 
-        var item = $('<div class="studioCard" style="border: 2px solid #bdc3c7; background-color: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 8px; display: flex; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
+        var item = $('<div class="studioCard" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; display: flex; align-items: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
         
-        var pieContainer = $('<div style="width: 80px; text-align: center; margin-right: 15px;"></div>');
+        var pieContainer = $('<div style="width: 60px; min-width: 60px; text-align: center; margin-right: 10px;"></div>');
         var canvasId = 'pie_' + studio.id;
-        pieContainer.append('<canvas id="'+canvasId+'" width="60" height="60" data-shares="'+studio.sharesOwned+'" data-name="'+studio.name+'" class="pieChartCanvas"></canvas>');
-        pieContainer.append('<div style="font-size: 14pt; margin-top: 5px; color: #2c3e50; font-weight: bold;">'+studio.sharesOwned+'%</div>');
+        pieContainer.append('<canvas id="'+canvasId+'" width="50" height="50" data-shares="'+studio.sharesOwned+'" data-name="'+studio.name+'" class="pieChartCanvas"></canvas>');
+        pieContainer.append('<div style="font-size: 10pt; margin-top: 3px; color: #2c3e50; font-weight: bold;">'+studio.sharesOwned+'%</div>');
         item.append(pieContainer);
 
-        var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1;"></div>');
-        detailsContainer.append('<div style="display: flex; justify-content: space-between;"><h3 style="margin: 0; font-size: 20pt; color: #d35400;">' + studio.name + '</h3><div style="font-size: 14pt; color: #34495e;">Total Staff: ' + totalEmps + ' ($' + UI.getShortNumberString(totalMaint) + '/wk)</div></div>');
+        var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1; min-width: 0;"></div>');
+        var headerRow = $('<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;"></div>');
+        headerRow.append('<h3 style="margin: 0; font-size: 13pt; color: #d35400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1;">' + studio.name + '</h3>');
+        headerRow.append('<div style="font-size: 10pt; color: #34495e; white-space: nowrap;">Staff: ' + totalEmps + ' ($' + UI.getShortNumberString(totalMaint) + '/wk)</div>');
+        detailsContainer.append(headerRow);
         
-        var breakdownStr = '<span style="font-size: 10pt; color: #7f8c8d;">[' + studio.staff[1] + '✩1 | ' + studio.staff[2] + '✩2 | ' + studio.staff[3] + '✩3 | ' + studio.staff[4] + '✩4 | ' + studio.staff[5] + '✩5]</span>';
-        detailsContainer.append('<div style="font-size: 16pt; margin: 5px 0;">Valuation: <strong style="color: #27ae60;">$' + UI.getShortNumberString(studio.valuation) + '</strong> ' + breakdownStr + '</div>');
+        var breakdownStr = '<span style="font-size: 9pt; color: #7f8c8d;">[' + studio.staff[1] + '✩1 | ' + studio.staff[2] + '✩2 | ' + studio.staff[3] + '✩3 | ' + studio.staff[4] + '✩4 | ' + studio.staff[5] + '✩5]</span>';
+        detailsContainer.append('<div style="font-size: 11pt; margin: 3px 0;">Val: <strong style="color: #27ae60;">$' + UI.getShortNumberString(studio.valuation) + '</strong> ' + breakdownStr + '</div>');
         
         if (studio.currentProject) {
-            var plabel = studio.currentProject.isPublishedByPlayer ? "<span style='color:#e67e22'>[Publishing Contract]</span> " : "";
-            detailsContainer.append('<div style="font-size: 14pt; margin: 5px 0; color: #7f8c8d;">Developing: ' + plabel + studio.currentProject.name + ' (' + Math.ceil(studio.currentProject.weeksRemaining) + ' weeks left)</div>');
+            var plabel = studio.currentProject.isPublishedByPlayer ? "<span style='color:#e67e22'>[Pub]</span> " : "";
+            detailsContainer.append('<div style="font-size: 10pt; margin: 3px 0; color: #7f8c8d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Dev: ' + plabel + studio.currentProject.name + ' (' + Math.ceil(studio.currentProject.weeksRemaining) + 'w left)</div>');
             
             if (studio.sharesOwned >= 50) {
-                var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; margin-top: 5px; font-size: 12pt; padding: 5px 10px;">Cancel Project</div>');
+                var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; margin-top: 3px; font-size: 10pt; padding: 3px 8px;">Cancel Project</div>');
                 cancelBtn.click(function () {
                     if (confirm("Are you sure you want to cancel " + studio.currentProject.name + "? All progress and investments will be permanently lost!")) {
                         if (studio.currentProject.isPublishedByPlayer && store.data.publishingProjects) {
@@ -1469,22 +1612,22 @@
                 detailsContainer.append(cancelBtn);
             }
         } else {
-            detailsContainer.append('<div style="font-size: 14pt; margin: 5px 0; color: #7f8c8d;">Currently idle.</div>');
+            detailsContainer.append('<div style="font-size: 10pt; margin: 3px 0; color: #95a5a6;">Currently idle.</div>');
         }
 
-        var btnContainer = $('<div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;"></div>');
-        var topBtns = $('<div style="display: flex; gap: 10px; align-items: center;"></div>');
+        var btnContainer = $('<div style="margin-top: 8px; display: flex; flex-direction: column; gap: 5px;"></div>');
+        var topBtns = $('<div style="display: flex; gap: 6px; align-items: center;"></div>');
         var middleBtns = null;
-        var bottomBtns = $('<div style="display: flex; gap: 10px;"></div>');
+        var bottomBtns = $('<div style="display: flex; gap: 6px;"></div>');
 
         var tenPercentValue = Math.floor(studio.valuation * 0.1);
         var getRoute = function(s) { return (s >= 50) ? "subsidiaries" : "market"; };
 
         if (studio.sharesOwned > 0 && !studio.isFounded) {
-            var sellBtn = $('<button class="selectorButton deleteButton" style="flex: 1; font-size: 12pt;">Sell 10%</button>');
+            var sellBtn = $('<button class="selectorButton deleteButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Sell 10%</button>');
             sellBtn.click(function () {
                 GameManager.company.adjustCash(tenPercentValue, "Sold 10% of " + studio.name);
-                studio.sharesOwned -= 10;
+                studio.sharesOwned = Math.max(0, studio.sharesOwned - 10);
                 if (studio.sharesOwned <= 0 && GameManager.company.gameLog) {
                     GameManager.company.gameLog.forEach(function(g) {
                         if (g.modStudioId === studio.id) delete g.modLastDividendCash;
@@ -1493,15 +1636,15 @@
                 routeModMenu(getRoute(studio.sharesOwned));
             });
             topBtns.append(sellBtn);
-            topBtns.append($('<div style="flex: 1; text-align: center; color: #7f8c8d; font-size: 14pt;">Val: $' + UI.getShortNumberString(tenPercentValue) + '</div>'));
+            topBtns.append($('<div style="flex: 1; text-align: center; color: #7f8c8d; font-size: 10pt;">Val: $' + UI.getShortNumberString(tenPercentValue) + '</div>'));
         }
 
         if (studio.sharesOwned < 100) {
-            var buyBtn = $('<button class="selectorButton greenButton" style="flex: 1; font-size: 12pt;">Buy 10%</button>');
+            var buyBtn = $('<button class="selectorButton greenButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Buy 10%</button>');
             buyBtn.click(function () {
                 if (GameManager.company.cash >= tenPercentValue) {
                     GameManager.company.adjustCash(-tenPercentValue, "Bought 10% of " + studio.name);
-                    studio.sharesOwned += 10;
+                    studio.sharesOwned = Math.min(100, studio.sharesOwned + 10);
                     routeModMenu(getRoute(studio.sharesOwned));
                 } else { alert("Not enough cash!"); }
             });
@@ -1509,11 +1652,11 @@
         }
 
         if (studio.sharesOwned >= 50) {
-            middleBtns = $('<div style="display: flex; gap: 10px; align-items: center;"></div>');
-            var staffSelect = $('<select id="staff_tier_' + studio.id + '" style="font-size: 14pt; padding: 5px; color: black; flex: 2; height: 100%; border-radius: 5px; border: 1px solid #ccc;"></select>');
+            middleBtns = $('<div style="display: flex; gap: 6px; align-items: center;"></div>');
+            var staffSelect = $('<select id="staff_tier_' + studio.id + '" style="font-size: 10pt; padding: 3px; color: black; flex: 2; border-radius: 3px; border: 1px solid #bdc3c7; box-sizing: border-box;"></select>');
             staffSelect.append('<option value="1">1✩ (H:$50K)</option><option value="2" selected>2✩ (H:$100K)</option><option value="3">3✩ (H:$250K)</option><option value="4">4✩ (H:$1M)</option><option value="5">5✩ (H:$5M)</option>');
             
-            var hireBtn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 12pt; padding: 5px; text-align: center;">Hire</div>');
+            var hireBtn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt; padding: 4px; text-align: center;">Hire</div>');
             hireBtn.click(function() {
                 var t = parseInt($('#staff_tier_' + studio.id).val());
                 if (GameManager.company.cash >= starTiers[t].hire) {
@@ -1522,7 +1665,7 @@
                 } else { alert("Not enough cash!"); }
             });
 
-            var fireBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; font-size: 12pt; padding: 5px; text-align: center;">Fire</div>');
+            var fireBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; font-size: 10pt; padding: 4px; text-align: center;">Fire</div>');
             fireBtn.click(function() {
                 var t = parseInt($('#staff_tier_' + studio.id).val());
                 if (studio.staff[t] > 0) {
@@ -1535,7 +1678,7 @@
             });
             middleBtns.append(staffSelect).append(hireBtn).append(fireBtn);
 
-            var instructBtn = $('<button class="selectorButton orangeButton" style="flex: 1; font-size: 12pt;">Instruct</button>');
+            var instructBtn = $('<button class="selectorButton orangeButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Instruct</button>');
             instructBtn.click(function () {
                 if (studio.currentProject) { alert(studio.name + " is busy!"); return; }
                 instructStudio(studio);
@@ -1543,18 +1686,23 @@
             bottomBtns.append(instructBtn);
 
             if (GameManager.company.currentGame && !studio.currentProject) {
-                var coDevBtn = $('<button class="selectorButton whiteBoardButton" style="flex: 1; font-size: 10pt;">Co-Dev (Free)</button>');
+                var coDevBtn = $('<button class="selectorButton whiteBoardButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Co-Dev (Free)</button>');
                 coDevBtn.click(function() {
                     var playerGame = GameManager.company.currentGame;
                     if (playerGame) { 
-                        // Free co-dev for owned/partnered studios
-                        // Removed cash deduction logic
-                        var dPts = Math.floor(studio.valuation / 200000);
-                        var tPts = Math.floor(studio.valuation / 200000);
-                        GameManager.company.currentGame.designPoints += dPts;
-                        GameManager.company.currentGame.technologyPoints += tPts;
-                        GameManager.company.notifications.push(new Notification({ header: "Co-Development", text: studio.name + " injected " + dPts + " Design and " + tPts + " Tech points!" }));
-                        studio.currentProject = { name: "Co-Dev Support", weeksRemaining: 10, isPublishedByPlayer: false };
+                        // Initial small boost for immediate feedback
+                        var dPts = Math.floor(studio.valuation / 1000000) + 1;
+                        var tPts = Math.floor(studio.valuation / 1000000) + 1;
+                        playerGame.designPoints += dPts;
+                        playerGame.technologyPoints += tPts;
+                        
+                        /* GameManager.company.notifications.push(new Notification({ 
+                            header: "Co-Development Started", 
+                            text: studio.name + " is now assisting your project until completion!" 
+                        })); */
+                        
+                        // Set persistent co-dev state
+                        studio.currentProject = { name: "Co-Dev Support", isCoDev: true, isPublishedByPlayer: false };
                         routeModMenu("subsidiaries");
                     } else { alert("You need an active game in development to co-develop!"); }
                 });
@@ -1562,7 +1710,7 @@
             }
 
             if (studio.sharesOwned === 100 && !studio.isFounded) {
-                var absorbBtn = $('<button class="selectorButton deleteButton" style="flex: 1; font-size: 10pt;">Absorb</button>');
+                var absorbBtn = $('<button class="selectorButton deleteButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Absorb</button>');
                 absorbBtn.click(function() {
                     if(confirm("Absorb " + studio.name + "? You will gain their fans and tech, but the studio will close permanently.")) {
                         var fansGained = Math.floor(studio.valuation / 500);
@@ -1604,20 +1752,20 @@
                 var shares = parseInt(canvas.getAttribute('data-shares'));
                 var sName = canvas.getAttribute('data-name') || "Co";
                 var ctx = canvas.getContext('2d');
+                var cx = 25, cy = 25, r = 25;
                 ctx.fillStyle = "#bdc3c7";
-                ctx.beginPath(); ctx.moveTo(30, 30); ctx.arc(30, 30, 30, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
 
                 if (shares > 0) {
                     ctx.fillStyle = "#d35400"; 
-                    ctx.beginPath(); ctx.moveTo(30, 30);
+                    ctx.beginPath(); ctx.moveTo(cx, cy);
                     var endAngle = (-Math.PI / 2) + Math.PI * 2 * (shares / 100);
-                    ctx.arc(30, 30, 30, -Math.PI / 2, endAngle);
+                    ctx.arc(cx, cy, r, -Math.PI / 2, endAngle);
                     ctx.fill();
                 }
 
-                // Draw inner circle for donut chart look
                 ctx.fillStyle = "#34495e";
-                ctx.beginPath(); ctx.arc(30, 30, 18, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(cx, cy, 15, 0, Math.PI * 2); ctx.fill();
 
                 var words = sName.split(' ');
                 var initials = "";
@@ -1625,10 +1773,10 @@
                 else initials = words[0].substring(0, 2);
                 
                 ctx.fillStyle = "white";
-                ctx.font = "bold 16px sans-serif";
+                ctx.font = "bold 12px sans-serif";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText(initials.toUpperCase(), 30, 30);
+                ctx.fillText(initials.toUpperCase(), cx, cy);
             }
         }, 50);
 
@@ -1638,28 +1786,29 @@
     function instructStudio(studio) {
         var contentArea = $('#modUI_content');
         if (contentArea.length === 0) return;
+        contentArea.css({ opacity: 0 });
         contentArea.empty();
         
-        contentArea.append('<h2 style="color: #d35400;">Instruct ' + studio.name + '</h2>');
+        contentArea.append('<h2 style="color: #d35400; font-size: 13pt; margin: 0 0 10px 0;">Instruct ' + studio.name + '</h2>');
 
-        var formContainer = $('<div style="padding: 20px; font-size: 16pt; line-height: 2;"></div>');
-        formContainer.append('<div>Project funding requirement: <strong style="color: #f39c12;">$1,000,000</strong></div>');
+        var formContainer = $('<div style="padding: 10px; font-size: 11pt; line-height: 1.8;"></div>');
+        formContainer.append('<div>Funding: <strong style="color: #f39c12;">$1,000,000</strong></div>');
         
         formContainer.append('<div>Topic:</div>');
-        var topicSearch = $('<input type="text" placeholder="Search topics..." style="font-size: 14pt; width: 100%; margin-bottom: 5px; background: white; border: 1px solid #ccc; color: black; padding: 5px;">');
+        var topicSearch = $('<input type="text" placeholder="Search topics..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
         formContainer.append(topicSearch);
-        var topicSelect = $('<select id="inst_topic" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
+        var topicSelect = $('<select id="inst_topic" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
         Topics.topics.forEach(function(t) { topicSelect.append('<option value="' + t.name + '">' + t.name + '</option>'); });
         formContainer.append(topicSelect);
 
-        var genreSearch = $('<input type="text" placeholder="Search genre..." style="font-size: 14pt; width: 100%; margin-bottom: 5px; background: white; border: 1px solid #ccc; color: black; padding: 5px;">');
+        var genreSearch = $('<input type="text" placeholder="Search genre..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
         formContainer.append('<div>Genre:</div>').append(genreSearch);
-        var genreSelect = $('<select id="inst_genre" style="font-size: 16pt; width: 100%; margin-bottom: 5px; color: black;"></select>');
+        var genreSelect = $('<select id="inst_genre" style="font-size: 11pt; width: 100%; margin-bottom: 4px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
         var genres = GameGenre.getAll();
         genres.forEach(function(g) { genreSelect.append('<option value="' + g.name + '">' + g.name + '</option>'); });
         formContainer.append(genreSelect);
 
-        var matchContainer = $('<div style="font-size: 14pt; margin-bottom: 20px; text-align: right;">Match Quality: <span id="inst_match" style="font-weight: bold;"></span></div>');
+        var matchContainer = $('<div style="font-size: 10pt; margin-bottom: 10px; text-align: right;">Match: <span id="inst_match" style="font-weight: bold;"></span></div>');
         formContainer.append(matchContainer);
 
         function updateInstMatch() {
@@ -1704,16 +1853,16 @@
 
         updateInstMatch();
 
-        var pSizeSelect = $('<select id="inst_size" style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black;"></select>');
+        var pSizeSelect = $('<select id="inst_size" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
         pSizeSelect.append('<option value="Small">Small</option>');
         pSizeSelect.append('<option value="Medium">Medium</option>');
         pSizeSelect.append('<option value="Large">Large</option>');
         pSizeSelect.append('<option value="AAA">AAA</option>');
         formContainer.append('<div>Game Size:</div>').append(pSizeSelect);
 
-        var platSearch = $('<input type="text" placeholder="Search platforms..." style="font-size: 14pt; width: 100%; margin-bottom: 5px; background: white; border: 1px solid #ccc; color: black; padding: 5px;">');
+        var platSearch = $('<input type="text" placeholder="Search platforms..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
         formContainer.append('<div>Platforms (CTRL+Select):</div>').append(platSearch);
-        var platformSelect = $('<select id="inst_platform" multiple style="font-size: 16pt; width: 100%; margin-bottom: 20px; color: black; height: 100px;"></select>');
+        var platformSelect = $('<select id="inst_platform" multiple style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; height: 80px; border: 1px solid #bdc3c7; border-radius: 3px; box-sizing: border-box;"></select>');
         var myPlats = [];
         if (GameManager.company.availablePlatforms) myPlats = myPlats.concat(GameManager.company.availablePlatforms);
         if (GameManager.company.licencedPlatforms) myPlats = myPlats.concat(GameManager.company.licencedPlatforms);
@@ -1733,8 +1882,8 @@
 
         contentArea.append(formContainer);
 
-        var actionContainer = $('<div class="centeredButtonWrapper" style="margin-top: 20px;"></div>');
-        var confirmBtn = $('<div class="selectorButton orangeButton" style="display: inline-block; width: 200px;">Begin Development</div>');
+        var actionContainer = $('<div class="centeredButtonWrapper" style="margin-top: 10px;"></div>');
+        var confirmBtn = $('<div class="selectorButton orangeButton" style="display: inline-block; width: 160px; font-size: 11pt;">Begin Development</div>');
         confirmBtn.click(function () {
             if (GameManager.company.cash >= 1000000) {
                 var selectedTopic = $('#inst_topic').val();
@@ -1754,7 +1903,7 @@
                     weeksRemaining: (selectedSize==="Small"?15:(selectedSize==="Medium"?30:(selectedSize==="Large"?50:80)))
                 };
 
-                var msg = studio.name + " has begun production on a " + selectedSize + " " + selectedTopic + " " + selectedGenre + " game for " + selectedPlats.join(", ") + " per your instructions. They will release it soon!";
+                var msg = studio.name + " has begun production on a " + selectedSize + " " + selectedTopic + " " + selectedGenre + " game for " + selectedPlats.join(", ") + ".";
                 GameManager.company.notifications.push(new Notification({
                     header: "Subsidiary Tasked",
                     text: msg,
@@ -1766,25 +1915,28 @@
             }
         });
         
-        var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; width: 200px;">Cancel</div>');
+        var cancelBtn = $('<div class="selectorButton deleteButton" style="display: inline-block; width: 160px; font-size: 11pt;">Cancel</div>');
         cancelBtn.click(function() { routeModMenu("subsidiaries"); });
 
         actionContainer.append(confirmBtn).append(cancelBtn);
         contentArea.append(actionContainer);
+
+        // Animate form in
+        contentArea.animate({ opacity: 1 }, 250);
     }
 
     function foundNewStudio() {
         var cost = 5000000;
         if (GameManager.company.cash >= cost) {
             $.modal.close();
-            var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; padding: 20px; text-align: center;"></div>');
-            container.append('<h2 style="color: #d35400;">Found New Studio</h2>');
-            container.append('<div style="margin: 20px; font-size: 16pt; color: #34495e;">Enter a name for your new subsidiary:</div>');
-            var input = $('<input type="text" style="font-size: 16pt; padding: 5px; width: 80%; margin-bottom: 20px; color: black;">');
+            var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; padding: 14px; text-align: center;"></div>');
+            container.append('<h2 style="color: #d35400; font-size: 13pt; margin: 0 0 10px 0;">Found New Studio</h2>');
+            container.append('<div style="margin: 10px 0; font-size: 11pt; color: #34495e;">Enter a name for your new subsidiary:</div>');
+            var input = $('<input type="text" style="font-size: 12pt; padding: 4px 6px; width: 80%; margin-bottom: 12px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; box-sizing: border-box;">');
             container.append(input);
             
-            var btnArea = $('<div style="display: flex; gap: 10px; justify-content: center;"></div>');
-            var confirmBtn = $('<div class="selectorButton greenButton" style="width: 150px;">Found ($5M)</div>');
+            var btnArea = $('<div style="display: flex; gap: 8px; justify-content: center;"></div>');
+            var confirmBtn = $('<div class="selectorButton greenButton" style="width: 130px; font-size: 11pt;">Found ($5M)</div>');
             confirmBtn.click(function() {
                 var name = input.val().trim();
                 if (name) {
@@ -1804,7 +1956,7 @@
                     }, 300);
                 }
             });
-            var cancelBtn = $('<div class="selectorButton deleteButton" style="width: 150px;">Cancel</div>');
+            var cancelBtn = $('<div class="selectorButton deleteButton" style="width: 130px; font-size: 11pt;">Cancel</div>');
             cancelBtn.click(function() {
                 $.modal.close();
                 setTimeout(function() {
@@ -1819,11 +1971,79 @@
                 overlayClose: false,
                 opacity: 80,
                 overlayCss: { backgroundColor: "#000" },
-                containerCss: { width: "500px", height: "300px" }
+                containerCss: { width: "420px", height: "auto" }
             });
             setTimeout(function() { input.focus(); }, 100);
         } else {
             alert("You need at least $5M to found a new studio!");
         }
     }
+
+    function renderLeaderboardTab(container) {
+        var hist = store.data.leaderboardGames || [];
+        var studios = store.data.studios || [];
+        
+        container.append('<h3 style="color: #2c3e50; text-align: center; margin-top: 6px; font-size: 12pt;">Highest Valued Studios</h3>');
+        
+        var bestStudios = studios.slice().sort(function(a, b) {
+            return b.valuation - a.valuation;
+        }).slice(0, 5);
+        
+        bestStudios.forEach(function(s, idx) {
+            var sItem = $('<div class="cs-stagger-item" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 6px 10px; margin-bottom: 4px; border-radius: 4px; font-size: 11pt; box-shadow: 0 1px 2px rgba(0,0,0,0.06);"></div>');
+            sItem.append('<strong>#' + (idx+1) + ': ' + s.name + '</strong> (Val: <span style="color:#d35400">$' + UI.getShortNumberString(s.valuation) + '</span>)');
+            container.append(sItem);
+        });
+
+        container.append('<h3 style="color: #2c3e50; text-align: center; margin-top: 16px; font-size: 12pt;">AI Hall Of Fame</h3>');
+        
+        if (hist.length === 0) {
+            container.append('<div style="text-align: center; font-size: 11pt; margin-top: 8px; color: #7f8c8d;">No masterclass games released yet.</div>');
+        }
+
+        hist.forEach(function(g, idx) {
+            var gItem = $('<div class="cs-stagger-item" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 6px 10px; margin-bottom: 4px; border-radius: 4px; font-size: 11pt; box-shadow: 0 1px 2px rgba(0,0,0,0.06);"></div>');
+            gItem.append('<strong>#' + (idx+1) + ': ' + g.gameName + '</strong> by ' + g.studioName + ' (Score: <span style="color:#27ae60">' + g.score + '/10</span>, Gross: <span style="color:#2980b9">$' + UI.getShortNumberString(g.revenue) + '</span>)');
+            container.append(gItem);
+        });
+    }
+
+    // Patch Native UI: Add Search Bar to Sequel Selection
+    var originalShowItemSelector = UI._showItemSelector;
+    UI._showItemSelector = function (options) {
+        originalShowItemSelector.apply(this, arguments);
+
+        // Check if this is a sequel or platform selection where search is useful
+        var isSequel = options.title && (options.title.indexOf("Sequel") !== -1 || options.title.indexOf("Game") !== -1);
+        if (isSequel) {
+            var modal = $('#screen-item-selector');
+            if (modal.length > 0) {
+                var searchBar = $('<input type="text" placeholder="Search games..." style="width: 80%; display: block; margin: 10px auto; padding: 10px; font-size: 14pt; border-radius: 5px; border: 1px solid #ccc; color: black; background: white;">');
+                
+                // Inject after the header
+                var header = modal.find('.window-header');
+                if (header.length > 0) {
+                    header.after(searchBar);
+                } else {
+                    modal.prepend(searchBar);
+                }
+                
+                searchBar.on('input', function() {
+                    var term = $(this).val().toLowerCase();
+                    modal.find('.item-element').each(function() {
+                        var text = $(this).text().toLowerCase();
+                        if (text.indexOf(term) !== -1) {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+                });
+                
+                // Focus the search bar
+                setTimeout(function() { searchBar.focus(); }, 100);
+            }
+        }
+    };
+
 })();
