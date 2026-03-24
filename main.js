@@ -430,21 +430,28 @@
     };
 
     function ensureStaffObj(studio) {
-        if (!studio.staff) {
+        if (!studio.staff || typeof studio.staff !== 'object') {
             studio.staff = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-            if (typeof studio.employees === "number") {
-                studio.staff[2] = studio.employees; 
-                delete studio.employees;
-            } else {
-                var initialEmp = studio.isFounded ? 5 : Math.floor(Math.random() * 10) + 5;
-                for (var i = 0; i < initialEmp; i++) {
-                    var r = Math.random();
-                    if (r < 0.2) studio.staff[1]++;
-                    else if (r < 0.6) studio.staff[2]++;
-                    else if (r < 0.85) studio.staff[3]++;
-                    else if (r < 0.95) studio.staff[4]++;
-                    else studio.staff[5]++;
-                }
+        }
+        for (var t = 1; t <= 5; t++) {
+            if (typeof studio.staff[t] !== 'number') studio.staff[t] = 0;
+        }
+
+        if (typeof studio.employees === "number") {
+             studio.staff[2] = (studio.staff[2] || 0) + studio.employees; 
+             delete studio.employees;
+        }
+
+        var total = studio.staff[1] + studio.staff[2] + studio.staff[3] + studio.staff[4] + studio.staff[5];
+        if (total === 0) {
+            var initialEmp = studio.isFounded ? 5 : Math.floor(Math.random() * 10) + 5;
+            for (var i = 0; i < initialEmp; i++) {
+                var r = Math.random();
+                if (r < 0.2) studio.staff[1]++;
+                else if (r < 0.6) studio.staff[2]++;
+                else if (r < 0.85) studio.staff[3]++;
+                else if (r < 0.95) studio.staff[4]++;
+                else studio.staff[5]++;
             }
         }
     }
@@ -628,20 +635,34 @@
             Sound.click();
 
             var genreIndexMap = {"Action":0, "Adventure":1, "RPG":2, "Simulation":3, "Strategy":4, "Casual":5};
-            var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50; padding: 0; overflow: hidden;"></div>');
+            var container = $('<div class="windowBorder" style="background-color: #fdf6e3; color: #2c3e50; padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);"></div>');
 
-            
-            var header = $('<div style="background-color: #d35400; padding: 12px 18px;"></div>');
-            header.append('<div style="font-size: 14pt; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + studio.name + '</div>');
-            header.append('<div style="font-size: 11pt; color: rgba(255,255,255,0.9); margin-top: 2px;">is idle and wants to start a new project</div>');
+            var header = $('<div style="background-color: #1a5276; padding: 15px 20px; position: relative; border-bottom: 3px solid #154360;"></div>');
+            header.append('<div style="position: absolute; right: 15px; top: 18px; background: #d35400; color: white; padding: 3px 12px; border-radius: 20px; font-size: 10pt; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">DLC</div>');
+            header.append('<div style="font-size: 16pt; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 60px; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">' + studio.name + '</div>');
+            header.append('<div style="font-size: 11pt; color: rgba(255,255,255,0.85); margin-top: 4px; font-style: italic;">Subsidiary Project Proposal</div>');
             container.append(header);
 
+            var body = $('<div style="padding: 20px; background: #ffffff; border-bottom: 1px solid #d5dbdb;"></div>');
             
-            var body = $('<div style="padding: 14px 18px;"></div>');
             function makeRow(labelText, color, selectEl) {
-                var row = $('<div style="display: flex; align-items: center; margin-bottom: 8px;"></div>');
-                row.append('<div style="width: 60px; font-size: 11pt; font-weight: bold; color: ' + color + ';">' + labelText + '</div>');
-                selectEl.css({ "flex": "1", "min-width": "0", "font-size": "11pt", "padding": "4px 8px", "border-radius": "4px", "border": "1px solid #bdc3c7", "background": "white", "color": "#2c3e50", "outline": "none", "cursor": "pointer", "box-sizing": "border-box" });
+                var row = $('<div style="display: flex; align-items: center; margin-bottom: 12px;"></div>');
+                row.append('<div style="width: 85px; font-size: 11pt; font-weight: bold; color: #34495e; text-transform: uppercase; letter-spacing: 0.5px;">' + labelText + '</div>');
+                selectEl.css({ 
+                    "flex": "1", 
+                    "min-width": "0", 
+                    "font-size": "11pt", 
+                    "padding": "6px 10px", 
+                    "border-radius": "4px", 
+                    "border": "1px solid #bdc3c7", 
+                    "background": "#f9f9f9", 
+                    "color": "#2c3e50", 
+                    "outline": "none", 
+                    "cursor": "pointer", 
+                    "box-shadow": "inset 0 1px 2px rgba(0,0,0,0.05)",
+                    "transition": "border-color 0.2s"
+                });
+                selectEl.hover(function(){ $(this).css("border-color", color); }, function(){ $(this).css("border-color", "#bdc3c7"); });
                 row.append(selectEl);
                 return row;
             }
@@ -670,9 +691,9 @@
             });
             body.append(makeRow("Size", "#d35400", sizeSelect));
 
-            var matchBar = $('<div style="display: flex; align-items: center; margin-top: 2px; margin-bottom: 6px;"></div>');
-            matchBar.append('<div style="width: 60px; font-size: 11pt; font-weight: bold; color: #7f8c8d;">Match</div>');
-            var matchLabel = $('<span id="draft_match" style="font-size: 11pt; font-weight: bold; padding: 2px 8px; border-radius: 3px;"></span>');
+            var matchBar = $('<div style="display: flex; align-items: center; margin-top: 5px; margin-bottom: 10px;"></div>');
+            matchBar.append('<div style="width: 85px; font-size: 11pt; font-weight: bold; color: #7f8c8d; text-transform: uppercase;">Match</div>');
+            var matchLabel = $('<span id="draft_match" style="font-size: 10.5pt; font-weight: bold; padding: 4px 12px; border-radius: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></span>');
             matchBar.append(matchLabel);
             body.append(matchBar);
 
@@ -685,19 +706,19 @@
                     var idx = genreIndexMap[g.name]; if (idx === undefined) idx = 0;
                     var w = (t.genreWeightings && t.genreWeightings[idx]) || 0;
                     var el = $('#draft_match');
-                    if (w >= 1.0) { el.text("Great ★★★").css({ "color": "#27ae60", "background": "rgba(39,174,96,0.12)" }); }
-                    else if (w >= 0.8) { el.text("Good ★★").css({ "color": "#f39c12", "background": "rgba(243,156,18,0.12)" }); }
-                    else if (w >= 0.7) { el.text("Okay ★").css({ "color": "#e67e22", "background": "rgba(230,126,34,0.12)" }); }
-                    else { el.text("Bad ✗").css({ "color": "#c0392b", "background": "rgba(192,57,43,0.12)" }); }
+                    if (w >= 1.0) { el.text("Premium Quality \u2605\u2605\u2605").css({ "color": "white", "background": "#27ae60" }); }
+                    else if (w >= 0.8) { el.text("Standard Quality \u2605\u2605").css({ "color": "white", "background": "#f39c12" }); }
+                    else if (w >= 0.7) { el.text("Fair Quality \u2605").css({ "color": "white", "background": "#e67e22" }); }
+                    else { el.text("Low Synergy \u2717").css({ "color": "white", "background": "#c0392b" }); }
                 }
             }
 
-            var costLine = $('<div style="text-align: center; margin-top: 10px; padding: 8px; background: #f9f9f9; border: 1px solid #bdc3c7; border-radius: 5px; font-size: 12pt;">Funding: <strong style="color: #c0392b;">$' + UI.getShortNumberString(draft.cost) + '</strong></div>');
+            var costLine = $('<div style="text-align: center; margin-top: 15px; padding: 12px; background: #f4f6f7; border: 2px dashed #bdc3c7; border-radius: 8px; font-size: 13pt; color: #2c3e50;">Required Funding: \u003cstrong style=\"color: #c0392b; font-size: 15pt;\"\u003e$' + UI.getShortNumberString(draft.cost) + '\u003c/strong\u003e</div>');
             body.append(costLine);
             container.append(body);
 
-            var btnArea = $('<div style="display: flex; gap: 0; border-top: 1px solid #bdc3c7;"></div>');
-            var btnAccept = $('<div class="selectorButton greenButton" style="flex: 1; text-align: center; padding: 10px 0; font-size: 12pt; font-weight: bold; cursor: pointer; border-radius: 0; margin: 0;">Accept &amp; Fund</div>');
+            var btnArea = $('<div style=\"display: flex; gap: 10px; padding: 15px 20px; background: #ecf0f1;\"></div>');
+            var btnAccept = $('<div class=\"selectorButton greenButton\" style=\"flex: 1.5; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 3px 0 #1e8449;\">Accept \u0026 Fund</div>');
             btnAccept.click(function() {
                 var selTopic = $('#draft_topic').val();
                 var selGenre = $('#draft_genre').val();
@@ -719,14 +740,20 @@
                 } else { alert("You need $" + UI.getShortNumberString(cost) + " to fund this draft!"); }
             });
 
-            var btnDecline = $('<div class="selectorButton deleteButton" style="flex: 1; text-align: center; padding: 10px 0; font-size: 12pt; font-weight: bold; cursor: pointer; border-radius: 0; margin: 0;">Decline</div>');
+            var btnDecline = $('<div class=\"selectorButton deleteButton\" style=\"flex: 1; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 3px 0 #943126;\">Decline</div>');
             btnDecline.click(function() { isShowingDraft = false; studio.draftCooldown = 8; $.modal.close(); });
 
             btnArea.append(btnAccept).append(btnDecline);
             container.append(btnArea);
-            container.modal({ overlayClose: false, opacity: 80, overlayCss: { backgroundColor: "#000" }, containerCss: { width: "480px", height: "auto" } });
+            
+            container.modal({ 
+                overlayClose: false, 
+                opacity: 80, 
+                overlayCss: { backgroundColor: "#000" }, 
+                containerCss: { width: "550px", height: "auto", border: "none", background: "transparent" } 
+            });
 
-            setTimeout(function() { $('#draft_topic, #draft_genre').change(updateDraftMatch); updateDraftMatch(); }, 50);
+            setTimeout(function() { $('#draft_topic, #draft_genre').change(updateDraftMatch); updateDraftMatch(); }, 100);
         } catch (e) {
             console.error("[Mod] promptDraft fatal error:", e);
             isShowingDraft = false;
@@ -1029,7 +1056,7 @@
         var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50; padding: 0;"></div>');
         var header = $('<div id="modUI_header" style="display: flex; gap: 3px; border-bottom: 2px solid #bdc3c7; padding: 6px 8px 0 8px; background-color: #e0e6ed;"></div>');
         container.append(header);
-        var contentArea = $('<div id="modUI_content" style="height: 480px; overflow-y: auto; overflow-x: hidden; padding: 14px; background-color: #ecf0f1; box-sizing: border-box;"></div>');
+        var contentArea = $('<div id="modUI_content" style="height: 600px; overflow-y: auto; overflow-x: hidden; padding: 14px; background-color: #ecf0f1; box-sizing: border-box;"></div>');
         container.append(contentArea);
 
         var closeWrapper = $('<div class="centeredButtonWrapper" style="padding: 8px; border-top: 2px solid #bdc3c7; text-align: center;"></div>');
@@ -1042,7 +1069,7 @@
             overlayClose: false,
             opacity: 80,
             overlayCss: { backgroundColor: "#000" },
-            containerCss: { width: "850px", height: "580px" }
+            containerCss: { width: "960px", height: "720px" }
         });
 
         routeModMenu(activeTab);
@@ -1105,7 +1132,9 @@
             el.css({ opacity: 0 });
             setTimeout(function() {
                 el.addClass('cs-card-enter');
-            }, i * 50);
+                // Ensure visibility fallback
+                setTimeout(function() { el.css({ opacity: 1 }); }, 400);
+            }, i * 40);
         });
     }
 
@@ -1563,18 +1592,18 @@
         var totalMaint = 0;
         for (var t=1; t<=5; t++) totalMaint += (starTiers[t].maint * studio.staff[t]);
 
-        var item = $('<div class="studioCard" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; display: flex; align-items: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
+        var item = $('<div class="studioCard" style="border: 1px solid #d1d9e6; background: linear-gradient(135deg, #ffffff 0%, #f4f7fa 100%); padding: 12px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: flex-start; box-shadow: 0 2px 6px rgba(0,0,0,0.05); transition: all 0.2s ease;"></div>');
         
-        var pieContainer = $('<div style="width: 60px; min-width: 60px; text-align: center; margin-right: 10px;"></div>');
+        var pieContainer = $('<div style="width: 60px; min-width: 60px; text-align: center; margin-right: 12px;"></div>');
         var canvasId = 'pie_' + studio.id;
         pieContainer.append('<canvas id="'+canvasId+'" width="50" height="50" data-shares="'+studio.sharesOwned+'" data-name="'+studio.name+'" class="pieChartCanvas"></canvas>');
-        pieContainer.append('<div style="font-size: 10pt; margin-top: 3px; color: #2c3e50; font-weight: bold;">'+studio.sharesOwned+'%</div>');
+        pieContainer.append('<div style="font-size: 10pt; margin-top: 5px; color: #34495e; font-weight: bold;">'+studio.sharesOwned+'%</div>');
         item.append(pieContainer);
 
         var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1; min-width: 0;"></div>');
-        var headerRow = $('<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;"></div>');
-        headerRow.append('<h3 style="margin: 0; font-size: 13pt; color: #d35400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1;">' + studio.name + '</h3>');
-        headerRow.append('<div style="font-size: 10pt; color: #34495e; white-space: nowrap;">Staff: ' + totalEmps + ' ($' + UI.getShortNumberString(totalMaint) + '/wk)</div>');
+        var headerRow = $('<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"></div>');
+        headerRow.append('<h3 style="margin: 0; font-size: 14pt; color: #2c3e50; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; font-weight: bold;">' + studio.name + '</h3>');
+        headerRow.append('<div style="font-size: 10pt; color: #7f8c8d; white-space: nowrap; font-weight: 500;">Staff: ' + totalEmps + ' (@' + UI.getShortNumberString(totalMaint) + '/wk)</div>');
         detailsContainer.append(headerRow);
         
         var breakdownStr = '<span style="font-size: 9pt; color: #7f8c8d;">[' + studio.staff[1] + '✩1 | ' + studio.staff[2] + '✩2 | ' + studio.staff[3] + '✩3 | ' + studio.staff[4] + '✩4 | ' + studio.staff[5] + '✩5]</span>';
