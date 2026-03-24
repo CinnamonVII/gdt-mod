@@ -3,7 +3,7 @@
   "name": "concurrent-studios",
   "version": "1.0.0",
   "author": "Cinnamon",
-  "description": "Introduces rival studios, stock market, subsidiaries, founding studios, and a DLC system.",
+  "description": "Introduces rival studios, stock market, subsidiaries, founding studios, publising your own publication offers and a DLC system.",
   "main": "./main.js",
   "dependencies": {
     "gdt-modAPI": "0.1.x"
