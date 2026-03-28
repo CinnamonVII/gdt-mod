@@ -366,6 +366,9 @@
                 if (typeof c.prevTechnologyPoints !== 'undefined') c.prevTechnologyPoints = lastG.technologyPoints;
                 if (typeof c.designBaseline !== 'undefined') c.designBaseline = lastG.designPoints;
                 if (typeof c.technologyBaseline !== 'undefined') c.technologyBaseline = lastG.technologyPoints;
+                if (typeof c.lastDesignPoints !== 'undefined') c.lastDesignPoints = lastG.designPoints;
+                if (typeof c.lastTechPoints !== 'undefined') c.lastTechPoints = lastG.technologyPoints;
+
 
                 if (repairedCount > 0) console.log("[Mod] Heuristic Baseline Repair: Scrubbed " + repairedCount + " data-points. Solo potential restored.");
             }
@@ -3197,6 +3200,9 @@
             GameManager.company.technologyBaseline = t;
             if (typeof GameManager.company.prevDesignPoints !== 'undefined') GameManager.company.prevDesignPoints = d;
             if (typeof GameManager.company.prevTechnologyPoints !== 'undefined') GameManager.company.prevTechnologyPoints = t;
+            if (typeof GameManager.company.lastDesignPoints !== 'undefined') GameManager.company.lastDesignPoints = d;
+            if (typeof GameManager.company.lastTechPoints !== 'undefined') GameManager.company.lastTechPoints = t;
+
 
             alert("Baselines successfully recovered! Entire history adjusted to D:" + d + " / T:" + t + ".");
         });
