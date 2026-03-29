@@ -132,118 +132,6 @@
     var isShowingDraft = false;
 
 
-    var originalFinishDevelopment = (typeof GameManager !== 'undefined') ? GameManager.finishDevelopment : null;
-    if (originalFinishDevelopment) {
-        GameManager.finishDevelopment = function () {
-            var playerGame = GameManager.company.currentGame;
-            if (!playerGame) { originalFinishDevelopment.apply(this, arguments); return; }
-
-
-            if (store.data.disableOverloadMalus) {
-                playerGame.featureOverload = 0;
-                playerGame.featureOverloadScore = 0;
-                playerGame.featureOverloadPoints = 0;
-                if (playerGame.bugs > 50) {
-                    playerGame.bugs = Math.floor(playerGame.bugs * 0.2);
-                }
-            }
-
-
-            var activeFranchiseEntry = findActiveFranchiseEntryForCurrentGame(playerGame);
-
-            if (activeFranchiseEntry) {
-                // Attach data directly to the game object so it persists until release
-                playerGame.modFranchiseId = activeFranchiseEntry.franchiseId;
-                playerGame.modEntryType = activeFranchiseEntry.entryType || activeFranchiseEntry.type;
-
-                // Save a persistent link using the Game ID
-                if (!store.data.playerProjectMapping) store.data.playerProjectMapping = {};
-                store.data.playerProjectMapping[playerGame.id] = {
-                    franchiseId: activeFranchiseEntry.franchiseId,
-                    entryType: playerGame.modEntryType,
-                    remakeTargetId: activeFranchiseEntry.remakeTargetId
-                };
-
-                var fran = getFranchiseById(playerGame.modFranchiseId);
-                if (fran) {
-
-                    var franchiseScoreBonus = 0;
-                    if (fran.tier >= 2) franchiseScoreBonus += 0.5;
-                    if (fran.tier >= 4) franchiseScoreBonus += 0.5;
-                    if (fran.pendingSoundtrackBonus > 0) {
-                        franchiseScoreBonus += 0.5;
-                        fran.pendingSoundtrackBonus--;
-                    }
-                    playerGame.modFranchiseScoreBonus = franchiseScoreBonus;
-
-
-                    var pointBoost = Math.floor(franchiseScoreBonus * 50);
-                    playerGame.designPoints += pointBoost;
-                    playerGame.technologyPoints += pointBoost;
-
-
-                    if (playerGame.modEntryType === "bundle" && activeFranchiseEntry.bundleBaseScore) {
-
-                        playerGame.designPoints = activeFranchiseEntry.bundleBaseScore * 60 + pointBoost;
-                        playerGame.technologyPoints = activeFranchiseEntry.bundleBaseScore * 60 + pointBoost;
-                    }
-                }
-            }
-
-            var scrubEntry = store.data.coDevScrubMap[playerGame.title];
-
-            if (activeFranchiseEntry && playerGame.modEntryType === "expansion") {
-                if (!store.data.dlcData) store.data.dlcData = {};
-                if (!store.data.dlcData[playerGame.id]) store.data.dlcData[playerGame.id] = { count: 0, activeDLCs: [] };
-
-                var weeklyRev = 5000;
-                if (playerGame.sequelTo) {
-                    var baseGame = GameManager.company.getGameById(playerGame.sequelTo);
-                    if (baseGame && baseGame.totalSalesCash) {
-                        weeklyRev = Math.max(5000, Math.floor(baseGame.totalSalesCash / 80));
-                    }
-                }
-
-                store.data.dlcData[playerGame.id].count++;
-                store.data.dlcData[playerGame.id].activeDLCs.push({
-                    activeWeeksLeft: 20,
-                    weeklyRevenue: weeklyRev
-                });
-            }
-
-            originalFinishDevelopment.apply(this, arguments);
-
-            if (scrubEntry) {
-                var c = GameManager.company;
-                if (typeof c.prevDesignPoints !== 'undefined') c.prevDesignPoints = Math.max(0, c.prevDesignPoints - scrubEntry.design);
-                if (typeof c.prevTechnologyPoints !== 'undefined') c.prevTechnologyPoints = Math.max(0, c.prevTechnologyPoints - scrubEntry.tech);
-                if (typeof c.designBaseline !== 'undefined') c.designBaseline = Math.max(0, c.designBaseline - scrubEntry.design);
-                if (typeof c.technologyBaseline !== 'undefined') c.technologyBaseline = Math.max(0, c.technologyBaseline - scrubEntry.tech);
-                if (typeof c.lastDesignPoints !== 'undefined') c.lastDesignPoints = Math.max(0, c.lastDesignPoints - scrubEntry.design);
-                if (typeof c.lastTechPoints !== 'undefined') c.lastTechPoints = Math.max(0, c.lastTechPoints - scrubEntry.tech);
-
-                if (c.gameLog && c.gameLog.length > 0) {
-                    var lastG = c.gameLog[c.gameLog.length - 1];
-                    if (lastG.title === playerGame.title || lastG.name === playerGame.title) {
-                        lastG.designPoints = Math.max(0, lastG.designPoints - scrubEntry.design);
-                        lastG.technologyPoints = Math.max(0, lastG.technologyPoints - scrubEntry.tech);
-                    }
-                }
-
-                delete store.data.coDevScrubMap[playerGame.title];
-
-                if (scrubEntry.design > 0 || scrubEntry.tech > 0) {
-                    GameManager.company.notifications.push(new Notification({
-                        header: "Co-Dev Support Complete",
-                        text: "Subsidiary teams injected " + scrubEntry.design + " Design and " + scrubEntry.tech + " Technology points during development of " + playerGame.title + "!",
-                        image: ""
-                    }));
-                }
-            }
-        };
-    }
-
-
 
     GDT.on(GDT.eventKeys.saves.loading, function (e) {
         initData();
@@ -277,8 +165,11 @@
         var game = e.game;
 
         var mapping = store.data.playerProjectMapping ? store.data.playerProjectMapping[game.id] : null;
-        var franchiseId = mapping ? mapping.franchiseId : (game.modFranchiseId || (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.franchiseId : null));
-        var entryType = mapping ? mapping.entryType : (game.modEntryType || (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.entryType : null));
+
+        var franchiseId = game.modFranchiseId || (mapping ? mapping.franchiseId : (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.franchiseId : null));
+        var entryType = game.modEntryType || (mapping ? mapping.entryType : (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.entryType : null));
+        var remakeTargetId = game.modRemakeTargetId || (mapping ? mapping.remakeTargetId : (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.remakeTargetId : null));
+        var bundledIds = game.modBundledIds || (mapping ? mapping.bundledIds : (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.bundledIds : null));
 
         if (franchiseId) {
             var fran = getFranchiseById(franchiseId);
@@ -291,13 +182,13 @@
                     type: entryType || "sequel",
                     releaseWeek: Math.floor(GameManager.company.currentWeek),
                     revenue: game.totalSalesCash || 0,
-                    remakeTargetId: mapping ? mapping.remakeTargetId : (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.remakeTargetId : null)
+                    remakeTargetId: remakeTargetId,
+                    bundledIds: bundledIds
                 };
 
                 onFranchiseEntryComplete(fran, historyEntry, game.score, game.totalSalesCash || 0);
             }
 
-            // Clean up only if we actually found a franchise link
             if (store.data.playerProjectMapping) delete store.data.playerProjectMapping[game.id];
             store.data.activePlayerFranchiseProject = null;
         }
@@ -378,7 +269,7 @@
         });
 
         if (!store.data.movieStudios || store.data.movieStudios.length === 0) store.data.movieStudios = generateMovieStudios();
-        
+
         // Repair older movie studios
         if (store.data.movieStudios) {
             store.data.movieStudios.forEach(function (ms) {
@@ -394,6 +285,12 @@
         if (!store.data.mediaMarketWeeksLeft) store.data.mediaMarketWeeksLeft = 0;
         if (!store.data.activePlayerFranchiseProject) store.data.activePlayerFranchiseProject = null;
         if (!store.data.aiAcquisitionOffers) store.data.aiAcquisitionOffers = [];
+        if (!store.data.activeAILicenses) store.data.activeAILicenses = [];
+        if (!store.data.aiLicensingOffers) store.data.aiLicensingOffers = [];
+        if (!store.data.activeDistributionChoice) store.data.activeDistributionChoice = null;
+        if (!store.data.activeCatalogueDeals) store.data.activeCatalogueDeals = [];
+        if (!store.data.activeLicensingOffer) store.data.activeLicensingOffer = null;
+        if (!store.data.activeCatalogueNegotiation) store.data.activeCatalogueNegotiation = null;
 
         // Repair older franchises
         if (store.data.franchises) {
@@ -447,6 +344,9 @@
         }
 
         if (!store.data.theaterReleases) store.data.theaterReleases = [];
+        if (!store.data.releaseHistory || store.data.releaseHistory.length === 0) {
+            store.data.releaseHistory = csSeedFilmMarket();
+        }
 
         if (store.data.theaterReleases) {
             for (var trIdx = 0; trIdx < store.data.theaterReleases.length; trIdx++) {
@@ -501,6 +401,8 @@
             if (typeof store.data.gridService.name === 'undefined') store.data.gridService.name = "Grid";
             if (typeof store.data.gridService.monthlySubFee === 'undefined' || isNaN(store.data.gridService.monthlySubFee)) store.data.gridService.monthlySubFee = 14.99;
             if (typeof store.data.gridService.churnRate === 'undefined' || isNaN(store.data.gridService.churnRate)) store.data.gridService.churnRate = 0.01;
+            if (typeof store.data.gridService.pendingUpkeep === 'undefined') store.data.gridService.pendingUpkeep = 0;
+            if (typeof store.data.gridService.weeklyUpkeep === 'undefined') store.data.gridService.weeklyUpkeep = 0;
         }
 
         // --- Pending Distribution Decisions ---
@@ -728,20 +630,20 @@
     function csEstimateStreamingRevenue(mediaProject, platform) {
         var baseViewership = platform.subscriberBase * (0.01 + ((mediaProject.score || 5) / 100));
         if (platform.subscriberBase <= 0) baseViewership = 1000000;
-        
+
         var viewportMultiplier = 1.0;
         if (mediaProject.franchiseId) {
             var fran = getFranchiseById(mediaProject.franchiseId);
             if (fran) viewportMultiplier += (fran.fanbaseScore / 200);
         }
-        
+
         var revenuePerViewer = 0.0015;
         var grossWeeklyRevenue = baseViewership * viewportMultiplier * revenuePerViewer;
         var weeklyRevenue = Math.floor(grossWeeklyRevenue * platform.revenueShareRate);
         weeklyRevenue = Math.max(5000, Math.min(50000000, weeklyRevenue));
-        
+
         var weeksTotal = (mediaProject.type === "movie" ? 26 : ((mediaProject.type === "tvSeries" || mediaProject.type === "animatedShow") ? 52 : 26));
-        
+
         return {
             weeklyRevenue: weeklyRevenue,
             totalRevenue: weeklyRevenue * weeksTotal,
@@ -754,18 +656,18 @@
         var scoreMultiplier = Math.pow((mediaProject.score || 5) / 5, 2);
         var budgetBonus = Math.min(3.0, Math.log((mediaProject.budget || 250000) / 1000000 + 1) / Math.LN10);
         if (isNaN(budgetBonus) || budgetBonus <= 0) budgetBonus = 1.0;
-        
+
         var franchiseBonus = 1.0;
         if (mediaProject.franchiseId) {
             var fran = getFranchiseById(mediaProject.franchiseId);
             if (fran) franchiseBonus = 1.0 + (fran.tier * 0.2);
         }
-        
+
         var ticketPrice = 14.50;
         var peakWeeklyRevenue = Math.floor(baseAudience * scoreMultiplier * budgetBonus * franchiseBonus * ticketPrice);
         if (isNaN(peakWeeklyRevenue)) peakWeeklyRevenue = 100000;
         peakWeeklyRevenue = Math.max(50000, Math.min(500000000, peakWeeklyRevenue));
-        
+
         var estimatedTotal = 0;
         var curGross = peakWeeklyRevenue;
         for (var w = 1; w <= 8; w++) {
@@ -779,7 +681,7 @@
             if (curGross < 100000) break;
             estimatedTotal += curGross;
         }
-        
+
         var playerShare = Math.floor(estimatedTotal * (1.0 - theaterChain.distributionFeeRate));
         return {
             peakWeeklyRevenue: peakWeeklyRevenue,
@@ -791,13 +693,13 @@
     function csConfirmStreamingDeal(mediaProject, platform, isExclusive) {
         if (!platform || !mediaProject) return;
         var currentWeek = Math.floor(GameManager.company.currentWeek);
-        
+
         if (platform.acceptsType.indexOf(mediaProject.type) === -1) { alert("This platform does not accept this content type!"); return; }
         if (mediaProject.distributionStatus !== "pending") return;
         if (currentWeek - (platform.bookingCooldownWeek || -100) < 16) { alert("Must wait 16 weeks between deals with this platform."); return; }
-        
+
         if (isExclusive) {
-            var currentExclusiveCount = platform.activeDeals.filter(function(d) { return d.isExclusive; }).length;
+            var currentExclusiveCount = platform.activeDeals.filter(function (d) { return d.isExclusive; }).length;
             if (currentExclusiveCount >= platform.exclusivitySlots) { alert("This platform has no exclusive slots left."); return; }
         }
 
@@ -902,7 +804,7 @@
         if (mediaProject.distributionStatus !== "pending") return;
         var validTypes = ["movie", "tvSeries", "animatedShow", "comicBook", "soundtrack"];
         if (validTypes.indexOf(mediaProject.type) === -1) { alert("Grid does not support this content type."); return; }
-        
+
         for (var i = 0; i < store.data.gridService.contentLibrary.length; i++) {
             if (store.data.gridService.contentLibrary[i].mediaProjectId === mediaProject.id) {
                 alert("Already in Grid Library."); return;
@@ -945,35 +847,34 @@
         }));
     }
 
-    function csLicenseExternalToGrid(platform, contentEntry) {
+    function csLicenseExternalToGrid(movieEntry, weeklyCost, weeks) {
         if (!store.data.gridService || !store.data.gridService.isActive) return;
-        
-        var baseCost = platform.prestige * 10000;
-        var scoreMult = 1.0 + ((contentEntry.score || 5) / 10);
-        var licenseCostWeekly = Math.floor(baseCost * scoreMult);
+        if (!movieEntry) return;
 
         var entry = {
             id: "GC_LIC_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
             mediaProjectId: null,
-            title: contentEntry.title,
-            type: contentEntry.type,
+            title: movieEntry.title || "Unknown Film",
+            type: "movie",
             addedWeek: Math.floor(GameManager.company.currentWeek),
-            score: (contentEntry.score || 5),
+            score: (movieEntry.score || 5),
             viewsThisWeek: 0,
             totalViews: 0,
             subscriberContribution: 0,
             isOriginal: false,
-            licenseCostWeekly: licenseCostWeekly,
-            licenseWeeksRemaining: contentEntry.licenseWeeks,
+            licenseCostWeekly: (weeklyCost || 0),
+            licenseWeeksRemaining: (weeks || 52),
             franchiseId: null
         };
 
         store.data.gridService.contentLibrary.push(entry);
-        GameManager.company.adjustCash(-licenseCostWeekly, "Grid License: " + contentEntry.title);
-        
+        if (entry.licenseCostWeekly > 0) {
+            GameManager.company.adjustCash(-entry.licenseCostWeekly, "Grid License (Wk 1): " + entry.title);
+        }
+
         GameManager.company.notifications.push(new Notification({
             header: "Content Licensed for Grid",
-            text: "Licensed " + contentEntry.title + " from " + platform.name + " for " + contentEntry.licenseWeeks + " weeks.",
+            text: "Licensed " + entry.title + " from " + (movieEntry.studioName || "AI Studio") + " for " + entry.licenseWeeksRemaining + " weeks.",
             image: ""
         }));
     }
@@ -1051,7 +952,7 @@
 
 
             if ((type === "remaster" || type === "remake") && franchise.installments.length > 0) {
-                var hasUnremade = franchise.installments.some(function(i) { return i.type !== "soundtrack" && i.type !== "bundle" && !i.beingRemade; });
+                var hasUnremade = franchise.installments.some(function (i) { return i.type !== "soundtrack" && i.type !== "bundle" && !i.beingRemade; });
                 if (!hasUnremade) return { ok: false, reason: "All eligible installments have already been remastered/remade." };
             }
         }
@@ -1250,7 +1151,7 @@
                     });
                 } else if (entry.type !== "bundle" && franchise.installments && franchise.installments.length > 0) {
                     if (entry.remakeTargetId) {
-                        var target = franchise.installments.filter(function(i) { return i.id === entry.remakeTargetId; })[0];
+                        var target = franchise.installments.filter(function (i) { return i.id === entry.remakeTargetId; })[0];
                         if (target) target.beingRemade = true;
                     } else {
                         franchise.installments[0].beingRemade = true;
@@ -1382,7 +1283,7 @@
                     for (var m = 0; m < store.data.mediaProjects.length; m++) {
                         var mp = store.data.mediaProjects[m];
                         var inGrid = false;
-                        for(var g=0; g<grid.contentLibrary.length; g++) {
+                        for (var g = 0; g < grid.contentLibrary.length; g++) {
                             if (grid.contentLibrary[g].title === mp.title) { inGrid = true; break; }
                         }
                         if (!inGrid && mp.distributionStatus !== "pending") {
@@ -1403,13 +1304,13 @@
                 // Migrate acquired studio media history
                 if (store.data.movieStudios && store.data.releaseHistory) {
                     var ownedNames = [];
-                    for(var o=0; o<store.data.movieStudios.length; o++) {
+                    for (var o = 0; o < store.data.movieStudios.length; o++) {
                         if (store.data.movieStudios[o].sharesOwned >= 50) {
                             ownedNames.push(store.data.movieStudios[o].name);
                         }
                     }
                     if (ownedNames.length > 0) {
-                        for(var h = store.data.releaseHistory.length-1; h>=0; h--) {
+                        for (var h = store.data.releaseHistory.length - 1; h >= 0; h--) {
                             var rh = store.data.releaseHistory[h];
                             if (rh.platformIds && rh.platformIds.indexOf("movie") !== -1 && ownedNames.indexOf(rh.studioName) !== -1) {
                                 grid.contentLibrary.push({
@@ -1436,39 +1337,119 @@
         store.data.weeklyLaunchSources = [];
 
 
-        if (store.data.disableOverloadMalus && GameManager.company && GameManager.company.currentGame) {
-            var pg = GameManager.company.currentGame;
+        var pg = GameManager.company ? GameManager.company.currentGame : null;
+        if (store.data.disableOverloadMalus && pg) {
             pg.featureOverload = 0;
             pg.featureOverloadScore = 0;
             pg.featureOverloadPoints = 0;
         }
 
+        // --- TICK-BASED FRANCHISE MAPPING & POLL ---
+        if (pg && !pg.modProcessedCreation) {
+            pg.modProcessedCreation = true;
 
-        try {
-            processCompetitors();
-        } catch (e) { console.error("[Mod] processCompetitors error:", e); }
-        try {
-            csProcessMediaStudios();
-        } catch (e) { console.error("[Mod] csProcessMediaStudios error:", e); }
-        try {
-            processDLCs();
-        } catch (e) { console.error("[Mod] processDLCs error:", e); }
-        try {
-            processAISales();
-        } catch (e) { console.error("[Mod] processAISales error:", e); }
-        try {
-            processPublishingProjects();
-        } catch (e) { console.error("[Mod] processPublishingProjects error:", e); }
-        try {
-            processCampaigns();
-        } catch (e) { console.error("[Mod] processCampaigns error:", e); }
+            var matchedFranchiseId = null;
+            var matchedEntryType = "sequel";
+            var matchedRemakeId = null;
+            var matchedBundleScore = null;
+            var matchedBundledIds = null;
 
+            if (store.data.activePlayerFranchiseProject) {
+                matchedFranchiseId = store.data.activePlayerFranchiseProject.franchiseId;
+                matchedEntryType = store.data.activePlayerFranchiseProject.entryType;
+                matchedRemakeId = store.data.activePlayerFranchiseProject.remakeTargetId;
+                matchedBundleScore = store.data.activePlayerFranchiseProject.bundleBaseScore;
+                matchedBundledIds = store.data.activePlayerFranchiseProject.bundledIds;
+                store.data.activePlayerFranchiseProject = null;
+            } else if (pg.title) {
+                var match = pg.title.match(/(?:\s*)?\(id(\d+)\)$/i);
+                if (match) {
+                    var numId = parseInt(match[1]);
+                    if (store.data.franchises) {
+                        for (var fIdx = 0; fIdx < store.data.franchises.length; fIdx++) {
+                            if (store.data.franchises[fIdx].numId === numId) {
+                                matchedFranchiseId = store.data.franchises[fIdx].id;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 
+            if (matchedFranchiseId) {
+                pg.modFranchiseId = matchedFranchiseId;
+                pg.modEntryType = matchedEntryType;
+                pg.modRemakeTargetId = matchedRemakeId;
+                pg.modBundleBaseScore = matchedBundleScore;
+                pg.modBundledIds = matchedBundledIds;
+
+                // Save persistent mapping link
+                if (!store.data.playerProjectMapping) store.data.playerProjectMapping = {};
+                store.data.playerProjectMapping[pg.id] = {
+                    franchiseId: matchedFranchiseId,
+                    entryType: matchedEntryType,
+                    remakeTargetId: matchedRemakeId,
+                    bundledIds: matchedBundledIds
+                };
+
+                var fran = getFranchiseById(matchedFranchiseId);
+                if (fran) {
+                    var franchiseScoreBonus = 0;
+                    if (fran.tier >= 2) franchiseScoreBonus += 0.5;
+                    if (fran.tier >= 4) franchiseScoreBonus += 0.5;
+                    if (fran.pendingSoundtrackBonus > 0) {
+                        franchiseScoreBonus += 0.5;
+                        fran.pendingSoundtrackBonus--;
+                    }
+                    pg.modFranchiseScoreBonus = franchiseScoreBonus;
+                    var pointBoost = Math.floor(franchiseScoreBonus * 50);
+
+                    pg.designPoints = (pg.designPoints || 0) + pointBoost;
+                    pg.technologyPoints = (pg.technologyPoints || 0) + pointBoost;
+
+                    if (matchedEntryType === "bundle" && matchedBundleScore) {
+                        pg.designPoints += Math.floor(matchedBundleScore * 60);
+                        pg.technologyPoints += Math.floor(matchedBundleScore * 60);
+                    }
+                }
+
+                if (matchedEntryType === "expansion") {
+                    if (!store.data.dlcData) store.data.dlcData = {};
+                    if (!store.data.dlcData[pg.id]) store.data.dlcData[pg.id] = { count: 0, activeDLCs: [] };
+
+                    var weeklyRev = 5000;
+                    if (pg.sequelTo) {
+                        var baseGame = GameManager.company.getGameById(pg.sequelTo);
+                        if (baseGame && baseGame.totalSalesCash) {
+                            weeklyRev = Math.max(5000, Math.floor(baseGame.totalSalesCash / 80));
+                        }
+                    }
+
+                    store.data.dlcData[pg.id].count++;
+                    store.data.dlcData[pg.id].activeDLCs.push({
+                        activeWeeksLeft: 20,
+                        weeklyRevenue: weeklyRev
+                    });
+                }
+            }
+
+            if (pg.title) {
+                pg.title = pg.title.replace(/(?:\s*)?\(id\d+\)$/i, '');
+            }
+        }
+
+        try { processCompetitors(); } catch (e) { console.error("[Mod] processCompetitors error:", e); }
+        try { csProcessMediaStudios(); } catch (e) { console.error("[Mod] csProcessMediaStudios error:", e); }
+        try { processDLCs(); } catch (e) { console.error("[Mod] processDLCs error:", e); }
+        try { processAISales(); } catch (e) { console.error("[Mod] processAISales error:", e); }
+        try { processPublishingProjects(); } catch (e) { console.error("[Mod] processPublishingProjects error:", e); }
+        try { processCampaigns(); } catch (e) { console.error("[Mod] processCampaigns error:", e); }
         try { processFranchisePassiveIncome(); } catch (e) { console.error("[Mod] processFranchisePassiveIncome error:", e); }
         try { processMediaProjects(); } catch (e) { console.error("[Mod] processMediaProjects error:", e); }
         try { csProcessStreamingContracts(); } catch (e) { console.error("[Mod] csProcessStreamingContracts error:", e); }
         try { csProcessTheaterReleases(); } catch (e) { console.error("[Mod] csProcessTheaterReleases error:", e); }
         try { csProcessGridService(); } catch (e) { console.error("[Mod] csProcessGridService error:", e); }
+        try { csUpdateAILicensingSystem(); } catch (e) { console.error("[Mod] csUpdateAILicensingSystem error:", e); }
 
         try {
             if (GameManager.company && GameManager.company.gameLog) {
@@ -1487,6 +1468,45 @@
                 }
             }
         } catch (e) { console.error("[Mod] Update player franchise revenue error:", e); }
+
+        // Tick-based poll: register franchise installment as soon as GDT assigns a score > 0
+        try {
+            if (store.data.playerProjectMapping) {
+                var pmKeys = Object.keys(store.data.playerProjectMapping);
+                for (var pmk = 0; pmk < pmKeys.length; pmk++) {
+                    var pmGameId = pmKeys[pmk];
+                    var pmEntry = store.data.playerProjectMapping[pmGameId];
+                    if (!pmEntry || pmEntry.processed) continue;
+                    var pmGameLog = GameManager.company.gameLog || [];
+                    var pmGame = null;
+                    for (var pmgl = 0; pmgl < pmGameLog.length; pmgl++) {
+                        if (pmGameLog[pmgl].id === pmGameId && pmGameLog[pmgl].score > 0) {
+                            pmGame = pmGameLog[pmgl];
+                            break;
+                        }
+                    }
+                    if (pmGame) {
+                        pmEntry.processed = true;
+                        var pmFran = getFranchiseById(pmEntry.franchiseId);
+                        if (pmFran) {
+                            var pmHist = {
+                                id: "FE_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+                                gameId: pmGame.id,
+                                title: pmGame.title,
+                                score: pmGame.score,
+                                type: pmEntry.entryType || "sequel",
+                                releaseWeek: Math.floor(GameManager.company.currentWeek),
+                                revenue: pmGame.totalSalesCash || 0,
+                                remakeTargetId: pmEntry.remakeTargetId
+                            };
+                            onFranchiseEntryComplete(pmFran, pmHist, pmGame.score, pmGame.totalSalesCash || 0);
+                        }
+                        delete store.data.playerProjectMapping[pmGameId];
+                        store.data.activePlayerFranchiseProject = null;
+                    }
+                }
+            }
+        } catch (e) { console.error("[Mod] Franchise mapping poll error:", e); }
 
 
         if (currentWeek % 4 === 0) {
@@ -1585,16 +1605,16 @@
         for (var i = 0; i < playerFrans.length; i++) {
             var f = playerFrans[i];
 
-
             var originId = f.originGameId;
             if (store.data.dlcData && store.data.dlcData[originId]) {
                 var dlcObj = store.data.dlcData[originId];
-                if (dlcObj.activeDLCs) {
-                    for (var k = 0; k < dlcObj.activeDLCs.length; k++) {
-                        var d = dlcObj.activeDLCs[k];
-                        if (d.modMultiplierWeeks && d.modMultiplierWeeks > 0) {
-                            d.modMultiplierWeeks--;
-                            if (d.modMultiplierWeeks <= 0) d.modRevenueMultiplier = 1.0;
+                if (dlcObj.activeDLCs && dlcObj.activeDLCs.length > 0) {
+                    for (var dIdx = dlcObj.activeDLCs.length - 1; dIdx >= 0; dIdx--) {
+                        var dlc = dlcObj.activeDLCs[dIdx];
+                        weeklyIncome += dlc.weeklyRevenue;
+                        dlc.activeWeeksLeft--;
+                        if (dlc.activeWeeksLeft <= 0) {
+                            dlcObj.activeDLCs.splice(dIdx, 1);
                         }
                     }
                 }
@@ -1602,13 +1622,11 @@
 
             if (f.fanbaseScore <= 0) f.isDead = true;
 
-
             if (f.tier > 0) {
                 var baseIncome = f.tier * 10000;
                 weeklyIncome += baseIncome;
                 incomeSources.push(f.name + " Royalties: +$" + UI.getShortNumberString(baseIncome));
             }
-
 
             if (f.tier >= 4 && currentWeek % 4 === 0) {
                 var factor = (f.fanbaseScore < 20) ? 0.5 : 1.0;
@@ -1619,7 +1637,6 @@
                 }
             }
 
-
             if (f.tier === 5 && currentWeek % 12 === 0) {
                 var legendBonus = Math.floor((f.totalRevenue || 0) * 0.01);
                 if (!isNaN(legendBonus) && legendBonus > 0) {
@@ -1629,12 +1646,10 @@
             }
         }
 
-
         if (store.data.mediaProjects) {
             for (var j = 0; j < store.data.mediaProjects.length; j++) {
                 var p = store.data.mediaProjects[j];
                 if (p.status === "releasing") {
-                    // Revenue builds up as episodes are released
                     var epRev = Math.floor((p.budget * 0.02) * (p.currentEpisode / p.totalEpisodes));
                     if (epRev > 0) {
                         weeklyIncome += epRev;
@@ -1644,10 +1659,7 @@
                     weeklyIncome += p.weeklyRevenue;
                     incomeSources.push(p.title + " Sales: +$" + UI.getShortNumberString(p.weeklyRevenue));
                     p.salesWeeksLeft--;
-
-                    // Decaying revenue
                     p.weeklyRevenue = Math.floor(p.weeklyRevenue * (p.decayRate || 0.92));
-
                     if (p.salesWeeksLeft <= 0 || p.weeklyRevenue < 50) {
                         p.weeklyRevenue = 0;
                         p.salesWeeksLeft = 0;
@@ -1656,7 +1668,6 @@
             }
         }
 
-        // Grid content revenue contribution to franchise passive income
         if (store.data.gridService && store.data.gridService.isActive) {
             var grid = store.data.gridService;
             for (var gci = 0; gci < grid.contentLibrary.length; gci++) {
@@ -1685,9 +1696,133 @@
             GameManager.company.adjustCash(weeklyIncome, "Media & Franchise Royalties");
         }
 
-
         store.data.weeklyLaunchRevenue = 0;
         store.data.weeklyLaunchSources = [];
+    }
+
+    function csUpdateAILicensingSystem() {
+        if (!store.data.movieStudios || !store.data.franchises) return;
+        var currentWeek = Math.floor(GameManager.company.currentWeek);
+
+        if (currentWeek % 8 === 0 && Math.random() < 0.2) {
+            var playerFrans = getPlayerFranchises().filter(function (f) { return (f.tier || 1) >= 2; });
+            var unownedStudios = store.data.movieStudios.filter(function (ms) { return ms.sharesOwned < 50; });
+
+            if (playerFrans.length > 0 && unownedStudios.length > 0) {
+                var chosenFran = playerFrans[Math.floor(Math.random() * playerFrans.length)];
+                var chosenStudio = unownedStudios[Math.floor(Math.random() * unownedStudios.length)];
+
+                var existing = store.data.activeAILicenses.filter(function (l) { return l.franchiseId === chosenFran.id && l.studioId === chosenStudio.id; })[0];
+                if (!existing) {
+                    var upfront = Math.floor((chosenFran.tier * 1000000) * (0.8 + Math.random() * 0.4));
+                    var royalty = Math.floor(5 + Math.random() * 10);
+                    var films = Math.floor(Math.random() * 3) + 2;
+
+                    var offer = {
+                        id: "LO_" + Date.now(),
+                        studioId: chosenStudio.id,
+                        studioName: chosenStudio.name,
+                        franchiseId: chosenFran.id,
+                        franchiseName: chosenFran.name,
+                        upfront: upfront,
+                        royaltyRate: royalty / 100,
+                        filmsCount: films,
+                        expiresWeek: currentWeek + 8
+                    };
+
+                    store.data.aiLicensingOffers.push(offer);
+
+                    GameManager.company.notifications.push(new Notification({
+                        header: "Licensing Proposal",
+                        text: chosenStudio.name + " wants to license your '" + chosenFran.name + "' franchise!",
+                        image: "",
+                        buttonText: "Review Proposal",
+                        onClick: function () {
+                            store.data.activeLicensingOffer = offer;
+                            routeModMenu("licensing_review", "media");
+                        }
+                    }));
+                }
+            }
+        }
+
+        for (var i = store.data.aiLicensingOffers.length - 1; i >= 0; i--) {
+            if (currentWeek > store.data.aiLicensingOffers[i].expiresWeek) {
+                store.data.aiLicensingOffers.splice(i, 1);
+            }
+        }
+    }
+
+    function csShowAILicensingModal(offer) {
+        var studio = getMovieStudioById(offer.studioId);
+        var fran = getFranchiseById(offer.franchiseId);
+        if (!studio || !fran) return;
+
+        var modalContent = $('<div style="padding: 10px; display: flex; flex-direction: column;"></div>');
+        modalContent.append('<h2 style="margin-top: 0; color: #d35400;">Licensing Proposal: ' + offer.franchiseName + '</h2>');
+        modalContent.append('<div style="background: #fdf6e3; padding: 15px; border-radius: 8px; border: 1px solid #f39c12; margin-bottom: 20px;">' +
+            '<p style="font-size: 11pt; color: #2c3e50;"><b>' + offer.studioName + '</b> has approached you with a licensing deal for <b>' + offer.franchiseName + '</b>.</p>' +
+            '</div>');
+
+        var terms = $('<div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;"></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 8pt; text-transform: uppercase;">Upfront Payment</label><h3 style="margin: 5px 0; color: #27ae60;">$' + UI.getShortNumberString(offer.upfront) + '</h3></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 8pt; text-transform: uppercase;">Duration</label><h3 style="margin: 5px 0; color: #2980b9;">' + offer.filmsCount + ' Films</h3></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 8pt; text-transform: uppercase;">Your Royalties</label><h3 style="margin: 5px 0; color: #8e44ad;">' + (offer.royaltyRate * 100).toFixed(0) + '%</h3></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 8pt; text-transform: uppercase;">Studio Prestige</label><h3 style="margin: 5px 0; color: #d35400;">' + (studio.reputation || 1).toFixed(1) + '/5</h3></div>');
+        modalContent.append(terms);
+
+        var actions = $('<div style="display: flex; gap: 15px; margin-top: 10px;"></div>');
+        var acceptBtn = $('<div class="selectorButton greenButton" style="flex: 1; padding: 12px; font-weight: bold; text-align: center;">Accept Deal</div>');
+        var declineBtn = $('<div class="selectorButton redButton" style="flex: 1; padding: 12px; font-weight: bold; text-align: center;">Decline</div>');
+
+        acceptBtn.click(function () {
+            csHandleAILicensingResponse(offer, true);
+            $.modal.close();
+        });
+        declineBtn.click(function () {
+            csHandleAILicensingResponse(offer, false);
+            $.modal.close();
+        });
+
+        actions.append(acceptBtn);
+        actions.append(declineBtn);
+        modalContent.append(actions);
+
+        $.modal(modalContent, {
+            overlayClose: true,
+            opacity: 80,
+            overlayCss: { backgroundColor: "#000" },
+            containerCss: {
+                width: "600px",
+                backgroundColor: "#ecf0f1",
+                borderRadius: "8px",
+                padding: "20px"
+            }
+        });
+    }
+
+    function csHandleAILicensingResponse(offer, accepted) {
+        if (accepted) {
+            GameManager.company.adjustCash(offer.upfront, "IP Licensing Upfront: " + offer.franchiseName);
+            store.data.activeAILicenses.push({
+                id: "AL_" + Date.now(),
+                studioId: offer.studioId,
+                franchiseId: offer.franchiseId,
+                filmsRemaining: offer.filmsCount,
+                royaltyRate: offer.royaltyRate,
+                totalRoyaltiesEarned: 0
+            });
+            Sound.click();
+        }
+
+        var idx = -1;
+        for (var i = 0; i < store.data.aiLicensingOffers.length; i++) {
+            if (store.data.aiLicensingOffers[i].id === offer.id) {
+                idx = i;
+                break;
+            }
+        }
+        if (idx > -1) store.data.aiLicensingOffers.splice(idx, 1);
     }
 
     function processMediaProjects() {
@@ -1800,7 +1935,7 @@
                 }
             }
         }
-        
+
         // Enforce distribution deadlines
         var currentWkDist = Math.floor(GameManager.company.currentWeek);
         for (var pdI = store.data.pendingDistribution.length - 1; pdI >= 0; pdI--) {
@@ -1825,14 +1960,14 @@
 
     function csPromptMediaDraft(ms) {
         if ($("#simplemodal-overlay").length > 0) return; // Wait if another modal is open
-        
+
         var draft = {
             title: ms.name + " Production " + Math.floor(Math.random() * 1000),
             type: ["movie", "tvSeries", "animatedShow"][Math.floor(Math.random() * 3)],
             budget: ms.valuation * 0.05,
             scoreEst: Math.floor(Math.random() * 4) + 6
         };
-        
+
         var content = $('<div style="padding: 10px;"></div>');
         content.append('<h2 style="color: #d35400; margin-top: 0;">Media Production Pitch</h2>');
         content.append('<p>Your subsidiary <b>' + ms.name + '</b> has proposed a new project:</p>');
@@ -1841,10 +1976,10 @@
         info.append('<div style="color: #7f8c8d; font-size: 11pt;">Format: ' + draft.type + '</div>');
         info.append('<div style="color: #e74c3c; font-weight: bold; margin-top: 5px;">Required Budget: $' + UI.getShortNumberString(draft.budget) + '</div>');
         content.append(info);
-        
+
         var actions = $('<div style="display: flex; gap: 10px;"></div>');
         var acceptBtn = $('<div class="selectorButton orangeButton" style="flex: 1; text-align: center;">Fund Project</div>');
-        acceptBtn.click(function() {
+        acceptBtn.click(function () {
             if (GameManager.company.cash >= draft.budget) {
                 GameManager.company.adjustCash(-draft.budget, "Media Pitch: " + draft.title);
                 ms.currentProject = {
@@ -1863,18 +1998,18 @@
                 alert("Not enough cash to fund this production.");
             }
         });
-        
+
         var rejectBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; text-align: center;">Decline</div>');
-        rejectBtn.click(function() {
+        rejectBtn.click(function () {
             ms.draftCooldown = 12; // Wait a few months
             Sound.click();
             $.modal.close();
         });
-        
+
         actions.append(rejectBtn);
         actions.append(acceptBtn);
         content.append(actions);
-        
+
         $.modal(content, {
             overlayClose: false,
             opacity: 80,
@@ -1888,7 +2023,7 @@
         if (!store.data.releaseHistory) return;
         var grid = store.data.gridService;
         var transferred = 0;
-        
+
         for (var i = store.data.releaseHistory.length - 1; i >= 0; i--) {
             var r = store.data.releaseHistory[i];
             if (r.studioName === ms.name && (r.platformIds && r.platformIds.indexOf("movie") !== -1)) {
@@ -1907,7 +2042,7 @@
                 transferred++;
             }
         }
-        
+
         if (transferred > 0) {
             GameManager.company.notifications.push(new Notification({
                 header: "Catalog Acquired",
@@ -1933,7 +2068,7 @@
                         var finalScore = Math.min(10, Math.floor(ms.currentProject.score + (Math.random() * 2 - 0.5)));
                         finalScore = Math.max(1, finalScore);
                         var baseRev = Math.floor(ms.currentProject.budget * (1.2 + (finalScore / 10)));
-                        
+
                         var newProj = {
                             id: "FP_" + Date.now() + "_" + i,
                             title: ms.currentProject.title,
@@ -1946,7 +2081,7 @@
                             distributionStatus: "pending",
                             distributionDeadlineWeek: currentWk + 4
                         };
-                        
+
                         if (store.data.gridService && store.data.gridService.isActive && ms.sharesOwned >= 50) {
                             var grid = store.data.gridService;
                             grid.contentLibrary.push({
@@ -1970,7 +2105,7 @@
                             store.data.mediaProjects.push(newProj);
                             if (!store.data.pendingDistribution) store.data.pendingDistribution = [];
                             store.data.pendingDistribution.push({ mediaProjectId: newProj.id, decisionDeadlineWeek: newProj.distributionDeadlineWeek });
-                            
+
                             GameManager.company.notifications.push(new Notification({
                                 header: "Subsidiary Media Finished",
                                 text: ms.name + " has delivered " + newProj.title + ". It awaits distribution.",
@@ -1979,14 +2114,47 @@
                         }
                     } else {
                         // Autonomous release
-                        if (!store.data.releaseHistory) store.data.releaseHistory = [];
-                        store.data.releaseHistory.push({
-                            id: "FR_" + Date.now() + "_" + i,
-                            title: ms.currentProject.title,
-                            platformIds: ["movie"],
-                            score: ms.currentProject.score,
-                            studioName: ms.name
-                        });
+                        var catDeal = (store.data.activeCatalogueDeals || []).filter(function (d) { return d.studioId === ms.id && currentWk < d.endWeek; })[0];
+                        if (catDeal && store.data.gridService && store.data.gridService.isActive) {
+                            var pseudoMovie = { title: ms.currentProject.title, score: ms.currentProject.score, studioName: ms.name };
+                            csLicenseExternalToGrid(pseudoMovie, 0, 104);
+                        } else {
+                            if (!store.data.releaseHistory) store.data.releaseHistory = [];
+                            store.data.releaseHistory.push({
+                                id: "FR_" + Date.now() + "_" + i,
+                                title: ms.currentProject.title,
+                                platformIds: ["movie"],
+                                score: ms.currentProject.score,
+                                studioName: ms.name
+                            });
+                        }
+
+                        // Royalty payment for licensed projects
+                        if (ms.currentProject.modLicenseId) {
+                            var lic = store.data.activeAILicenses.filter(function (l) { return l.id === ms.currentProject.modLicenseId; })[0];
+                            if (lic) {
+                                var estBoxOffice = Math.floor(ms.currentProject.budget * 2.5 * (ms.currentProject.score / 5));
+                                var playerCut = Math.floor(estBoxOffice * lic.royaltyRate);
+                                if (playerCut > 0) {
+                                    GameManager.company.adjustCash(playerCut, "Licensing Royalties: " + ms.currentProject.title);
+                                    lic.totalRoyaltiesEarned += playerCut;
+                                    GameManager.company.notifications.push(new Notification({
+                                        header: "Royalty Payment",
+                                        text: ms.name + " released " + ms.currentProject.title + ". Your " + (lic.royaltyRate * 100).toFixed(0) + "% royalty: $" + UI.getShortNumberString(playerCut),
+                                        image: ""
+                                    }));
+                                }
+                                lic.filmsRemaining--;
+                                if (lic.filmsRemaining <= 0) {
+                                    GameManager.company.notifications.push(new Notification({
+                                        header: "License Expired",
+                                        text: ms.name + "'s license for your franchise has expired.",
+                                        image: ""
+                                    }));
+                                }
+                            }
+                        }
+
                         ms.valuation += Math.floor(ms.currentProject.budget * 0.1);
                     }
                     ms.currentProject = null;
@@ -1999,7 +2167,27 @@
                         csPromptMediaDraft(ms);
                     }
                 } else {
-                    if (Math.random() < 0.05) {
+                    // Check for active AI licenses
+                    var licToUse = store.data.activeAILicenses.filter(function (l) { return l.studioId === ms.id && l.filmsRemaining > 0; })[0];
+                    if (licToUse && Math.random() < 0.6) {
+                        var lFran = getFranchiseById(licToUse.franchiseId);
+                        if (lFran) {
+                            var pBudget = Math.floor(ms.valuation * 0.1);
+                            ms.currentProject = {
+                                title: lFran.name + " " + ["Origins", "Evolution", "Legacy", "Reborn"][Math.floor(Math.random() * 4)],
+                                type: ["movie", "tvSeries"][Math.floor(Math.random() * 2)],
+                                weeksTotal: 28,
+                                weeksRemaining: 28,
+                                budget: pBudget,
+                                score: Math.floor(Math.random() * 4) + 6,
+                                isPlayerFunded: false,
+                                modLicenseId: licToUse.id
+                            };
+                            return;
+                        }
+                    }
+
+                    if (Math.random() < 0.10) {
                         var pBudget = ms.valuation * 0.05;
                         ms.currentProject = {
                             title: ms.name + " " + ["Blockbuster", "Original", "Feature"][Math.floor(Math.random() * 3)],
@@ -2022,22 +2210,22 @@
 
         for (var i = 0; i < store.data.streamingPlatforms.length; i++) {
             var platform = store.data.streamingPlatforms[i];
-            
+
             for (var j = platform.activeDeals.length - 1; j >= 0; j--) {
                 var deal = platform.activeDeals[j];
                 deal.weeksActive++;
-                
+
                 var weeklyRev = deal.weeklyRevenue || 0;
                 GameManager.company.adjustCash(weeklyRev, "Streaming: " + deal.title + " on " + platform.name);
-                
+
                 var mediaProj = csGetMediaProjectById(deal.mediaProjectId);
                 if (mediaProj) {
                     mediaProj.totalRevenue = (mediaProj.totalRevenue || 0) + weeklyRev;
                 }
-                
+
                 if (deal.weeksActive >= deal.weeksTotal) {
                     if (mediaProj) mediaProj.distributionStatus = "streamingComplete";
-                    
+
                     if (deal.studioId && mediaProj && mediaProj.studioShare) {
                         var studio = getMovieStudioById(deal.studioId);
                         if (studio) {
@@ -2046,7 +2234,7 @@
                             if (studio.reputation < 5) studio.reputation += 0.1;
                         }
                     }
-                    
+
                     platform.totalDealsCompleted++;
                     platform.playerRelationship = Math.min(100, platform.playerRelationship + 5);
                     GameManager.company.notifications.push(new Notification({
@@ -2057,7 +2245,7 @@
                     platform.activeDeals.splice(j, 1);
                 }
             }
-            
+
             if (currentWeek % 4 === 0 && platform.monthlyFee > 0 && platform.activeDeals.length > 0) {
                 GameManager.company.adjustCash(-platform.monthlyFee, "Platform Fee: " + platform.name);
             }
@@ -2071,36 +2259,36 @@
         for (var i = store.data.theaterReleases.length - 1; i >= 0; i--) {
             var release = store.data.theaterReleases[i];
             if (release.status !== "active") continue;
-            
+
             release.weeksActive++;
-            
+
             var decayFactor = 1.0;
             if (release.weeksActive === 1) decayFactor = 0.55;
             else if (release.weeksActive === 2) decayFactor = 0.60;
             else if (release.weeksActive >= 3 && release.weeksActive <= 5) decayFactor = 0.65;
             else if (release.weeksActive >= 6) decayFactor = 0.70;
-            
+
             var weeklyGross = 0;
             if (release.weeksActive === 1) {
                 weeklyGross = release.peakWeeklyRevenue;
             } else {
                 weeklyGross = Math.floor((release.lastWeeklyGross || release.peakWeeklyRevenue) * decayFactor);
             }
-            
+
             var theaterChain = csGetTheaterChainById(release.theaterChainId);
             var distFee = theaterChain ? theaterChain.distributionFeeRate : 0.5;
             var playerCut = Math.floor(weeklyGross * (1.0 - distFee));
-            
+
             release.totalBoxOffice += weeklyGross;
             release.playerShare += playerCut;
             release.lastWeeklyGross = weeklyGross;
-            
+
             GameManager.company.adjustCash(playerCut, "Box Office: " + release.title);
-            
+
             var mediaProj = csGetMediaProjectById(release.mediaProjectId);
             if (mediaProj) {
                 mediaProj.totalRevenue = (mediaProj.totalRevenue || 0) + playerCut;
-                
+
                 if (mediaProj.franchiseId && release.weeksActive % 2 === 0) {
                     var fran = getFranchiseById(mediaProj.franchiseId);
                     if (fran) {
@@ -2108,18 +2296,18 @@
                     }
                 }
             }
-            
+
             if (release.weeksActive >= release.maxWeeks || weeklyGross < 100000) {
                 release.status = "completed";
                 if (theaterChain) theaterChain.activeRelease = null;
                 if (mediaProj) mediaProj.distributionStatus = "theaterComplete";
-                
+
                 GameManager.company.notifications.push(new Notification({
                     header: "Theater Run Complete: " + release.title,
                     text: "Total Box Office: $" + UI.getShortNumberString(release.totalBoxOffice) + " | Your Share: $" + UI.getShortNumberString(release.playerShare),
                     image: ""
                 }));
-                
+
                 if (mediaProj && mediaProj.type === "movie" && mediaProj.franchiseId) {
                     var maxBudget = mediaProj.budget || 5000000;
                     if (release.totalBoxOffice >= maxBudget * 1.5) {
@@ -2148,7 +2336,7 @@
                 eScore -= 2;
             }
             contentScore += eScore;
-            
+
             entry.viewsThisWeek = Math.floor(grid.subscribers * 0.03 * ((entry.score || 5) / 10));
             entry.totalViews += entry.viewsThisWeek;
         }
@@ -2179,6 +2367,16 @@
             grid.totalRevenue += weeklySubRevenue;
         }
 
+        var baseUpkeep = 5000;
+        var varUpkeep = 0;
+        if (grid.subscribers < 100000) varUpkeep = grid.subscribers * 0.10;
+        else if (grid.subscribers < 1000000) varUpkeep = (100000 * 0.10) + (grid.subscribers - 100000) * 0.05;
+        else if (grid.subscribers < 10000000) varUpkeep = (100000 * 0.10) + (900000 * 0.05) + (grid.subscribers - 1000000) * 0.02;
+        else varUpkeep = (100000 * 0.10) + (900000 * 0.05) + (9000000 * 0.02) + (grid.subscribers - 10000000) * 0.01;
+
+        grid.weeklyUpkeep = Math.floor(baseUpkeep + varUpkeep);
+        grid.pendingUpkeep = (grid.pendingUpkeep || 0) + grid.weeklyUpkeep;
+
         for (var li = grid.contentLibrary.length - 1; li >= 0; li--) {
             var libEntry = grid.contentLibrary[li];
             if (!libEntry.isOriginal && libEntry.licenseCostWeekly > 0) {
@@ -2195,7 +2393,7 @@
                 }
             }
         }
-        
+
         if (currentWeek % 4 === 0) {
             if (grid.pendingRevenue > 0) {
                 GameManager.company.adjustCash(grid.pendingRevenue, "Grid Subscriptions (Monthly)");
@@ -2205,6 +2403,25 @@
                 GameManager.company.adjustCash(-grid.pendingMarketing, "Grid Marketing (Monthly)");
                 grid.pendingMarketing = 0;
             }
+            if (grid.pendingUpkeep > 0) {
+                GameManager.company.adjustCash(-grid.pendingUpkeep, "Grid Infrastructure Upkeep (Monthly)");
+                grid.pendingUpkeep = 0;
+            }
+
+            // Catalogue Deal Upkeep
+            var totalCatMaint = 0;
+            for (var cdi = store.data.activeCatalogueDeals.length - 1; cdi >= 0; cdi--) {
+                var cd = store.data.activeCatalogueDeals[cdi];
+                if (currentWeek >= cd.endWeek) {
+                    store.data.activeCatalogueDeals.splice(cdi, 1);
+                } else {
+                    totalCatMaint += (cd.weeklyMaintenance * 4);
+                }
+            }
+            if (totalCatMaint > 0) {
+                GameManager.company.adjustCash(-totalCatMaint, "Studio Catalogue Maintenance (Monthly)");
+            }
+
             if (grid.pendingLicenses > 0) {
                 GameManager.company.adjustCash(-grid.pendingLicenses, "Grid Licenses (Monthly)");
                 grid.pendingLicenses = 0;
@@ -3335,7 +3552,7 @@
         menuType = menuType || "studios";
         if (menuType === "studios") activeTab = activeTab || "market";
         else activeTab = activeTab || "film_subs";
-        
+
         Sound.click();
 
         if ($('#modUI').length > 0) {
@@ -3404,7 +3621,10 @@
             { id: "schedule", label: "Releases", type: "studios" },
             { id: "leaderboard", label: "Leaderboard", type: "studios" },
             { id: "dlc", label: "DLCs", type: "studios" },
+            { id: "franchises", label: "Franchises", type: "studios" },
             { id: "franchises", label: "Franchises", type: "media" },
+            { id: "licensing_review", label: "Review Offer", type: "media" },
+            { id: "catalogue_negotiation", label: "Negotiation", type: "media" },
             { id: "media", label: "Media", type: "media" },
             { id: "marketing", label: "Marketing", type: "studios" },
             { id: "settings", label: "Settings", type: "studios" }
@@ -3455,6 +3675,12 @@
             renderMarketingTab(contentArea);
         } else if (activeTab === "grid_dashboard") {
             csRenderGridDashboard(contentArea);
+        } else if (activeTab === "distribution_offers") {
+            csRenderDistributionOffers(contentArea);
+        } else if (activeTab === "licensing_review") {
+            csRenderLicensingReview(contentArea);
+        } else if (activeTab === "catalogue_negotiation") {
+            csRenderCatalogueNegotiation(contentArea);
         } else if (activeTab === "settings") {
             renderSettingsTab(contentArea);
         }
@@ -4220,7 +4446,8 @@
             var tabs = [
                 { id: "my", label: "My Franchises" },
                 { id: "register", label: "Create / Register" },
-                { id: "acquisitions", label: "Acquisitions" }
+                { id: "acquisitions", label: "Acquisitions" },
+                { id: "proposals", label: "Proposals" }
             ];
 
             tabs.forEach(function (t) {
@@ -4482,6 +4709,30 @@
                     offerDiv.append(offerBtn);
                     container.append(offerDiv);
                 }
+            } else if (subTab === "proposals") {
+                container.append('<h3 style="color: #d35400; margin-top: 0;">Licensing Proposals</h3>');
+                container.append('<p style="font-size: 10pt; color: #7f8c8d; margin-bottom: 20px;">Unowned studios may periodically approach you to license your franchises. These offers expire if not reviewed.</p>');
+
+                var offers = store.data.aiLicensingOffers || [];
+                if (offers.length === 0) {
+                    container.append('<div style="text-align: center; padding: 40px; color: #7f8c8d; font-style: italic;">No active licensing proposals. Keep building Tier 2+ franchises to attract studio interest!</div>');
+                } else {
+                    offers.forEach(function (o) {
+                        var card = $('<div style="background: white; border-radius: 8px; border: 1px solid #bdc3c7; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
+                        var info = $('<div></div>');
+                        info.append('<div style="font-weight: bold; font-size: 11pt; color: #d35400;">' + o.franchiseName + '</div>');
+                        info.append('<div style="font-size: 9pt; color: #2c3e50;">From: <b>' + o.studioName + '</b></div>');
+                        info.append('<div style="font-size: 9pt; color: #7f8c8d; margin-top: 4px;">Upfront: <b>$' + UI.getShortNumberString(o.upfront) + '</b> | Royalty: <b>' + (o.royaltyRate * 100).toFixed(0) + '%</b></div>');
+                        card.append(info);
+
+                        var revBtn = $('<div class="selectorButton orangeButton" style="padding: 8px 15px; font-weight: bold;">Review Offer</div>');
+                        revBtn.click(function () {
+                            csShowAILicensingModal(o);
+                        });
+                        card.append(revBtn);
+                        container.append(card);
+                    });
+                }
             }
         }
 
@@ -4515,7 +4766,7 @@
 
             if (subTab === "active") {
                 var mediaArr = store.data.mediaProjects || [];
-                var active = mediaArr.filter(function (p) { return p.status === "inProduction" || p.status === "releasing"; });
+                var active = mediaArr.filter(function (p) { return p.status === "inProduction" || p.status === "releasing" || p.status === "productionCompleted"; });
                 if (active.length === 0) {
                     container.append('<div style="text-align: center; padding: 40px; color: #7f8c8d;">No media projects currently active or releasing.</div>');
                 }
@@ -4568,6 +4819,31 @@
                         }
                     });
                     card.append(cancelBtn);
+
+                    // "Air Next Episode" button — only shown when episodes are queued
+                    if ((p.isReleasing || p.status === "releasing" || p.status === "productionCompleted") &&
+                        p.currentEpisode < (p.totalEpisodes || 1)) {
+                        (function (proj) {
+                            var airBtn = $('<div style="position: absolute; bottom: 12px; left: 15px;">' +
+                                '<span style="color: #27ae60; cursor: pointer; font-size: 8pt; font-weight: bold; text-decoration: underline; transition: color 0.2s;">' +
+                                '\u25B6 Air Next Episode Now</span></div>');
+                            airBtn.hover(
+                                function () { $(this).find('span').css('color', '#1a8a4a'); },
+                                function () { $(this).find('span').css('color', '#27ae60'); }
+                            );
+                            airBtn.click(function () {
+                                proj.nextReleaseWeek = Math.floor(GameManager.company.currentWeek) - 1;
+                                Sound.click();
+                                GameManager.company.notifications.push(new Notification({
+                                    header: "Episode Queued",
+                                    text: proj.title + " — next episode will air this week.",
+                                    image: ""
+                                }));
+                                refresh();
+                            });
+                            card.append(airBtn);
+                        })(p);
+                    }
                     container.append(card);
                 });
             } else if (subTab === "produce") {
@@ -4742,9 +5018,9 @@
 
         if (!store.data.gridService || !store.data.gridService.isActive) {
             var gridRnD = $('<div class="selectorButton orangeButton" style="width: 100%; text-align: center; font-size: 11pt; padding: 12px 0; border-radius: 5px; font-weight: bold; margin-bottom: 20px;">Research "Grid" Streaming Service ($50M)</div>');
-            gridRnD.click(function() {
+            gridRnD.click(function () {
                 if (GameManager.company.cash >= 50000000) {
-                    if(confirm("Launch your own streaming platform 'Grid' for $50,000,000?")){
+                    if (confirm("Launch your own streaming platform 'Grid' for $50,000,000?")) {
                         GameManager.company.adjustCash(-50000000, "Grid Platform R&D");
                         if (!store.data.gridService) store.data.gridService = {};
                         store.data.gridService.isActive = true;
@@ -5011,8 +5287,8 @@
 
     function showSearchableList(title, items, onSelect, inlineContainer) {
         var modal = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; padding: 15px; display: flex; flex-direction: column; overflow: hidden; position: relative;' + (inlineContainer ? ' width: 100%; height: 100%; box-sizing: border-box;' : '') + '"></div>');
-        
-        var closeAction = function() {
+
+        var closeAction = function () {
             if (inlineContainer) {
                 modal.remove();
                 inlineContainer.children().show();
@@ -5178,7 +5454,7 @@
         var p2 = "None";
         var p3 = "None";
         var platRow = $('<div style="display: flex; gap: 8px; margin-bottom: 20px; justify-content: center;"></div>');
-        var pList = [{name: "None"}].concat(myPlats);
+        var pList = [{ name: "None" }].concat(myPlats);
 
         function updatePlatShelf() {
             platRow.empty();
@@ -5204,7 +5480,7 @@
         var confirmBtn = $('<div class="selectorButton orangeButton" style="width: 160px; text-align: center; font-size: 12pt; font-weight: bold; border-radius: 6px;">Post Offer</div>');
         confirmBtn.click(function () {
             var advance = sizes.filter(function (x) { return x.id === selectedSize; })[0].cost;
-            selectedPlats = [p1, p2, p3].filter(function(x) { return x !== "None"; });
+            selectedPlats = [p1, p2, p3].filter(function (x) { return x !== "None"; });
             if (selectedPlats.length === 0) selectedPlats = [myPlats[0] ? myPlats[0].name : "PC"];
 
             if (GameManager.company.cash >= advance) {
@@ -5593,6 +5869,15 @@
             topBtns.append(buyBtn);
         }
 
+        var isLicensed = (store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === studio.id && GameManager.company.currentWeek < d.endWeek; });
+        var dealBtn = $('<button class="selectorButton whiteBoardButton" style="width: 100%; margin-top: 5px; font-size: 10pt;">' + (isLicensed ? "Catalogue Active \u2705" : "Negotiate Catalogue Deal") + '</button>');
+        dealBtn.click(function () {
+            Sound.click();
+            store.data.activeCatalogueNegotiation = studio;
+            routeModMenu("catalogue_negotiation", "media");
+        });
+        detailsContainer.append(dealBtn);
+
         if (studio.sharesOwned >= 50) {
             middleBtns = $('<div style="display: flex; gap: 6px; align-items: center;"></div>');
             var staffSelect = $('<select id="staff_tier_' + studio.id + '" style="font-size: 10pt; padding: 3px; color: black; flex: 2; border-radius: 3px; border: 1px solid #bdc3c7; box-sizing: border-box;"></select>');
@@ -5711,7 +5996,7 @@
 
                         var sArr3 = store.data.studios || [];
                         store.data.studios = sArr3.filter(function (s) { return s.id !== studio.id; });
-                        GameManager.company.notifications.push(new Notification({ header: "Takeover!", text: "Absorbed " + studio.name + "!" }));
+                        GameManager.company.notifications.push(new Notification({ header: "Takeover!", text: "Absorbed " + studio.name + "!", image: "" }));
                         routeModMenu("subsidiaries");
                     }
                 });
@@ -5847,7 +6132,7 @@
         var p1 = myPlats[0] ? myPlats[0].name : "PC";
         var p2 = "None";
         var p3 = "None";
-        var pList = [{name: "None"}].concat(myPlats);
+        var pList = [{ name: "None" }].concat(myPlats);
         var platRow = $('<div style="display: flex; gap: 8px; margin-bottom: 20px; justify-content: center;"></div>');
 
         function updatePlatShelf() {
@@ -5876,7 +6161,7 @@
                 var selectedTopic = $('#inst_topic').val();
                 var selectedGenre = $('#inst_genre').val();
                 var selectedSize = $('#inst_size').val();
-                var selectedPlats = [p1, p2, p3].filter(function(x) { return x !== "None"; });
+                var selectedPlats = [p1, p2, p3].filter(function (x) { return x !== "None"; });
                 if (selectedPlats.length === 0) selectedPlats = [p1];
 
                 GameManager.company.adjustCash(-1000000, "Subsidiary Funding: " + studio.name);
@@ -6100,56 +6385,54 @@
     function csRenderDistributionTab(container) {
         container.empty();
         container.append('<h3 style="color: #d35400; margin-top: 0; margin-bottom: 20px;">Media Distribution</h3>');
-        
+
         var currentWeek = Math.floor(GameManager.company.currentWeek);
-        
+
         // --- PENDING DISTRIBUTION ---
         var pendingObj = $('<div style="margin-bottom: 30px;"></div>');
         pendingObj.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Awaiting Distribution Decision</h4>');
-        
+
         var distPending = store.data.pendingDistribution || [];
         if (distPending.length === 0) {
             pendingObj.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px;">No projects currently awaiting distribution.</div>');
         } else {
-            distPending.forEach(function(pd) {
+            distPending.forEach(function (pd) {
                 var mediaProj = csGetMediaProjectById(pd.mediaProjectId);
                 if (!mediaProj) return;
-                
+
                 var weeksLeft = Math.max(0, pd.decisionDeadlineWeek - currentWeek);
                 var isExpiringSoon = weeksLeft <= 1;
                 var colorClass = isExpiringSoon ? "color: #e74c3c;" : "color: #27ae60;";
-                
+
                 var card = $('<div style="background: #fff; border: 1px solid #bdc3c7; border-left: 4px solid ' + (isExpiringSoon ? '#e74c3c' : '#f39c12') + '; padding: 15px; border-radius: 4px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
-                
+
                 var info = $('<div></div>');
                 info.append('<div style="font-weight: bold; font-size: 12pt;">' + mediaProj.title + ' <span style="font-size: 10pt; font-weight: normal; color: #7f8c8d;">(' + mediaProj.type + ')</span></div>');
                 info.append('<div style="font-size: 10pt; margin-top: 5px;">Score: ' + mediaProj.score + '/10 | Base Value: $' + UI.getShortNumberString(mediaProj.estimatedRevenue) + '</div>');
                 info.append('<div style="font-size: 10pt; margin-top: 3px; font-weight: bold; ' + colorClass + '">Decision expires in ' + weeksLeft + ' weeks</div>');
                 card.append(info);
-                
+
                 var actionBtn = $('<div class="selectorButton orangeButton" style="padding: 8px 15px;">Review Offers</div>');
-                actionBtn.click(function() {
+                actionBtn.click(function () {
                     Sound.click();
-                    csShowDistributionChoiceModal(mediaProj, function() {
-                        container.empty();
-                        csRenderDistributionTab(container);
-                    });
+                    store.data.activeDistributionChoice = mediaProj;
+                    routeModMenu("distribution_offers", "media");
                 });
                 card.append(actionBtn);
                 pendingObj.append(card);
             });
         }
         container.append(pendingObj);
-        
+
         // --- ACTIVE STREAMING ---
         var streamObj = $('<div style="margin-bottom: 30px;"></div>');
         streamObj.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Active Streaming Contracts</h4>');
-        
+
         var activeStreamDeals = [];
         if (store.data.streamingPlatforms) {
-            store.data.streamingPlatforms.forEach(function(platform) {
+            store.data.streamingPlatforms.forEach(function (platform) {
                 if (platform.activeDeals) {
-                    platform.activeDeals.forEach(function(deal) {
+                    platform.activeDeals.forEach(function (deal) {
                         if (!deal.isGridLicense) {
                             activeStreamDeals.push({ platform: platform, deal: deal });
                         }
@@ -6157,14 +6440,14 @@
                 }
             });
         }
-        
+
         if (activeStreamDeals.length === 0) {
             streamObj.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px;">No active streaming contracts.</div>');
         } else {
             var sTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></table>');
             sTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th></tr>');
-            
-            activeStreamDeals.forEach(function(item) {
+
+            activeStreamDeals.forEach(function (item) {
                 var d = item.deal;
                 var p = item.platform;
                 var sRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
@@ -6177,23 +6460,23 @@
             streamObj.append(sTable);
         }
         container.append(streamObj);
-        
+
         // --- ACTIVE THEATER RUNS ---
         var theaterObj = $('<div style="margin-bottom: 30px;"></div>');
         theaterObj.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Active Theater Runs</h4>');
-        
-        var activeTheater = (store.data.theaterReleases || []).filter(function(r) { return r.status === "active"; });
-        
+
+        var activeTheater = (store.data.theaterReleases || []).filter(function (r) { return r.status === "active"; });
+
         if (activeTheater.length === 0) {
             theaterObj.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px;">No active theater releases.</div>');
         } else {
             var tTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></table>');
             tTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Movie</th><th>Chain</th><th>Your Share</th><th>Progress</th></tr>');
-            
-            activeTheater.forEach(function(tr) {
+
+            activeTheater.forEach(function (tr) {
                 var chain = csGetTheaterChainById(tr.theaterChainId);
                 var chainName = chain ? chain.name : "Unknown Chain";
-                
+
                 var tRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
                 tRow.append('<td style="padding: 10px; font-weight: bold;">' + tr.title + '</td>');
                 tRow.append('<td>' + chainName + '</td>');
@@ -6206,13 +6489,87 @@
         container.append(theaterObj);
     }
 
+    function csRenderDistributionOffers(container) {
+        var project = store.data.activeDistributionChoice;
+        if (!project) {
+            routeModMenu("media", "media");
+            return;
+        }
+
+        container.empty();
+        var backBtn = $('<div class="selectorButton" style="padding: 8px 15px; margin-bottom: 15px; display: inline-block; cursor: pointer;"> < Back to Media</div>');
+        backBtn.click(function () { routeModMenu("media", "media"); });
+        container.append(backBtn);
+
+        container.append('<h2 style="margin-top: 0; color: #d35400;">Distribution Offers: ' + project.title + '</h2>');
+        container.append('<p style="font-size: 11pt; color: #34495e;">Project Score: <b>' + project.score + '/10</b> | Base Value: <b>$' + UI.getShortNumberString(project.estimatedRevenue) + '</b></p>');
+
+        var offersArea = $('<div style="padding-top: 10px;"></div>');
+
+        if (store.data.gridService && store.data.gridService.isActive) {
+            var gridObj = $('<div class="cs-stagger-item" style="background: #fdf6e3; border: 2px solid #f39c12; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
+            var gInfo = $('<div><h3 style="margin: 0; color: #d35400;">Your Grid Service (Exclusive)</h3><div style="font-size: 10pt; margin-top: 5px;">Add this directly to your Grid platform.</div></div>');
+            gridObj.append(gInfo);
+            var gridBtn = $('<div class="selectorButton orangeButton" style="padding: 10px 20px;">Publish to Grid</div>');
+            gridBtn.click(function () {
+                csAddToGrid(project);
+                routeModMenu("media", "media");
+            });
+            gridObj.append(gridBtn);
+            offersArea.append(gridObj);
+        }
+
+        if (project.type === "movie" && store.data.theaterChains) {
+            offersArea.append('<h3 style="margin-bottom: 15px; border-bottom: 1px solid #bdc3c7;">Theatrical Releases</h3>');
+            store.data.theaterChains.forEach(function (chain) {
+                var projected = csEstimateTheaterRevenue(project, chain);
+                var minReqScore = Math.ceil(chain.prestige * 1.5);
+                var isAcceptable = project.score >= minReqScore;
+                var tObj = $('<div style="background: #fff; border: 1px solid #bdc3c7; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ' + (!isAcceptable ? 'opacity: 0.6;' : '') + '"></div>');
+                var tInfo = $('<div><div style="font-weight: bold; font-size: 11pt;">' + chain.name + '</div><div style="font-size: 10pt;">Fee: ' + (chain.distributionFeeRate * 100).toFixed(0) + '% | Min Score: ' + minReqScore + '</div></div>');
+                if (isAcceptable) tInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. Share: $' + UI.getShortNumberString(projected.playerShare.min) + ' - $' + UI.getShortNumberString(projected.playerShare.max) + '</div>');
+                else tInfo.append('<div style="font-size: 10pt; color: #e74c3c; font-weight: bold; margin-top: 5px;">Score too low.</div>');
+                tObj.append(tInfo);
+                if (isAcceptable) {
+                    var tBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
+                    tBtn.click(function () {
+                        csConfirmTheaterRelease(project, chain);
+                        routeModMenu("media", "media");
+                    });
+                    tObj.append(tBtn);
+                }
+                offersArea.append(tObj);
+            });
+        }
+
+        if (store.data.streamingPlatforms) {
+            offersArea.append('<h3 style="margin-top: 20px; margin-bottom: 15px; border-bottom: 1px solid #bdc3c7;">Streaming Exclusive Deals</h3>');
+            store.data.streamingPlatforms.forEach(function (platform) {
+                if (platform.acceptsType && platform.acceptsType.indexOf(project.type) === -1) return;
+                var projected = csEstimateStreamingRevenue(project, platform);
+                var sObj = $('<div style="background: #fff; border: 1px solid #bdc3c7; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;"></div>');
+                var sInfo = $('<div><div style="font-weight: bold; font-size: 11pt;">' + platform.name + '</div><div style="font-size: 10pt;">Contract: ' + projected.weeks + ' weeks</div><div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Total Est: $' + UI.getShortNumberString(projected.totalRevenue) + '</div></div>');
+                sObj.append(sInfo);
+                var sBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
+                sBtn.click(function () {
+                    csConfirmStreamingDeal(project, platform);
+                    routeModMenu("media", "media");
+                });
+                sObj.append(sBtn);
+                offersArea.append(sObj);
+            });
+        }
+
+        container.append(offersArea);
+    }
+
     function csShowDistributionChoiceModal(project, onRefresh) {
         var modalContent = $('<div style="padding: 10px; display: flex; flex-direction: column; height: 100%;"></div>');
         modalContent.append('<h2 style="margin-top: 0; color: #d35400;">Distribution Offers: ' + project.title + '</h2>');
         modalContent.append('<p style="font-size: 11pt; color: #34495e;">Project Score: <b>' + project.score + '/10</b> | Base Value: <b>$' + UI.getShortNumberString(project.estimatedRevenue) + '</b></p>');
-        
+
         var offersContainer = $('<div style="flex: 1; overflow-y: auto; padding-right: 10px;"></div>');
-        
+
         // 1. Grid Service
         if (store.data.gridService && store.data.gridService.isActive) {
             var gridObj = $('<div class="cs-stagger-item" style="background: #fdf6e3; border: 2px solid #f39c12; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
@@ -6221,83 +6578,85 @@
             gInfo.append('<div style="font-size: 10pt; margin-top: 5px;">Add this directly to your Grid platform. Boosts subscriber growth and library value.</div>');
             gInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. Value: Synergy & Subscriber Growth</div>');
             gridObj.append(gInfo);
-            
+
             var gridBtn = $('<div class="selectorButton orangeButton" style="padding: 10px 20px;">Publish to Grid</div>');
-            gridBtn.click(function() {
+            gridBtn.click(function () {
                 csAddToGrid(project);
                 $.modal.close();
-                if(onRefresh) onRefresh();
+                if (onRefresh) onRefresh();
             });
             gridObj.append(gridBtn);
             offersContainer.append(gridObj);
         }
-        
+
         // 2. Theater Chains (Movies Only)
         if (project.type === "movie" && store.data.theaterChains) {
             offersContainer.append('<h3 style="margin-bottom: 10px; border-bottom: 1px solid #bdc3c7;">Theatrical Releases</h3>');
-            store.data.theaterChains.forEach(function(chain) {
+            store.data.theaterChains.forEach(function (chain) {
                 var projected = csEstimateTheaterRevenue(project, chain);
-                var isAcceptable = project.score >= chain.minScore;
-                
+                var minReqScore = Math.ceil(chain.prestige * 1.5);
+                var isAcceptable = project.score >= minReqScore;
+
                 var tObj = $('<div style="background: #fff; border: 1px solid #bdc3c7; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ' + (!isAcceptable ? 'opacity: 0.6;' : '') + '"></div>');
-                
+
                 var tInfo = $('<div></div>');
                 tInfo.append('<div style="font-weight: bold; font-size: 11pt;">' + chain.name + ' <span style="font-size: 9pt; color: #7f8c8d;">(Prestige: ' + chain.prestige + ')</span></div>');
-                tInfo.append('<div style="font-size: 10pt; margin-top: 3px;">Distribution Fee: ' + (chain.distributionFeeRate * 100) + '% | Min Score: ' + chain.minScore + '</div>');
-                
+                tInfo.append('<div style="font-size: 10pt; margin-top: 3px;">Distribution Fee: ' + (chain.distributionFeeRate * 100).toFixed(0) + '% | Min Score: ' + minReqScore.toFixed(1) + '</div>');
+
                 if (isAcceptable) {
-                    tInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. Your Share: $' + UI.getShortNumberString(projected.estPlayerCut) + '</div>');
+                    tInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. Your Share: $' + UI.getShortNumberString(projected.playerShare.min) + ' - $' + UI.getShortNumberString(projected.playerShare.max) + '</div>');
                 } else {
                     tInfo.append('<div style="font-size: 10pt; color: #e74c3c; font-weight: bold; margin-top: 5px;">Project score too low for this chain.</div>');
                 }
                 tObj.append(tInfo);
-                
+
                 if (isAcceptable) {
                     var tBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
-                    tBtn.click(function() {
+                    tBtn.click(function () {
                         csConfirmTheaterRelease(project, chain);
                         $.modal.close();
-                        if(onRefresh) onRefresh();
+                        if (onRefresh) onRefresh();
                     });
                     tObj.append(tBtn);
                 } else {
                     tObj.append('<div style="padding: 8px 15px; color: #7f8c8d; font-weight: bold;">Rejected</div>');
                 }
-                
+
                 offersContainer.append(tObj);
             });
         }
-        
+
         // 3. Streaming Platforms
         if (store.data.streamingPlatforms) {
             offersContainer.append('<h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #bdc3c7;">Streaming Exclusive Deals</h3>');
-            store.data.streamingPlatforms.forEach(function(platform) {
+            store.data.streamingPlatforms.forEach(function (platform) {
+                if (platform.acceptsType && platform.acceptsType.indexOf(project.type) === -1) return;
                 var projected = csEstimateStreamingRevenue(project, platform);
-                
+
                 var sObj = $('<div style="background: #fff; border: 1px solid #bdc3c7; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;"></div>');
-                
+
                 var sInfo = $('<div></div>');
-                sInfo.append('<div style="font-weight: bold; font-size: 11pt;">' + platform.name + ' <span style="font-size: 9pt; color: #7f8c8d;">(Users: ' + UI.getShortNumberString(platform.userBase) + ')</span></div>');
-                var affinityBonusDisplay = (projected.affinityBonus > 1.0) ? ' <span style="color: #27ae60; font-size: 9pt;">[Affinity Match!]</span>' : '';
-                sInfo.append('<div style="font-size: 10pt; margin-top: 3px;">Contract: ' + platform.contractWeeks + ' weeks' + affinityBonusDisplay + '</div>');
-                
-                sInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Total Est. Payout: $' + UI.getShortNumberString(projected.estTotal) + '</div>');
+                sInfo.append('<div style="font-weight: bold; font-size: 11pt;">' + platform.name + ' <span style="font-size: 9pt; color: #7f8c8d;">(Users: ' + UI.getShortNumberString(platform.subscriberBase) + ')</span></div>');
+
+                sInfo.append('<div style="font-size: 10pt; margin-top: 3px;">Contract: ' + projected.weeks + ' weeks</div>');
+
+                sInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Total Est. Payout: $' + UI.getShortNumberString(projected.totalRevenue) + '</div>');
                 sObj.append(sInfo);
-                
+
                 var sBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
-                sBtn.click(function() {
+                sBtn.click(function () {
                     csConfirmStreamingDeal(project, platform);
                     $.modal.close();
-                    if(onRefresh) onRefresh();
+                    if (onRefresh) onRefresh();
                 });
                 sObj.append(sBtn);
-                
+
                 offersContainer.append(sObj);
             });
         }
-        
+
         modalContent.append(offersContainer);
-        
+
         $.modal(modalContent, {
             overlayClose: true,
             opacity: 80,
@@ -6315,7 +6674,7 @@
     function csRenderGridTab(container) {
         container.empty();
         container.append('<h3 style="color: #d35400; margin-top: 0; margin-bottom: 20px;">Grid Content License Management</h3>');
-        
+
         var grid = store.data.gridService;
         if (!grid || !grid.isActive) {
             container.append('<div style="color: #7f8c8d; font-style: italic;">Grid platform is not active. Research it in Settings.</div>');
@@ -6323,22 +6682,22 @@
         }
 
         var btnDash = $('<div class="selectorButton orangeButton" style="padding: 10px 20px; font-weight: bold; margin-bottom: 20px; display: inline-block;">Open Grid Dashboard</div>');
-        btnDash.click(function() {
+        btnDash.click(function () {
             Sound.click();
             routeModMenu("grid_dashboard");
         });
         container.append(btnDash);
-        
+
         container.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Active Internal Projects on Grid</h4>');
-        var internalContent = grid.contentLibrary.filter(function(c) { return c.isOriginal; });
-        
+        var internalContent = grid.contentLibrary.filter(function (c) { return c.isOriginal; });
+
         if (internalContent.length === 0) {
             container.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px; margin-bottom: 20px;">No internal exclusive content on Grid.</div>');
         } else {
             var iTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 30px;"></table>');
             iTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Title</th><th>Score</th><th>Added Week</th><th>Weekly Views</th></tr>');
-            
-            internalContent.forEach(function(c) {
+
+            internalContent.forEach(function (c) {
                 var iRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
                 iRow.append('<td style="padding: 10px; font-weight: bold;">' + c.title + '</td>');
                 iRow.append('<td>' + c.score + '/10</td>');
@@ -6348,46 +6707,46 @@
             });
             container.append(iTable);
         }
-        
+
         container.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Available External Licenses</h4>');
         var licenseObj = $('<div class="cs-stagger-item" style="background: #fff; border: 1px solid #bdc3c7; padding: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
-        
+
         var extMovies = [];
         if (store.data.releaseHistory) {
-            store.data.releaseHistory.forEach(function(h) {
+            store.data.releaseHistory.forEach(function (h) {
                 if (h.platformIds && h.platformIds.indexOf("movie") !== -1) extMovies.push(h);
             });
         }
-        
-        var availableExt = extMovies.filter(function(m) {
+
+        var availableExt = extMovies.filter(function (m) {
             for (var i = 0; i < grid.contentLibrary.length; i++) {
                 if (grid.contentLibrary[i].id === m.id) return false;
             }
             return true;
         });
-        
-        availableExt.sort(function(a, b) { return b.score - a.score; });
-        
+
+        availableExt.sort(function (a, b) { return b.score - a.score; });
+
         if (availableExt.length === 0) {
             licenseObj.append('<div style="color: #7f8c8d; font-style: italic;">No external movies available to license right now.</div>');
         } else {
             var lTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt;"></table>');
             lTable.append('<tr style="border-bottom: 1px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Movie (Studio)</th><th>Rating</th><th>Cost/Wk</th><th>Action</th></tr>');
-            
+
             var limit = Math.min(10, availableExt.length);
             for (var extI = 0; extI < limit; extI++) {
                 var em = availableExt[extI];
                 var cost = Math.floor(10000 + (em.score * em.score * 5000));
-                
+
                 var lRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
                 lRow.append('<td style="padding: 8px;"><b>' + em.title + '</b><br><span style="font-size: 8pt; color: #7f8c8d;">' + em.studioName + '</span></td>');
                 lRow.append('<td>' + em.score + '</td>');
                 lRow.append('<td style="color: #e74c3c;">-$' + UI.getShortNumberString(cost) + '</td>');
-                
+
                 var acCell = $('<td></td>');
-                var acBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 5px 10px; font-size: 8pt;" data-id="'+em.id+'">License (52wks)</div>');
-                acBtn.click((function(extM, extCost) {
-                    return function() {
+                var acBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 5px 10px; font-size: 8pt;" data-id="' + em.id + '">License (52wks)</div>');
+                acBtn.click((function (extM, extCost) {
+                    return function () {
                         csLicenseExternalToGrid(extM, extCost, 52);
                         Sound.click();
                         csRenderGridTab(container);
@@ -6412,7 +6771,7 @@
         contentArea.append(header);
 
         var topMetrics = $('<div style="display: flex; gap: 15px; margin-bottom: 20px;"></div>');
-        
+
         var gSubs = $('<div class="cs-stagger-item" style="flex: 1; background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
         gSubs.append('<div style="font-size: 11pt; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Active Subscribers</div>');
         gSubs.append('<div style="font-size: 24pt; font-weight: bold; color: #3498db;">' + UI.getShortNumberString(grid.subscribers) + '</div>');
@@ -6421,24 +6780,33 @@
         var subSign = subDiff > 0 ? "+" : "";
         gSubs.append('<div style="font-size: 10pt; margin-top: 5px; color: ' + subCol + ';">' + subSign + UI.getShortNumberString(subDiff) + ' this week</div>');
         topMetrics.append(gSubs);
-        
+
         var gRev = $('<div class="cs-stagger-item" style="flex: 1; background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
         gRev.append('<div style="font-size: 11pt; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Monthly Revenue (Est.)</div>');
         gRev.append('<div style="font-size: 24pt; font-weight: bold; color: #2ecc71;">$' + UI.getShortNumberString((grid.weeklyRevenue || 0) * 4) + '</div>');
         gRev.append('<div style="font-size: 10pt; margin-top: 5px; color: #ecf0f1;">@ $' + grid.monthlySubFee.toFixed(2) + ' / mo</div>');
         topMetrics.append(gRev);
-        
+
+        var gExp = $('<div class="cs-stagger-item" style="flex: 1; background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
+        gExp.append('<div style="font-size: 11pt; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Monthly Expenses (Est.)</div>');
+        var totalMonthlyExp = ((grid.weeklyUpkeep || 0) + (grid.marketingBudgetWeekly || 0)) * 4;
+        grid.contentLibrary.forEach(function (l) { if (!l.isOriginal && l.licenseCostWeekly > 0) totalMonthlyExp += l.licenseCostWeekly * 4; });
+        var profitMargin = ((grid.weeklyRevenue || 0) * 4) - totalMonthlyExp;
+        gExp.append('<div style="font-size: 24pt; font-weight: bold; color: ' + (profitMargin >= 0 ? "#2ecc71" : "#e74c3c") + ';">$' + UI.getShortNumberString(totalMonthlyExp) + '</div>');
+        gExp.append('<div style="font-size: 10pt; margin-top: 5px; color: #ecf0f1;">Upkeep: $' + UI.getShortNumberString((grid.weeklyUpkeep || 0) * 4) + ' | Mkt: $' + UI.getShortNumberString(grid.marketingBudgetWeekly * 4) + '</div>');
+        topMetrics.append(gExp);
+
         var gLib = $('<div class="cs-stagger-item" style="flex: 1; background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
         gLib.append('<div style="font-size: 11pt; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Content Library</div>');
         gLib.append('<div style="font-size: 24pt; font-weight: bold; color: #f39c12;">' + grid.contentLibrary.length + '</div>');
-        var origCount = grid.contentLibrary.filter(function(c) { return c.isOriginal; }).length;
+        var origCount = grid.contentLibrary.filter(function (c) { return c.isOriginal; }).length;
         gLib.append('<div style="font-size: 10pt; margin-top: 5px; color: #ecf0f1;">' + origCount + ' Originals | ' + (grid.contentLibrary.length - origCount) + ' Licensed</div>');
         topMetrics.append(gLib);
-        
+
         contentArea.append(topMetrics);
 
         var mngSect = $('<div class="cs-stagger-item" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #bdc3c7; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; gap: 20px;"></div>');
-        
+
         var priceDiv = $('<div style="flex: 1;"></div>');
         priceDiv.append('<h4 style="margin-top: 0; color: #2c3e50;">Subscription Price</h4>');
         var priceSelect = $('<select style="width: 100%; padding: 10px; font-size: 11pt;"></select>');
@@ -6448,10 +6816,10 @@
             { v: 15, t: "$15.00 / mo (Premium)" },
             { v: 25, t: "$25.00 / mo (Milking)" }
         ];
-        priceOpts.forEach(function(po) {
+        priceOpts.forEach(function (po) {
             priceSelect.append('<option value="' + po.v + '" ' + (grid.monthlySubFee === po.v ? 'selected' : '') + '>' + po.t + '</option>');
         });
-        priceSelect.change(function() {
+        priceSelect.change(function () {
             var nv = parseInt($(this).val());
             grid.monthlySubFee = nv;
             if (nv === 5) { grid.subscriberGrowthRate = 0.03; grid.churnRate = 0.005; }
@@ -6471,10 +6839,10 @@
             { v: 2000000, t: "$8.0M / mo" },
             { v: 5000000, t: "$20.0M / mo" }
         ];
-        markOpts.forEach(function(mo) {
+        markOpts.forEach(function (mo) {
             markSelect.append('<option value="' + mo.v + '" ' + (grid.marketingBudgetWeekly === mo.v ? 'selected' : '') + '>' + mo.t + '</option>');
         });
-        markSelect.change(function() {
+        markSelect.change(function () {
             grid.marketingBudgetWeekly = parseInt($(this).val());
         });
         markDiv.append(markSelect);
@@ -6484,10 +6852,10 @@
 
         var ldrSect = $('<div class="cs-stagger-item" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #bdc3c7; display: flex; flex-direction: column; height: 300px;"></div>');
         ldrSect.append('<h4 style="margin-top: 0; margin-bottom: 15px; color: #2c3e50; border-bottom: 1px solid #ecf0f1; padding-bottom: 10px;">Streaming Content Leaderboard (Top 5)</h4>');
-        
-        var sortedCats = grid.contentLibrary.slice().sort(function(a, b) { return b.totalViews - a.totalViews; });
+
+        var sortedCats = grid.contentLibrary.slice().sort(function (a, b) { return b.totalViews - a.totalViews; });
         var tl = Math.min(5, sortedCats.length);
-        
+
         if (tl === 0) {
             ldrSect.append('<div style="text-align: center; padding: 40px; color: #7f8c8d; font-style: italic;">No content available. Produce or license media to populate.</div>');
         } else {
@@ -6495,17 +6863,17 @@
             for (var ci = 0; ci < tl; ci++) {
                 var cItem = sortedCats[ci];
                 var cRow = $('<div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #f9f9f9; ' + (ci === 0 ? 'background: #fff9e6; border-left: 3px solid #f1c40f;' : '') + '"></div>');
-                
+
                 var lft = $('<div></div>');
-                lft.append('<div style="font-weight: bold; font-size: 11pt;">' + (ci+1) + '. ' + cItem.title + ' ' + (cItem.isOriginal ? '<span style="font-size: 8pt; background: #e67e22; color: white; padding: 2px 4px; border-radius: 3px;">Original</span>' : '<span style="font-size: 8pt; background: #95a5a6; color: white; padding: 2px 4px; border-radius: 3px;">Licensed</span>') + '</div>');
+                lft.append('<div style="font-weight: bold; font-size: 11pt;">' + (ci + 1) + '. ' + cItem.title + ' ' + (cItem.isOriginal ? '<span style="font-size: 8pt; background: #e67e22; color: white; padding: 2px 4px; border-radius: 3px;">Original</span>' : '<span style="font-size: 8pt; background: #95a5a6; color: white; padding: 2px 4px; border-radius: 3px;">Licensed</span>') + '</div>');
                 lft.append('<div style="font-size: 9pt; color: #7f8c8d; margin-top: 3px;">Score: ' + cItem.score + '/10</div>');
                 cRow.append(lft);
-                
+
                 var rgt = $('<div style="text-align: right;"></div>');
                 rgt.append('<div style="font-size: 11pt; font-weight: bold; color: #2980b9;">' + UI.getShortNumberString(cItem.totalViews) + ' views</div>');
                 rgt.append('<div style="font-size: 9pt; color: #2ecc71;">+' + UI.getShortNumberString(cItem.viewsThisWeek) + ' this wk</div>');
                 cRow.append(rgt);
-                
+
                 cList.append(cRow);
             }
             ldrSect.append(cList);
@@ -6522,18 +6890,18 @@
 
         var overlay = $('<div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9000; display:flex; justify-content:center; align-items:center;"></div>');
         var modal = $('<div class="windowBorder" style="background:#ecf0f1; border-radius:10px; padding:20px; width:450px; max-height:80%; display:flex; flex-direction:column;"></div>');
-        
+
         modal.append('<h3 style="margin-top:0; color:#d35400;">Film Adaptation: ' + ms.name + '</h3>');
         modal.append('<div style="font-size:10pt; color:#7f8c8d; margin-bottom:10px;">Select a game franchise to adapt. The game\'s score drastically improves initial momentum.</div>');
-        
+
         var listSq = $('<div style="flex:1; overflow-y:auto; border:1px solid #bdc3c7; background:#fff; margin-bottom:15px; border-radius:4px;"></div>');
         for (var i = log.length - 1; i >= 0; i--) {
             var g = log[i];
             var btn = $('<div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; font-weight:bold; color:#2c3e50;">' + g.title + ' (' + g.score + ' score)</div>');
-            btn.hover(function(){ $(this).css('background','#f4f6f7'); }, function(){ $(this).css('background','#fff'); });
-            
-            (function(game) {
-                btn.click(function() {
+            btn.hover(function () { $(this).css('background', '#f4f6f7'); }, function () { $(this).css('background', '#fff'); });
+
+            (function (game) {
+                btn.click(function () {
                     Sound.click();
                     var pBudget = ms.valuation * 0.1;
                     ms.currentProject = {
@@ -6552,107 +6920,105 @@
             listSq.append(btn);
         }
         modal.append(listSq);
-        
+
         var cancelBtn = $('<div class="selectorButton whiteBoardButton" style="text-align:center;">Cancel</div>');
-        cancelBtn.click(function() { overlay.remove(); });
+        cancelBtn.click(function () { overlay.remove(); });
         modal.append(cancelBtn);
-        
+
         overlay.append(modal);
         $('body').append(overlay);
     }
 
     function buildMediaStudioCard(ms) {
-        var item = $('<div class="studioCard" style="border: 1px solid #d1d9e6; background: #ffffff; padding: 12px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: flex-start; box-shadow: 0 2px 6px rgba(0,0,0,0.05); transition: all 0.2s ease;"></div>');
+        var item = $('<div class="studioCard" style="border: 1px solid #bdc3c7; background: #ffffff; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; align-items: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"></div>');
 
-        var pieContainer = $('<div style="width: 60px; min-width: 60px; text-align: center; margin-right: 12px;"></div>');
+        var pieContainer = $('<div style="width: 60px; min-width: 60px; text-align: center; margin-right: 10px;"></div>');
         var canvasId = 'pie_m_' + ms.id;
         pieContainer.append('<canvas id="' + canvasId + '" width="50" height="50" data-shares="' + ms.sharesOwned + '" data-name="' + ms.name + '" class="pieChartCanvas"></canvas>');
-        pieContainer.append('<div style="font-size: 10pt; margin-top: 5px; color: #34495e; font-weight: bold;">' + ms.sharesOwned + '%</div>');
+        pieContainer.append('<div style="font-size: 10pt; margin-top: 5px; color: #2c3e50; font-weight: bold;">' + ms.sharesOwned + '%</div>');
         item.append(pieContainer);
 
         var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1; min-width: 0;"></div>');
         var headerRow = $('<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"></div>');
         headerRow.append('<h3 style="margin: 0; font-size: 14pt; color: #2c3e50; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; font-weight: bold;">' + ms.name + '</h3>');
-        headerRow.append('<div style="font-size: 10pt; color: #7f8c8d; white-space: nowrap; font-weight: 500;">\u2B50 Reputation: ' + ms.reputation + '</div>');
+        headerRow.append('<div style="font-size: 10pt; color: #7f8c8d; white-space: nowrap; font-weight: 500;">\u2B50 Reputation: ' + (ms.reputation || 1).toFixed(1) + '</div>');
         detailsContainer.append(headerRow);
 
-        detailsContainer.append('<div style="font-size: 11pt; margin: 3px 0;">Val: <strong style="color: #27ae60;">$' + UI.getShortNumberString(ms.valuation) + '</strong></div>');
+        detailsContainer.append('<div style="font-size: 11pt; margin: 3px 0; font-weight: bold; color: #27ae60;">Valuation: $' + UI.getShortNumberString(ms.valuation) + '</div>');
 
         if (ms.currentProject) {
-            var typelabel = ms.currentProject.isPlayerFunded ? "<span style='color:#e67e22'>[Player Funded]</span> " : "<span style='color:#8e44ad'>[AI]</span> ";
+            var typelabel = ms.currentProject.isPlayerFunded ? "<span style='color:#e67e22'>[Player]</span> " : "<span style='color:#8e44ad'>[AI]</span> ";
             detailsContainer.append('<div style="font-size: 10pt; margin: 3px 0; color: #7f8c8d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Dev: ' + typelabel + ms.currentProject.title + ' (' + Math.ceil(ms.currentProject.weeksRemaining) + 'w left)</div>');
         } else {
-            detailsContainer.append('<div style="font-size: 10pt; margin: 3px 0; color: #7f8c8d; opacity: 0.8;">Currently idle.</div>');
+            detailsContainer.append('<div style="font-size: 10pt; margin: 3px 0; color: #95a5a6;">Currently idle.</div>');
         }
 
         var btnContainer = $('<div style="margin-top: 8px; display: flex; flex-direction: column; gap: 5px;"></div>');
-        var topBtns = $('<div style="display: flex; gap: 6px; align-items: center;"></div>');
-        var bottomBtns = $('<div style="display: flex; gap: 6px;"></div>');
-        
-        var chunkCost = Math.floor((ms.valuation * 0.1) * 1.15); // 15% premium
-        var chunkYield = Math.floor((ms.valuation * 0.1) * 0.85); // 15% fee
-        
-        if (ms.sharesOwned >= 10) {
+
+        var isLicensed = (store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === ms.id && GameManager.company.currentWeek < d.endWeek; });
+        var dealBtn = $('<button class="selectorButton whiteBoardButton" style="width: 100%; font-size: 10pt; padding: 6px 0;">' + (isLicensed ? "Catalog Active \u2705" : "Negotiate Catalogue Deal") + '</button>');
+        dealBtn.click(function () {
+            Sound.click();
+            store.data.activeCatalogueNegotiation = ms;
+            routeModMenu("catalogue_negotiation", "media");
+        });
+        btnContainer.append(dealBtn);
+
+        var actionRow = $('<div style="display: flex; gap: 6px; align-items: center;"></div>');
+        var chunkCost = Math.floor((ms.valuation * 0.1) * 1.15);
+        var chunkYield = Math.floor((ms.valuation * 0.1) * 0.85);
+
+        if (ms.sharesOwned > 0) {
             var sellBtn = $('<button class="selectorButton deleteButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Sell 10%</button>');
-            sellBtn.click(function() {
+            sellBtn.click(function () {
                 Sound.click();
                 GameManager.company.adjustCash(chunkYield, "Sold 10% of " + ms.name);
                 ms.sharesOwned -= 10;
                 routeModMenu("film_subs", "media");
             });
-            topBtns.append(sellBtn);
+            actionRow.append(sellBtn);
         } else {
-            topBtns.append($('<div style="flex: 1;"></div>'));
+            actionRow.append($('<div style="flex: 1;"></div>'));
         }
-        
-        topBtns.append($('<div style="flex: 1; text-align: center; color: #7f8c8d; font-size: 10pt;">Val: $' + UI.getShortNumberString(chunkYield) + '</div>'));
-        
+
+        actionRow.append('<div style="flex: 1; text-align: center; color: #7f8c8d; font-size: 9pt;">10% Yield: $' + UI.getShortNumberString(chunkYield) + '</div>');
+
         if (ms.sharesOwned < 100) {
             var buyBtn = $('<button class="selectorButton greenButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Buy 10%</button>');
-            buyBtn.click(function() {
+            buyBtn.click(function () {
                 Sound.click();
                 if (GameManager.company.cash >= chunkCost) {
                     GameManager.company.adjustCash(-chunkCost, "Purchased 10% of " + ms.name);
                     ms.sharesOwned += 10;
-                    if (ms.sharesOwned === 50) csAutoRouteMediaCatalog(ms);
                     routeModMenu("film_subs", "media");
                 } else alert("Not enough funds.");
             });
-            topBtns.append(buyBtn);
+            actionRow.append(buyBtn);
         } else {
-            topBtns.append($('<div style="flex: 1;"></div>'));
+            actionRow.append($('<div style="flex: 1;"></div>'));
         }
-        
-        if (ms.sharesOwned >= 50 && !ms.currentProject) {
-            var licenseBtn = $('<div class="selectorButton orangeButton" style="flex: 1; padding: 4px 10px; font-size: 10pt;">License Game IP</div>');
-            licenseBtn.click(function() {
-                Sound.click();
-                csShowGameLicensingModal(ms);
-            });
-            bottomBtns.append(licenseBtn);
-        }
-        
+        btnContainer.append(actionRow);
+
         if (ms.sharesOwned === 100) {
-            var absBtn = $('<div class="selectorButton orangeButton" style="flex: 1; padding: 4px 10px; font-size: 10pt;">Absorb (+$' + UI.getShortNumberString(ms.valuation) + ')</div>');
-            absBtn.click(function() {
-                Sound.click();
-                if (confirm("Fully absorb " + ms.name + " for $" + UI.getShortNumberString(ms.valuation) + "?")) {
-                    GameManager.company.adjustCash(ms.valuation, "Absorbed " + ms.name);
-                    var filtered = [];
-                    for(var f=0; f<store.data.movieStudios.length; f++){
-                        if(store.data.movieStudios[f].id !== ms.id) filtered.push(store.data.movieStudios[f]);
-                    }
-                    store.data.movieStudios = filtered;
+            var absorbBtn = $('<button class="selectorButton deleteButton" style="width: 100%; font-size: 10pt; padding: 6px 0;">Absorb Takeover</button>');
+            absorbBtn.click(function () {
+                if (confirm("Absorb " + ms.name + "?")) {
+                    Sound.click();
+                    var rpGained = Math.floor(ms.valuation / 200000) + 1;
+                    GameManager.company.researchPoints += rpGained;
+                    store.data.movieStudios = store.data.movieStudios.filter(function (s) { return s.id !== ms.id; });
+                    GameManager.company.notifications.push(new Notification({ header: "Takeover!", text: "Absorbed " + ms.name + "!", image: "" }));
                     routeModMenu("film_subs", "media");
                 }
             });
-            bottomBtns.append(absBtn);
+            btnContainer.append(absorbBtn);
+        } else if (ms.sharesOwned >= 50) {
+            var lpBtn = $('<button class="selectorButton orangeButton" style="width: 100%; font-size: 10pt; padding: 6px 0;">License Game IP (Adaptation)</button>');
+            lpBtn.click(function () { Sound.click(); csShowGameLicensingModal(ms); });
+            btnContainer.append(lpBtn);
         }
-        
-        btnContainer.append(topBtns);
-        if (bottomBtns.children().length > 0) btnContainer.append(bottomBtns);
+
         detailsContainer.append(btnContainer);
-        
         item.append(detailsContainer);
         return item;
     }
@@ -6667,9 +7033,7 @@
             return;
         }
 
-        var sortPref = store.data.modSortPref || "owned";
-        function getE(s) { ensureStaffObj(s); return (s.staff[1] || 0) + (s.staff[2] || 0) + (s.staff[3] || 0) + (s.staff[4] || 0) + (s.staff[5] || 0); }
-        function getQ(s) { ensureStaffObj(s); return ((s.staff[1] || 0) * 0.2) + ((s.staff[2] || 0) * 0.5) + ((s.staff[3] || 0) * 1.0) + ((s.staff[4] || 0) * 1.5) + ((s.staff[5] || 0) * 2.5); }
+        var sortPref = store.data.modSortPref_media || "owned";
         function getG(s) {
             var max = 0;
             if (store.data.releaseHistory) {
@@ -6683,9 +7047,8 @@
 
         mStudios.sort(function (a, b) {
             if (sortPref === "val") return b.valuation - a.valuation;
-            if (sortPref === "emps") return getE(b) - getE(a);
-            if (sortPref === "quality") return getQ(b) - getQ(a);
-            if (sortPref === "games") return getG(b) - getG(a);
+            if (sortPref === "rep") return (b.reputation || 0) - (a.reputation || 0);
+            if (sortPref === "films") return getG(b) - getG(a);
             return b.sharesOwned - a.sharesOwned;
         });
 
@@ -6694,12 +7057,11 @@
         var sortSelect = $('<select style="font-size: 11pt; flex: 1; padding: 4px; color: black; border: 1px solid #bdc3c7; border-radius: 4px; box-sizing: border-box;"></select>');
         sortSelect.append('<option value="owned">Ownership (Default)</option>');
         sortSelect.append('<option value="val">Valuation</option>');
-        sortSelect.append('<option value="emps">Total Employees</option>');
-        sortSelect.append('<option value="quality">Highest Quality Team</option>');
-        sortSelect.append('<option value="games">Highest Rated Film</option>');
+        sortSelect.append('<option value="rep">Reputation</option>');
+        sortSelect.append('<option value="films">Highest Rated Film</option>');
         sortSelect.val(sortPref);
         sortSelect.change(function () {
-            store.data.modSortPref = $(this).val();
+            store.data.modSortPref_media = $(this).val();
             routeModMenu("film_subs", "media");
         });
         sortContainer.append(sortSelect);
@@ -6712,7 +7074,7 @@
         });
 
         container.append(listContainer);
-        
+
         setTimeout(function () {
             $('.pieChartCanvas').each(function () {
                 var c = this;
@@ -6723,7 +7085,7 @@
                 var centerY = 25;
 
                 var sName = $(this).attr('data-name') || "?";
-                var initials = sName.split(' ').map(function(w){return w[0];}).join('').substring(0, 2).toUpperCase();
+                var initials = sName.split(' ').map(function (w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
 
                 ctx.clearRect(0, 0, 50, 50);
 
@@ -6751,6 +7113,119 @@
         }, 10);
     }
 
+    function csRenderLicensingReview(container) {
+        container.empty();
+        var offer = store.data.activeLicensingOffer;
+        if (!offer) {
+            container.append('<div style="text-align: center; color: #7f8c8d; font-style: italic; margin-top: 50px;">Nothing to display yet! Wait for a studio to approach you with a licensing proposal.</div>');
+            return;
+        }
+        var backBtn = $('<div class="selectorButton" style="padding: 8px 15px; margin-bottom: 15px; display: inline-block; cursor: pointer;"> < Back to Franchises</div>');
+        backBtn.click(function () { routeModMenu("franchises", "media"); });
+        container.append(backBtn);
+        container.append('<h2 style="margin-top: 0; color: #d35400;">Licensing Proposal: ' + offer.franchiseName + '</h2>');
+        var terms = $('<div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #f39c12; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt;">Upfront Payment</label><h3 style="margin: 5px 0; color: #27ae60;">$' + UI.getShortNumberString(offer.upfront) + '</h3></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt;">Duration</label><h3 style="margin: 5px 0; color: #2980b9;">' + offer.filmsCount + ' Films</h3></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt;">Your Royalties</label><h3 style="margin: 5px 0; color: #8e44ad;">' + (offer.royaltyRate * 100).toFixed(0) + '%</h3></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt;">Studio Reputation</label><h3 style="margin: 5px 0; color: #d35400;">' + (offer.studioReputation || 3.0).toFixed(1) + '/5</h3></div>');
+        container.append(terms);
+        var actions = $('<div style="display: flex; gap: 15px;"></div>');
+        var acceptBtn = $('<div class="selectorButton greenButton" style="flex: 1; padding: 12px; font-weight: bold; text-align: center;">Accept Deal</div>');
+        var declineBtn = $('<div class="selectorButton redButton" style="flex: 1; padding: 12px; font-weight: bold; text-align: center;">Decline</div>');
+        acceptBtn.click(function () {
+            csHandleAILicensingResponse(offer, true);
+            store.data.activeLicensingOffer = null;
+            routeModMenu("franchises", "media");
+        });
+        declineBtn.click(function () {
+            csHandleAILicensingResponse(offer, false);
+            store.data.activeLicensingOffer = null;
+            routeModMenu("franchises", "media");
+        });
+        actions.append(acceptBtn);
+        actions.append(declineBtn);
+        container.append(actions);
+    }
+
+    function csRenderCatalogueNegotiation(container) {
+        container.empty();
+        var ms = store.data.activeCatalogueNegotiation;
+        if (!ms) {
+            container.append('<div style="text-align: center; color: #7f8c8d; font-style: italic; margin-top: 50px;">Nothing to display yet! Access this tab by clicking "Negotiate Catalogue Deal" in the Film Studios menu.</div>');
+            return;
+        }
+
+        container.append('<div class="selectorButton whiteBoardButton" style="margin-bottom: 15px; display: inline-block; cursor: pointer; padding: 5px 15px;"> < Back to Studios</div>').children().last().click(function () { routeModMenu("film_subs", "media"); });
+
+        container.append('<h2 style="color: #f39c12; margin-top: 0; font-size: 16pt; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px;">Catalogue Negotiation: ' + ms.name + '</h2>');
+        container.append('<p style="font-size: 10pt; color: #2c3e50; margin-bottom: 15px;">A Catalogue Deal grants you <b>automatic, zero-fee access</b> to all of this studio\'s new releases for your Grid platform for 104 weeks.</p>');
+
+        var upfront = Math.floor(ms.valuation * 0.15);
+        var weekly = Math.floor(ms.valuation * 0.001);
+
+        var termsBox = $('<div style="background: #ecf0f1; border: 1px solid #bdc3c7; border-radius: 5px; padding: 15px; margin-bottom: 20px;"></div>');
+        termsBox.append('<div style="margin-bottom: 10px; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; font-weight: bold; color: #2c3e50;">Proposed Terms:</div>');
+
+        var row = function (l, v, c) {
+            return '<div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11pt;"><span style="color: #7f8c8d;">' + l + '</span><span style="font-weight: bold; color: ' + (c || '#2c3e50') + ';">' + v + '</span></div>';
+        };
+
+        termsBox.append(row("Upfront Licensing Fee", "$" + UI.getShortNumberString(upfront), "#27ae60"));
+        termsBox.append(row("Weekly Maintenance Fee", "$" + UI.getShortNumberString(weekly), "#e74c3c"));
+        termsBox.append(row("Contract Duration", "104 Weeks (Approx 2 Years)", "#2980b9"));
+        termsBox.append(row("Negotiation Partner", ms.name, "#34495e"));
+        container.append(termsBox);
+
+        if (!store.data.gridService || !store.data.gridService.isActive) {
+            container.append('<div style="text-align: center; color: #c0392b; font-weight: bold; margin-top: 10px; padding: 10px; border: 2px dashed #c0392b;">Grid Service Required to Sign Deal</div>');
+        } else {
+            var signBtn = $('<div class="selectorButton greenButton" style="width: 100%; padding: 12px; font-size: 12pt; font-weight: bold; text-align: center;">Sign Final Agreement</div>');
+            signBtn.click(function () {
+                if (GameManager.company.cash < upfront) {
+                    Sound.click();
+                    // FIX 1: Added 'image: ""' here to prevent the game's notification engine from crashing
+                    GameManager.company.notifications.push(new Notification({ header: "Funding Denied", text: "Insufficient funds for " + ms.name, image: "" }));
+                    return;
+                }
+                Sound.click();
+                GameManager.company.adjustCash(-upfront, "Catalogue Deal: " + ms.name);
+
+                // FIX 2: Ensure the array is initialized before pushing the new contract to it
+                if (!store.data.activeCatalogueDeals) {
+                    store.data.activeCatalogueDeals = [];
+                }
+
+                store.data.activeCatalogueDeals.push({
+                    studioId: ms.id,
+                    studioName: ms.name,
+                    startWeek: Math.floor(GameManager.company.currentWeek),
+                    endWeek: Math.floor(GameManager.company.currentWeek) + 104,
+                    weeklyMaintenance: weekly
+                });
+                store.data.activeCatalogueNegotiation = null;
+                routeModMenu("film_subs", "media");
+            });
+            container.append(signBtn);
+        }
+    }
+
+    function csSeedFilmMarket() {
+        var titles = ["Space Odyssey", "The Old World", "Cyber-Night", "Detective Holmes", "Magic Kingdom"];
+        var studios = ["Global Cine", "Indie Pixels", "Mega-Media", "FilmStar"];
+        var seeds = [];
+        for (var i = 0; i < titles.length; i++) {
+            seeds.push({
+                id: "SEED_" + i,
+                title: titles[i],
+                platformIds: ["movie"],
+                score: Math.floor(Math.random() * 4) + 6,
+                studioName: studios[i % studios.length]
+            });
+        }
+        return seeds;
+    }
+
     function csRenderFilmMarketTab(container) {
         container.empty();
         container.append('<h2 style="color: #d35400; font-size: 14pt; margin: 0 0 15px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px;">Film Licensing Market</h2>');
@@ -6761,7 +7236,7 @@
         }
 
         var rHist = store.data.releaseHistory || [];
-        var films = rHist.filter(function(r) { return r.platformIds && r.platformIds.indexOf("movie") !== -1; });
+        var films = rHist.filter(function (r) { return r.platformIds && r.platformIds.indexOf("movie") !== -1; });
 
         if (films.length === 0) {
             container.append('<div style="color: #7f8c8d; font-style: italic; text-align: center; margin-top: 30px;">There are no past film releases available to license on the open market. Wait for unowned studios to produce films.</div>');
@@ -6769,47 +7244,36 @@
         }
 
         var listContainer = $('<div style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 480px; padding-right: 5px;"></div>');
-        
-        films.forEach(function(f) {
+
+        films.forEach(function (f) {
             var row = $('<div style="background: #fff; border: 1px solid #bdc3c7; border-radius: 4px; padding: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"></div>');
-            
+
             var info = $('<div></div>');
             info.append('<div style="font-weight: bold; font-size: 13pt; color: #2c3e50;">' + f.title + '</div>');
             info.append('<div style="font-size: 10pt; color: #7f8c8d;">Originated by: ' + f.studioName + ' | Metacritic: <span style="color: #e67e22; font-weight: bold;">' + f.score + '/10</span></div>');
             row.append(info);
-            
+
             var baseCost = 2000000 + (f.score * 500000); // Between $2.5M and $7M upfront
             var wCost = 10000 + (f.score * 5000); // 15k - 60k weekly maintaining cost
-            
+
             var btn = $('<div class="selectorButton greenButton" style="padding: 6px 15px; font-size: 10pt; text-align: center;">License<br><span style="font-size: 8pt; font-weight: normal;">$' + UI.getShortNumberString(baseCost) + ' (50 wks)</span></div>');
-            btn.click(function() {
+            btn.click(function () {
                 Sound.click();
                 if (GameManager.company.cash >= baseCost) {
                     GameManager.company.adjustCash(-baseCost, "Licensed Film: " + f.title);
-                    var grid = store.data.gridService;
-                    grid.contentLibrary.push({
-                        title: f.title,
-                        type: "movie",
-                        isOriginal: false,
-                        score: f.score,
-                        addedWeek: Math.floor(GameManager.company.currentWeek),
-                        viewsThisWeek: 0,
-                        totalViews: 0,
-                        licenseCostWeekly: wCost,
-                        licenseWeeksRemaining: 50
-                    });
-                    
+                    csLicenseExternalToGrid(f, wCost, 50);
+
                     var actualIdx = store.data.releaseHistory.indexOf(f);
                     if (actualIdx > -1) store.data.releaseHistory.splice(actualIdx, 1);
-                    
+
                     routeModMenu("film_market", "media");
                 } else alert("Not enough cash to acquire this license!");
             });
-            
+
             row.append(btn);
             listContainer.append(row);
         });
-        
+
         container.append(listContainer);
     }
 
