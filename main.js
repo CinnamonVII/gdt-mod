@@ -150,11 +150,19 @@
 
 
             var activeFranchiseEntry = findActiveFranchiseEntryForCurrentGame(playerGame);
-            
+
             if (activeFranchiseEntry) {
                 // Attach data directly to the game object so it persists until release
                 playerGame.modFranchiseId = activeFranchiseEntry.franchiseId;
                 playerGame.modEntryType = activeFranchiseEntry.entryType || activeFranchiseEntry.type;
+
+                // Save a persistent link using the Game ID
+                if (!store.data.playerProjectMapping) store.data.playerProjectMapping = {};
+                store.data.playerProjectMapping[playerGame.id] = {
+                    franchiseId: activeFranchiseEntry.franchiseId,
+                    entryType: playerGame.modEntryType,
+                    remakeTargetId: activeFranchiseEntry.remakeTargetId
+                };
 
                 var fran = getFranchiseById(playerGame.modFranchiseId);
                 if (fran) {
@@ -188,11 +196,11 @@
                 if (!store.data.dlcData) store.data.dlcData = {};
                 if (!store.data.dlcData[playerGame.id]) store.data.dlcData[playerGame.id] = { count: 0, activeDLCs: [] };
 
-                var weeklyRev = 10000;
+                var weeklyRev = 5000;
                 if (playerGame.sequelTo) {
                     var baseGame = GameManager.company.getGameById(playerGame.sequelTo);
                     if (baseGame && baseGame.totalSalesCash) {
-                        weeklyRev = Math.max(10000, Math.floor(baseGame.totalSalesCash / 20));
+                        weeklyRev = Math.max(5000, Math.floor(baseGame.totalSalesCash / 80));
                     }
                 }
 
@@ -261,24 +269,30 @@
     var eventKeyReleased = (GDT.eventKeys && GDT.eventKeys.game) ? GDT.eventKeys.game.released : "gameReleased";
     GDT.on(eventKeyReleased, function (e) {
         var game = e.game;
-        var franchiseId = game.modFranchiseId || (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.franchiseId : null);
-        var entryType = game.modEntryType || (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.entryType : null);
+
+        var mapping = store.data.playerProjectMapping ? store.data.playerProjectMapping[game.id] : null;
+        var franchiseId = mapping ? mapping.franchiseId : (game.modFranchiseId || (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.franchiseId : null));
+        var entryType = mapping ? mapping.entryType : (game.modEntryType || (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.entryType : null));
 
         if (franchiseId) {
             var fran = getFranchiseById(franchiseId);
             if (fran) {
                 var historyEntry = {
-                    id: "FE_" + Date.now(),
+                    id: "FE_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
                     gameId: game.id,
                     title: game.title,
                     score: game.score,
                     type: entryType || "sequel",
                     releaseWeek: Math.floor(GameManager.company.currentWeek),
-                    revenue: game.totalSalesCash || 0
+                    revenue: game.totalSalesCash || 0,
+                    remakeTargetId: mapping ? mapping.remakeTargetId : (store.data.activePlayerFranchiseProject ? store.data.activePlayerFranchiseProject.remakeTargetId : null)
                 };
 
                 onFranchiseEntryComplete(fran, historyEntry, game.score, game.totalSalesCash || 0);
             }
+
+            // Clean up only if we actually found a franchise link
+            if (store.data.playerProjectMapping) delete store.data.playerProjectMapping[game.id];
             store.data.activePlayerFranchiseProject = null;
         }
     });
@@ -286,6 +300,9 @@
     function initData() {
         if (!store.data.studios || store.data.studios.length === 0) {
             store.data.studios = generateInitialStudios();
+        }
+        if (!store.data.playerProjectMapping) {
+            store.data.playerProjectMapping = {};
         }
         if (!store.data.dlcData) {
             store.data.dlcData = {};
@@ -328,7 +345,16 @@
             if (typeof p.seasonsProduced === 'undefined' || isNaN(p.seasonsProduced)) p.seasonsProduced = 0;
             if (typeof p.episodes === 'undefined' || isNaN(p.episodes)) p.episodes = 12;
             if (typeof p.weeksRemaining === 'undefined' || isNaN(p.weeksRemaining)) p.weeksRemaining = 0;
-            if (typeof p.weeksPerSeason === 'undefined' || isNaN(p.weeksPerSeason)) p.weeksPerSeason = 8;
+            if (typeof p.totalWeeks === 'undefined' || isNaN(p.totalWeeks)) {
+                var budgetTmp = (typeof p.budget === 'undefined' || isNaN(p.budget)) ? 250000 : p.budget;
+                var weeks = Math.min(300, Math.floor(Math.pow(budgetTmp / 100000, 0.75)) + 8);
+                if (p.type === "soundtrack") weeks = 6;
+                p.totalWeeks = weeks;
+            }
+            if (typeof p.weeksPerSeason === 'undefined' || isNaN(p.weeksPerSeason)) {
+                var totalS = (typeof p.seasons === 'undefined' || isNaN(p.seasons)) ? 1 : p.seasons;
+                p.weeksPerSeason = Math.floor(p.totalWeeks / totalS);
+            }
             if (typeof p.budget === 'undefined' || isNaN(p.budget)) p.budget = 250000;
 
             if (typeof p.nextReleaseWeek === 'undefined' || isNaN(p.nextReleaseWeek)) p.nextReleaseWeek = 0;
@@ -348,6 +374,10 @@
         // Repair older franchises
         if (store.data.franchises) {
             store.data.franchises.forEach(function (f) {
+                if (typeof f.numId === 'undefined') {
+                    store.data.lastFranchiseNumId = (store.data.lastFranchiseNumId || 0) + 1;
+                    f.numId = store.data.lastFranchiseNumId;
+                }
                 if (typeof f.totalRevenue === 'undefined' || isNaN(f.totalRevenue)) f.totalRevenue = 0;
                 if (typeof f.fanbaseScore === 'undefined' || isNaN(f.fanbaseScore)) f.fanbaseScore = 50;
                 if (typeof f.tier === 'undefined' || isNaN(f.tier)) f.tier = 1;
@@ -533,10 +563,9 @@
     function getEntryTypeWeeks(type, size, bundleCount) {
         var baseWeeks = { "Small": 30, "Medium": 60, "Large": 100, "AAA": 160 };
         var weeks = baseWeeks[size] || 30;
-        if (type === "remaster") return Math.floor(weeks * 0.5);
-        if (type === "remake") return Math.floor(weeks * 1.25);
+        if (type === "remaster" || type === "remake") return Math.floor(weeks * 0.25);
         if (type === "expansion") return 8;
-        if (type === "bundle") return Math.floor(weeks * 0.4 * (bundleCount || 2));
+        if (type === "bundle") return Math.floor(weeks * 0.15 * (bundleCount || 2));
         return weeks;
     }
 
@@ -569,8 +598,9 @@
             }
 
 
-            if ((type === "remaster" || type === "remake") && franchise.installments.length > 0 && franchise.installments[0].beingRemade) {
-                return { ok: false, reason: "The original installment has already been remastered/remade." };
+            if ((type === "remaster" || type === "remake") && franchise.installments.length > 0) {
+                var hasUnremade = franchise.installments.some(function(i) { return i.type !== "soundtrack" && i.type !== "bundle" && !i.beingRemade; });
+                if (!hasUnremade) return { ok: false, reason: "All eligible installments have already been remastered/remade." };
             }
         }
 
@@ -633,7 +663,7 @@
         return { ok: true };
     }
 
-    function estimateFranchiseEntryScore(franchise, type, size) {
+    function estimateFranchiseEntryScore(franchise, type, size, remakeTargetId) {
         var baseMin = 4 + (franchise.tier * 0.5);
         var baseMax = 6 + (franchise.tier * 0.8);
         var currentWeek = Math.floor(GameManager.company.currentWeek);
@@ -650,13 +680,18 @@
             baseMax -= 0.5;
         }
 
-        if (type === "remake" && franchise.installments[0]) {
-            var originScore = franchise.installments[0].score;
-            return { min: Math.max(1, originScore * 0.8), max: Math.min(10, originScore * 1.2) };
-        }
-        if (type === "remaster" && franchise.installments[0]) {
-            var originScore = franchise.installments[0].score;
-            return { min: Math.max(1, originScore * 0.9), max: Math.min(10, originScore * 1.1) };
+        if (type === "remaster" || type === "remake") {
+            var targetInst = null;
+            if (remakeTargetId) {
+                targetInst = franchise.installments.filter(function (i) { return i.id === remakeTargetId; })[0];
+            }
+            if (!targetInst) targetInst = franchise.installments[0];
+
+            if (targetInst) {
+                var originScore = targetInst.score;
+                if (type === "remake") return { min: Math.max(1, originScore * 0.8), max: Math.min(10, originScore * 1.2) };
+                else return { min: Math.max(1, originScore * 0.9), max: Math.min(10, originScore * 1.1) };
+            }
         }
 
         return { min: Math.max(1, baseMin), max: Math.min(10, baseMax) };
@@ -762,7 +797,12 @@
                         if (inst) inst.beingRemade = true;
                     });
                 } else if (entry.type !== "bundle" && franchise.installments && franchise.installments.length > 0) {
-                    franchise.installments[0].beingRemade = true;
+                    if (entry.remakeTargetId) {
+                        var target = franchise.installments.filter(function(i) { return i.id === entry.remakeTargetId; })[0];
+                        if (target) target.beingRemade = true;
+                    } else {
+                        franchise.installments[0].beingRemade = true;
+                    }
                 }
             }
 
@@ -801,9 +841,24 @@
 
     function findActiveFranchiseEntryForCurrentGame(game) {
         if (!game) return null;
-        if (game.isFranchiseEntry) return { franchiseId: game.franchiseId, entryType: game.entryType };
+        if (game.isFranchiseEntry) return { franchiseId: game.franchiseId, entryType: game.entryType, remakeTargetId: game.remakeTargetId };
 
         if (store.data.activePlayerFranchiseProject) return store.data.activePlayerFranchiseProject;
+
+        if (game.title) {
+            var match = game.title.match(/(?:\s*)?\(id(\d+)\)$/i);
+            if (match) {
+                var numId = parseInt(match[1]);
+                if (store.data.franchises) {
+                    for (var i = 0; i < store.data.franchises.length; i++) {
+                        if (store.data.franchises[i].numId === numId) {
+                            return { franchiseId: store.data.franchises[i].id, entryType: "sequel" };
+                        }
+                    }
+                }
+            }
+        }
+
         return null;
     }
 
@@ -898,6 +953,24 @@
 
         try { processFranchisePassiveIncome(); } catch (e) { console.error("[Mod] processFranchisePassiveIncome error:", e); }
         try { processMediaProjects(); } catch (e) { console.error("[Mod] processMediaProjects error:", e); }
+
+        try {
+            if (GameManager.company && GameManager.company.gameLog) {
+                var log = GameManager.company.gameLog;
+                if (store.data.franchises) {
+                    store.data.franchises.forEach(function (f) {
+                        if (!f.installments) return;
+                        f.installments.forEach(function (inst) {
+                            if (inst.developer !== "Player" || !inst.gameId) return;
+                            var g = log.filter(function (game) { return game.id === inst.gameId; })[0];
+                            if (g && typeof g.totalSalesCash !== 'undefined') {
+                                inst.revenue = g.totalSalesCash;
+                            }
+                        });
+                    });
+                }
+            }
+        } catch (e) { console.error("[Mod] Update player franchise revenue error:", e); }
 
 
         if (currentWeek % 4 === 0) {
@@ -1121,7 +1194,7 @@
             if (p.isReleasing || p.status === "releasing") {
                 if (currentWeek >= p.nextReleaseWeek) {
                     var episodesAvailable = (p.type === "comicBook") ? p.totalEpisodes : ((p.seasonsProduced || 1) * (p.episodes || 12));
-                    
+
                     if (p.currentEpisode < episodesAvailable) {
                         p.currentEpisode++;
                         var f = p.franchiseId ? getFranchiseById(p.franchiseId) : null;
@@ -1216,11 +1289,13 @@
                 if (f.saleWeekRemaining <= 0) {
                     var sArrSubs = store.data.studios || [];
                     var s = sArrSubs.filter(function (st) { return st.sharesOwned < 50; });
-                    var buyer = s[Math.floor(Math.random() * s.length)];
+                    var buyer = s.length > 0 ? s[Math.floor(Math.random() * s.length)] : null;
                     if (buyer) {
                         GameManager.company.adjustCash(f.playerSalePrice, "Franchise Sale: " + f.name);
                         f.ownerId = buyer.id;
                         f.isListedByPlayer = false;
+                        if (!f.acquisitionHistory) f.acquisitionHistory = [];
+                        f.acquisitionHistory.push({ week: currentWeek, newOwner: buyer.name, price: f.playerSalePrice });
                         GameManager.company.notifications.push(new Notification({
                             header: "Franchise Sold!",
                             text: buyer.name + " has purchased your '" + f.name + "' franchise for $" + UI.getShortNumberString(f.playerSalePrice),
@@ -1228,6 +1303,11 @@
                         }));
                     } else {
                         f.isListedByPlayer = false;
+                        GameManager.company.notifications.push(new Notification({
+                            header: "Franchise Sale Failed",
+                            text: "We couldn't find an eligible buyer for '" + f.name + "'. (No independent studios available)",
+                            image: ""
+                        }));
                     }
                 }
             }
@@ -1362,6 +1442,15 @@
 
             ensureStaffObj(studio);
 
+            if (studio.sharesOwned >= 50 && studio.specialization === "CoDev") {
+                if (GameManager.company && GameManager.company.currentGame) {
+                    if (!studio.currentProject || !studio.currentProject.isCoDev) {
+                        studio.currentProject = { name: "Co-Dev Support", isCoDev: true, isPublishedByPlayer: false };
+                        GameManager.company.notifications.push(new Notification({ header: "Auto Co-Dev", text: studio.name + " is prioritizing your active project.", image: "" }));
+                    }
+                }
+            }
+
 
             if (studio.sharesOwned >= 50 && (currentWeek % 4 === 0)) {
                 var maint = 0;
@@ -1418,7 +1507,7 @@
                                 name: target.title + " DLC",
                                 isDLC: true,
                                 gameId: target.id,
-                                weeklyRevenue: Math.floor((target.totalSalesCash || 1500000) * 0.05),
+                                weeklyRevenue: Math.floor((target.totalSalesCash || 1500000) * 0.015),
                                 weeksRemaining: 18
                             };
 
@@ -1428,6 +1517,8 @@
                         }
                     } else if (spec === "CoDev" && GameManager.company && GameManager.company.currentGame) {
                         studio.currentProject = { name: "Co-Dev Support", isCoDev: true, isPublishedByPlayer: false };
+                        continue;
+                    } else if (spec === "CoDev") {
                         continue;
                     } else if (spec === "Games" && (currentWeek % 4 === 0)) {
 
@@ -1573,8 +1664,19 @@
 
     function getSmartPlatforms(studio, topicName, genreName, size) {
         var currentWk = GameManager.company.currentWeek;
+        function parseGameWeek(dateVal) {
+            if (!dateVal) return 0;
+            if (typeof dateVal === 'number') return dateVal;
+            if (typeof General !== 'undefined' && General.getWeekFromDateString) return General.getWeekFromDateString(dateVal);
+            var parts = dateVal.split('/');
+            if (parts.length === 3) return (parseInt(parts[0]) - 1) * 48 + (parseInt(parts[1]) - 1) * 4 + parseInt(parts[2]);
+            return 0;
+        }
+
         var activePlats = Platforms.allPlatforms.filter(function (p) {
-            return (p.published && p.published <= currentWk) && (!p.retireDate || p.retireDate > currentWk);
+            var pubWk = parseGameWeek(p.published);
+            var retWk = p.retireDate ? parseGameWeek(p.retireDate) : Infinity;
+            return (pubWk <= currentWk) && (retWk > currentWk);
         });
 
         if (activePlats.length === 0) return [Platforms.allPlatforms[0].name];
@@ -1610,15 +1712,17 @@
             Sound.click();
 
             var genreIndexMap = { "Action": 0, "Adventure": 1, "RPG": 2, "Simulation": 3, "Strategy": 4, "Casual": 5 };
-            var container = $('<div class="windowBorder" style="background-color: #fdf6e3; color: #2c3e50; padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);"></div>');
+            var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; color: #2c3e50; padding: 0; display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; position: relative;"></div>');
+            var xBtn = $('<div style="position: absolute; right: 10px; top: 10px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>');
+            xBtn.click(function () { isShowingDraft = false; $.modal.close(); });
+            xBtn.hover(function () { $(this).css('background', '#c0392b'); }, function () { $(this).css('background', '#e74c3c'); });
+            container.append(xBtn);
 
-            var header = $('<div style="background-color: #1a5276; padding: 15px 20px; position: relative; border-bottom: 3px solid #154360;"></div>');
-            header.append('<div style="position: absolute; right: 15px; top: 18px; background: #d35400; color: white; padding: 3px 12px; border-radius: 20px; font-size: 10pt; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">DLC</div>');
-            header.append('<div style="font-size: 16pt; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 60px; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">' + studio.name + '</div>');
-            header.append('<div style="font-size: 11pt; color: rgba(255,255,255,0.85); margin-top: 4px; font-style: italic;">Subsidiary Project Proposal</div>');
+            var header = $('<div style="flex: 0 0 auto; background-color: #e0e6ed; padding: 15px 20px; position: relative; border-bottom: 2px solid #bdc3c7;"></div>');
+            header.append('<div style="font-size: 16pt; font-weight: bold; color: #2c3e50; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 40px;">' + studio.name + ' <span style="font-size: 11pt; color: #7f8c8d; font-weight: normal;">(Subsidiary Draft)</span></div>');
             container.append(header);
 
-            var body = $('<div style="padding: 20px; background: #ffffff; border-bottom: 1px solid #d5dbdb;"></div>');
+            var body = $('<div style="flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; background: #ffffff; min-height: 0;"></div>');
 
             function makeRow(labelText, color, selectEl) {
                 var row = $('<div style="display: flex; align-items: center; margin-bottom: 12px;"></div>');
@@ -1697,8 +1801,8 @@
             body.append(costLine);
             container.append(body);
 
-            var btnArea = $('<div style=\"display: flex; gap: 10px; padding: 15px 20px; background: #ecf0f1;\"></div>');
-            var btnAccept = $('<div class=\"selectorButton greenButton\" style=\"flex: 1.5; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 3px 0 #1e8449;\">Accept \u0026 Fund</div>');
+            var btnArea = $('<div style="flex: 0 0 auto; display: flex; gap: 10px; padding: 15px 20px; background: #ecf0f1; border-top: 2px solid #bdc3c7;"></div>');
+            var btnAccept = $('<div class=\"selectorButton greenButton\" style=\"flex: 1.5; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 6px;\">Accept \u0026 Fund</div>');
             btnAccept.click(function () {
                 var selTopic = $('#draft_topic').val();
                 var selGenre = $('#draft_genre').val();
@@ -1721,7 +1825,7 @@
                 } else { alert("You need $" + UI.getShortNumberString(cost) + " to fund this draft!"); }
             });
 
-            var btnDecline = $('<div class=\"selectorButton deleteButton\" style=\"flex: 1; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 3px 0 #943126;\">Decline</div>');
+            var btnDecline = $('<div class=\"selectorButton deleteButton\" style=\"flex: 1; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 6px;\">Decline</div>');
             btnDecline.click(function () { isShowingDraft = false; studio.draftCooldown = 8; $.modal.close(); });
 
             btnArea.append(btnAccept).append(btnDecline);
@@ -1729,9 +1833,9 @@
 
             container.modal({
                 overlayClose: false,
-                opacity: 80,
+                opacity: 60,
                 overlayCss: { backgroundColor: "#000" },
-                containerCss: { width: "550px", height: "auto", border: "none", background: "transparent" }
+                containerCss: { width: "550px", height: "90%", maxHeight: "650px", backgroundColor: "transparent", border: "none" }
             });
 
             setTimeout(function () { $('#draft_topic, #draft_genre').change(updateDraftMatch); updateDraftMatch(); }, 100);
@@ -1847,9 +1951,9 @@
         // RNG impact scales down as quality goes up (100% -> 5%)
         var rngWeight = 1.0 - (qFactor * 0.95);
 
-        var talentScore = (qFactor * 9) + 1; 
+        var talentScore = (qFactor * 9) + 1;
         var luckScore = (Math.random() * 9) + 1;
-        
+
         var score = Math.floor((talentScore * (1 - rngWeight)) + (luckScore * rngWeight));
 
         if (proj.size === "AAA") score += 1;
@@ -1905,7 +2009,7 @@
             var f = getFranchiseById(proj.franchiseId);
             if (f) {
                 var entry = {
-                    id: "FE_" + Date.now(),
+                    id: "FE_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
                     type: proj.entryType,
                     title: proj.title || (f.name + " " + proj.entryType),
                     gameId: "MOD_" + Math.random().toString(36).substr(2, 9),
@@ -1925,9 +2029,12 @@
             var fransArrFin = store.data.franchises || [];
             var exists = fransArrFin.some(function (fr) { return fr.name.toLowerCase() === gameTitle.toLowerCase(); });
             if (!exists) {
-                var fId = "FRAN_" + Date.now();
+                store.data.lastFranchiseNumId = (store.data.lastFranchiseNumId || 0) + 1;
+                var randSuffix = "_" + Math.floor(Math.random() * 100000);
+                var fId = "FRAN_" + Date.now() + randSuffix;
                 var newF = {
                     id: fId,
+                    numId: store.data.lastFranchiseNumId,
                     name: gameTitle,
                     ownerId: studio.id,
                     originGameId: "MOD_" + Math.random().toString(36).substr(2, 9),
@@ -1937,7 +2044,7 @@
                     tier: 1,
                     totalRevenue: units * price,
                     installments: [{
-                        id: "FE_" + Date.now(),
+                        id: "FE_" + Date.now() + randSuffix,
                         type: "original",
                         title: gameTitle,
                         gameId: "MOD_" + Math.random().toString(36).substr(2, 9),
@@ -1968,7 +2075,7 @@
             store.data.dlcData[gId].count++;
             store.data.dlcData[gId].activeDLCs.push({
                 activeWeeksLeft: 20,
-                weeklyRevenue: Math.floor(units * price / 20)
+                weeklyRevenue: Math.floor(units * price / 80)
             });
         }
 
@@ -2174,13 +2281,13 @@
         var currentWk = GameManager.company.currentWeek;
         for (var i = 0; i < games.length; i++) {
             var g = games[i];
-            
+
             // Track weekly revenue for forecasting
             var totalSales = g.totalSalesCash || 0;
             var prevTotal = g.modLastTotalSales || totalSales;
             var weeklyRev = totalSales - prevTotal;
             g.modLastTotalSales = totalSales;
-            
+
             // Store rolling 4-week history for accurate "Last Month" reporting
             if (!g.modRevenueHistory) g.modRevenueHistory = [];
             g.modRevenueHistory.push(weeklyRev);
@@ -2194,9 +2301,9 @@
                 var promptKey = "PROMPT_" + (g.modMarketExtension || 0);
                 if (g.modLastPromptKey !== promptKey) {
                     g.modLastPromptKey = promptKey;
-                    
+
                     var lastMonthRev = 0;
-                    g.modRevenueHistory.forEach(function(r) { lastMonthRev += r; });
+                    g.modRevenueHistory.forEach(function (r) { lastMonthRev += r; });
                     if (lastMonthRev === 0) lastMonthRev = weeklyRev * 4; // Fallback if history is short
 
                     var forecastRev = Math.floor(lastMonthRev * 0.85); // Estimated next month with decay
@@ -2229,7 +2336,7 @@
         var modal = $('<div id="maintainModal" style="color: #2c3e50; text-align: center;"></div>');
         modal.append('<h2 style="color: #d35400; margin-bottom: 15px;">Market Extension: ' + game.title + '</h2>');
         modal.append('<p style="font-size: 11pt; line-height: 1.4;">' + game.title + ' is scheduled to be pulled from the market in <b>4 weeks</b>.</p>');
-        
+
         var stats = $('<div style="background: #fdf6e3; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #bdc3c7; display: flex; justify-content: space-around;"></div>');
         stats.append('<div><span style="font-size: 8pt; color: #7f8c8d; text-transform: uppercase;">Last Month</span><br><b style="color: #27ae60; font-size: 12pt;">$' + UI.getShortNumberString(lastMonth) + '</b></div>');
         stats.append('<div><span style="font-size: 8pt; color: #7f8c8d; text-transform: uppercase;">Forecasted</span><br><b style="color: #2980b9; font-size: 12pt;">~$' + UI.getShortNumberString(forecast) + '</b></div>');
@@ -2240,7 +2347,7 @@
 
         var buttons = $('<div style="display: flex; gap: 10px;"></div>');
         var keepBtn = $('<div class="selectorButton greenButton" style="flex: 1; padding: 12px; font-weight: bold;">Maintain (Pay Fee)</div>');
-        keepBtn.click(function() {
+        keepBtn.click(function () {
             if (GameManager.company.cash >= cost) {
                 Sound.click();
                 GameManager.company.adjustCash(-cost, "Market Maintenance: " + game.title);
@@ -2250,9 +2357,9 @@
                 alert("Not enough funds!");
             }
         });
-        
+
         var expireBtn = $('<div class="selectorButton deleteButton" style="flex: 1; padding: 12px; font-weight: bold;">Let it Expire</div>');
-        expireBtn.click(function() {
+        expireBtn.click(function () {
             Sound.click();
             $.modal.close();
         });
@@ -2284,13 +2391,18 @@
         }
 
 
-        var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #ecf0f1; color: #2c3e50; padding: 0;"></div>');
-        var header = $('<div id="modUI_header" style="display: flex; flex-wrap: wrap; gap: 3px; border-bottom: 2px solid #bdc3c7; padding: 6px 8px 0 8px; background-color: #e0e6ed;"></div>');
+        var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; color: #2c3e50; padding: 0; display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; position: relative;"></div>');
+        var header = $('<div id="modUI_header" style="flex: 0 0 auto; display: flex; flex-wrap: nowrap; gap: 2px; border-bottom: 2px solid #bdc3c7; padding: 6px 40px 0 8px; background-color: #e0e6ed; overflow: hidden; cursor: move; position: relative; border-top-left-radius: 14px; border-top-right-radius: 14px;"></div>');
         container.append(header);
-        var contentArea = $('<div id="modUI_content" style="height: 600px; overflow-y: auto; overflow-x: hidden; padding: 14px; background-color: #ecf0f1; box-sizing: border-box;"></div>');
+
+        var xBtn = $('<div style="position: absolute; right: 10px; top: 8px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>');
+        xBtn.click(function () { $.modal.close(); });
+        xBtn.hover(function () { $(this).css('background', '#c0392b'); }, function () { $(this).css('background', '#e74c3c'); });
+        container.append(xBtn);
+        var contentArea = $('<div id="modUI_content" style="flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px; background-color: #ecf0f1; box-sizing: border-box; min-height: 0;"></div>');
         container.append(contentArea);
 
-        var closeWrapper = $('<div class="centeredButtonWrapper" style="padding: 8px; border-top: 2px solid #bdc3c7; text-align: center;"></div>');
+        var closeWrapper = $('<div class="centeredButtonWrapper" style="flex: 0 0 auto; padding: 8px; border-top: 2px solid #bdc3c7; text-align: center;"></div>');
         var closeBtn = $('<div class="okButton selectorButton orangeButton" style="width: 120px; display: inline-block;">Close</div>');
         closeBtn.click(function () { $.modal.close(); });
         closeWrapper.append(closeBtn);
@@ -2298,9 +2410,22 @@
 
         container.modal({
             overlayClose: false,
-            opacity: 80,
+            opacity: 60,
             overlayCss: { backgroundColor: "#000" },
-            containerCss: { width: "1250px", height: "720px" }
+            containerCss: {
+                width: "900px",
+                height: "600px",
+                minWidth: "600px",
+                minHeight: "400px",
+                resize: "both",
+                overflow: "hidden",
+                backgroundColor: "transparent"
+            },
+            onShow: function (dialog) {
+                if (typeof $.fn.draggable === 'function') {
+                    dialog.container.draggable({ handle: "#modUI_header" });
+                }
+            }
         });
 
         routeModMenu(activeTab);
@@ -2328,7 +2453,7 @@
         ];
 
         tabs.forEach(function (t) {
-            var tabStyle = "flex: 1; text-align: center; padding: 8px 0; cursor: pointer; font-size: 11pt; font-weight: bold; border-top-left-radius: 5px; border-top-right-radius: 5px; border: 1px solid #bdc3c7; border-bottom: none; white-space: nowrap;";
+            var tabStyle = "flex: 1; text-align: center; padding: 6px 2px; cursor: pointer; font-size: 10pt; font-weight: bold; border-top-left-radius: 5px; border-top-right-radius: 5px; border: 1px solid #bdc3c7; border-bottom: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;";
             if (t.id === activeTab) {
                 tabStyle += " background-color: #ecf0f1; color: #d35400; margin-bottom: -2px; border-bottom: 2px solid #ecf0f1;";
             } else {
@@ -2409,7 +2534,7 @@
 
         var patterns = {
             sequel: [
-                "{base} {n}", "{base} {roman}", "{base}: {sub}", "{base} {sub}", "{base} Reloaded", "{base} Evolution", 
+                "{base} {n}", "{base} {roman}", "{base}: {sub}", "{base} {sub}", "{base} Reloaded", "{base} Evolution",
                 "{base}: The Sequel", "{base} 2.0", "{base}: Next Gen", "{base} Unleashed", "{base}: The Legend Continues",
                 "{base}: Resurrection", "{base}: Vengeance", "{base}: Retribution", "{base}: Aftermath", "{base}: The New Chapter",
                 "{base}: Part {n}", "{base} II: {sub}", "{base} III: {sub}", "{base}: {sub} {n}", "{base} {n}: {sub}",
@@ -2477,13 +2602,13 @@
             "Cold", "Hot", "Sharp", "Dull", "Hard", "Soft", "Dark", "Bright", "Loud", "Quiet", "Fast", "Slow", "High", "Low", "Near", "Far", "Lost", "Found", "Hidden", "Revealed", "Broken", "Fixed", "Dead", "Alive", "Old", "New", "First", "Last", "Pure", "Corrupt",
             "Alpha", "Beta", "Gamma", "Delta", "Omega", "Sigma", "Zeta", "Red", "Blue", "Green", "Yellow", "Purple", "Orange", "Black", "White", "Grey", "Gold", "Silver", "Bronze", "Steel", "Neon", "Cyber", "Steam", "Clockwork", "Digital", "Analog"
         ];
-        
+
         var list = patterns[type] || ["{base} {n}"];
         var pattern = list[Math.floor(Math.random() * list.length)];
-        
+
         var numMatch = base.match(/ ([0-9]+)$/);
         var nextNum = numMatch ? parseInt(numMatch[1]) + 1 : 2;
-        
+
         var romanMatch = base.match(/ (I+V?X?)$/);
         var nextRoman = "II";
         if (romanMatch) {
@@ -2497,9 +2622,9 @@
         }
 
         return pattern.replace(/{base}/g, cleanBase)
-                      .replace(/{n}/g, nextNum)
-                      .replace(/{roman}/g, nextRoman)
-                      .replace(/{sub}/g, subTitles[Math.floor(Math.random() * subTitles.length)]);
+            .replace(/{n}/g, nextNum)
+            .replace(/{roman}/g, nextRoman)
+            .replace(/{sub}/g, subTitles[Math.floor(Math.random() * subTitles.length)]);
     }
 
     function getStudioTeamQuality(studio) {
@@ -2511,7 +2636,7 @@
         return quality;
     }
 
-    function startSubsidiaryFranchiseProject(studio, franchise, entryType, size, bundledIds, bundleBaseScore) {
+    function startSubsidiaryFranchiseProject(studio, franchise, entryType, size, bundledIds, bundleBaseScore, remakeTargetId) {
         var bCount = (entryType === "bundle" && bundledIds) ? bundledIds.length : 1;
         var weeks = getEntryTypeWeeks(entryType, size, bCount);
         studio.currentProject = {
@@ -2524,7 +2649,8 @@
             totalWeeks: weeks,
             status: "developing",
             bundledIds: bundledIds,
-            bundleBaseScore: bundleBaseScore
+            bundleBaseScore: bundleBaseScore,
+            remakeTargetId: remakeTargetId
         };
 
         GameManager.company.notifications.push(new Notification({
@@ -2554,6 +2680,9 @@
         var bundleSelection = [];
         var bundleList = $('<div style="display: none; margin-bottom: 20px; background: #eee; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7;"><b>Bundle Collection:</b><div id="bundle-options" style="margin-top: 10px; max-height: 150px; overflow-y: auto;"></div></div>');
 
+        var remakeSelection = null;
+        var remakeList = $('<div style="display: none; margin-bottom: 20px; background: #eee; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7;"><b>Select Target Game:</b><div id="remake-options" style="margin-top: 10px; max-height: 150px; overflow-y: auto;"></div></div>');
+
         types.forEach(function (t) {
             var can = canAddFranchiseEntry(franchise, t);
             var tBtn = $('<div class="entry-type-btn" style="background: ' + (can.ok ? "#bdc3c7" : "#eee") + '; color: ' + (can.ok ? "#2c3e50" : "#999") + '">' + t.toUpperCase() + '</div>');
@@ -2568,9 +2697,15 @@
 
                 if (type === "bundle") {
                     bundleList.show();
+                    remakeList.hide();
                     refreshBundleOptions();
+                } else if (type === "remake" || type === "remaster") {
+                    bundleList.hide();
+                    remakeList.show();
+                    refreshRemakeOptions();
                 } else {
                     bundleList.hide();
+                    remakeList.hide();
                 }
                 updateEstimates();
             });
@@ -2578,16 +2713,38 @@
         });
         mBody.append(typeRow);
         mBody.append(bundleList);
+        mBody.append(remakeList);
 
         function refreshBundleOptions() {
             var options = bundleList.find('#bundle-options').empty();
             franchise.installments.slice().reverse().forEach(function (inst) {
                 if (inst.type === "soundtrack" || inst.beingRemade) return;
-                var item = $('<div style="margin-bottom: 5px; font-size: 9pt; display: flex; align-items: center; gap: 5px;"><input type="checkbox" value="' + inst.id + '"> ' + inst.title + ' (S:' + inst.score + ')</div>');
-                var cb = item.find('input');
-                cb.change(function () {
-                    if ($(this).is(':checked')) bundleSelection.push(inst.id);
-                    else bundleSelection = bundleSelection.filter(function (id) { return id !== inst.id; });
+                var isSel = bundleSelection.indexOf(inst.id) !== -1;
+                var item = $('<div class="selectorButton" style="padding: 6px 12px; font-size: 10pt; margin-bottom: 5px; border-radius: 4px; border: 1px solid #bdc3c7; cursor: pointer; transition: all 0.2s;">' + inst.title + ' (S:' + inst.score + ')</div>');
+                item.css("background-color", isSel ? "#3498db" : "#ecf0f1").css("color", isSel ? "white" : "#2c3e50");
+                item.click(function () {
+                    Sound.click();
+                    if (bundleSelection.indexOf(inst.id) !== -1) bundleSelection = bundleSelection.filter(function (id) { return id !== inst.id; });
+                    else bundleSelection.push(inst.id);
+                    refreshBundleOptions();
+                    updateEstimates();
+                });
+                options.append(item);
+            });
+        }
+
+        function refreshRemakeOptions() {
+            var options = remakeList.find('#remake-options').empty();
+            var validGames = franchise.installments.slice().reverse().filter(function (i) { return i.type !== "soundtrack" && i.type !== "bundle"; });
+            if (!remakeSelection && validGames.length > 0) remakeSelection = validGames[0].id;
+            validGames.forEach(function (inst) {
+                var isSel = (remakeSelection === inst.id);
+                var item = $('<div class="selectorButton" style="padding: 6px 12px; font-size: 10pt; margin-bottom: 5px; border-radius: 4px; border: 1px solid #bdc3c7; cursor: pointer; transition: all 0.2s;">' + inst.title + ' (S:' + inst.score + ')</div>');
+                item.css("background-color", isSel ? "#e67e22" : "#ecf0f1").css("color", isSel ? "white" : "#2c3e50");
+                item.click(function () {
+                    Sound.click();
+                    remakeSelection = inst.id;
+                    refreshRemakeOptions();
                     updateEstimates();
                 });
                 options.append(item);
@@ -2629,7 +2786,7 @@
                 var avg = tot / bundleSelection.length;
                 scoreTxt.find('b').text((avg - 1).toFixed(1) + " - " + (avg + 1).toFixed(1));
             } else {
-                var scoreRange = estimateFranchiseEntryScore(franchise, type, size);
+                var scoreRange = estimateFranchiseEntryScore(franchise, type, size, remakeSelection);
                 scoreTxt.find('b').text(scoreRange.min.toFixed(1) + " - " + scoreRange.max.toFixed(1));
             }
         }
@@ -2642,7 +2799,7 @@
             if (type === "bundle" && bCount < 2) { alert("Select at least 2 games for a bundle!"); return; }
             var cost = getEntryTypeCost(type, size, franchise, bCount);
             if (GameManager.company.cash < cost) { alert("Not enough cash!"); return; }
-            var entry = { franchiseId: franchise.id, entryType: type, size: size, bundledIds: (type === "bundle" ? bundleSelection : null) };
+            var entry = { franchiseId: franchise.id, entryType: type, size: size, bundledIds: (type === "bundle" ? bundleSelection : null), remakeTargetId: ((type === "remake" || type === "remaster") ? remakeSelection : null) };
             if (type === "bundle") {
                 var tot = 0;
                 bundleSelection.forEach(function (bid) {
@@ -2673,14 +2830,14 @@
                     }));
                 }
 
-                setTimeout(function() {
+                setTimeout(function () {
                     var win = $('#gameDefinition');
                     if (!win.length) return;
-                    
+
                     if (win.find('.cs-franchise-reminder').length === 0) {
                         win.append('<div class="cs-franchise-reminder" style="color: #d35400; text-align: center; margin-top: 10px; font-weight: bold; font-size: 11pt;">After the game is released, it will be registered as a release from ' + franchise.name + '</div>');
                     }
-                    
+
                     if (typeof UI !== 'undefined' && typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.currentGame) {
                         var cGame = GameManager.company.currentGame;
 
@@ -2688,6 +2845,11 @@
                         var lastInst = (franchise.installments && franchise.installments.length > 0) ? franchise.installments[franchise.installments.length - 1] : null;
                         var baseTitle = lastInst ? lastInst.title : franchise.name;
                         var newTitle = generateFranchiseTitle(baseTitle, type);
+
+                        if (franchise.numId) {
+                            newTitle += " (id" + franchise.numId + ")";
+                        }
+
                         win.find('#gameTitle').val(newTitle);
                         cGame.title = newTitle;
 
@@ -2698,23 +2860,23 @@
                             win.find('.' + btnClass).addClass('selected');
                             cGame.gameSize = size;
                         }
-                        
+
                         var lastGame = null;
                         if (franchise.installments && franchise.installments.length > 0) {
                             lastGame = franchise.installments[franchise.installments.length - 1];
                         }
-                        
+
                         if (lastGame) {
                             var gdtGameLog = GameManager.company.gameLog || [];
-                            var pastGameInfo = gdtGameLog.filter(function(g) { return g.title === lastGame.title; })[0];
-                            
+                            var pastGameInfo = gdtGameLog.filter(function (g) { return g.title === lastGame.title; })[0];
+
                             var topicToSet = pastGameInfo ? pastGameInfo.topic : franchise.topic;
                             var genreToSet = pastGameInfo ? pastGameInfo.genre : franchise.genre;
                             var secondGenreToSet = pastGameInfo ? pastGameInfo.secondGenre : null;
-                            
+
                             if (topicToSet) {
                                 var tpBtn = win.find('.pickTopicButton');
-                                tpBtn.get(0).innerText = topicToSet.name || topicToSet; 
+                                tpBtn.get(0).innerText = topicToSet.name || topicToSet;
                                 tpBtn.removeClass('selectorButtonEmpty');
                                 cGame.topic = topicToSet;
                             }
@@ -2731,7 +2893,7 @@
                                 cGame.secondGenre = secondGenreToSet;
                             }
                         }
-                        
+
                         if (UI._updateGameDefinitionCost) UI._updateGameDefinitionCost();
                         if (UI._updateGameDefinitionNextButtonEnabled) UI._updateGameDefinitionNextButtonEnabled();
                     }
@@ -2761,6 +2923,7 @@
                 if (!studio) return;
                 GameManager.company.adjustCash(-cost, "Franchise Project Cost: " + franchise.name);
                 var bIds = (type === "bundle" ? bundleSelection : null);
+                var rTarget = ((type === "remake" || type === "remaster") ? remakeSelection : null);
                 var bScore = 0;
                 if (type === "bundle") {
                     var tot = 0;
@@ -2814,8 +2977,10 @@
 
             var type = "sequel";
             var bundleSelection = [];
+            var remakeSelection = null;
 
             var bundleList = $('<div style="display: none; margin-bottom: 20px; background: #eee; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7;"><b>Bundle Collection:</b><div id="lic-bundle-options" style="margin-top: 10px; max-height: 150px; overflow-y: auto;"></div></div>');
+            var remakeList = $('<div style="display: none; margin-bottom: 20px; background: #eee; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7;"><b>Select Target Game:</b><div id="lic-remake-options" style="margin-top: 10px; max-height: 150px; overflow-y: auto;"></div></div>');
 
             var typeSelect = $('<select style="width: 100%; padding: 10px; margin-bottom: 20px; color: black;"></select>');
             ["sequel", "remaster", "remake", "spinoff", "prequel", "bundle"].forEach(function (t) {
@@ -2824,14 +2989,21 @@
             });
             modal.append(typeSelect);
             modal.append(bundleList);
+            modal.append(remakeList);
 
             typeSelect.change(function () {
                 type = $(this).val();
                 if (type === "bundle") {
                     bundleList.show();
+                    remakeList.hide();
                     refreshLicBundleOptions();
+                } else if (type === "remaster" || type === "remake") {
+                    bundleList.hide();
+                    remakeList.show();
+                    refreshLicRemakeOptions();
                 } else {
                     bundleList.hide();
+                    remakeList.hide();
                 }
             });
 
@@ -2839,11 +3011,31 @@
                 var options = bundleList.find('#lic-bundle-options').empty();
                 franchise.installments.slice().reverse().forEach(function (inst) {
                     if (inst.type === "soundtrack" || inst.beingRemade) return;
-                    var item = $('<div style="margin-bottom: 5px; font-size: 9pt; display: flex; align-items: center; gap: 5px; color: #2c3e50;"><input type="checkbox" value="' + inst.id + '"> ' + inst.title + ' (S:' + inst.score + ')</div>');
-                    var cb = item.find('input');
-                    cb.change(function () {
-                        if ($(this).is(':checked')) bundleSelection.push(inst.id);
-                        else bundleSelection = bundleSelection.filter(function (id) { return id !== inst.id; });
+                    var isSel = bundleSelection.indexOf(inst.id) !== -1;
+                    var item = $('<div class="selectorButton" style="padding: 6px 12px; font-size: 10pt; margin-bottom: 5px; border-radius: 4px; border: 1px solid #bdc3c7; cursor: pointer; transition: all 0.2s;">' + inst.title + ' (S:' + inst.score + ')</div>');
+                    item.css("background-color", isSel ? "#3498db" : "#ecf0f1").css("color", isSel ? "white" : "#2c3e50");
+                    item.click(function () {
+                        Sound.click();
+                        if (bundleSelection.indexOf(inst.id) !== -1) bundleSelection = bundleSelection.filter(function (id) { return id !== inst.id; });
+                        else bundleSelection.push(inst.id);
+                        refreshLicBundleOptions();
+                    });
+                    options.append(item);
+                });
+            }
+
+            function refreshLicRemakeOptions() {
+                var options = remakeList.find('#lic-remake-options').empty();
+                var validGames = franchise.installments.slice().reverse().filter(function (i) { return i.type !== "soundtrack" && i.type !== "bundle"; });
+                if (!remakeSelection && validGames.length > 0) remakeSelection = validGames[0].id;
+                validGames.forEach(function (inst) {
+                    var isSel = (remakeSelection === inst.id);
+                    var item = $('<div class="selectorButton" style="padding: 6px 12px; font-size: 10pt; margin-bottom: 5px; border-radius: 4px; border: 1px solid #bdc3c7; cursor: pointer; transition: all 0.2s;">' + inst.title + ' (S:' + inst.score + ')</div>');
+                    item.css("background-color", isSel ? "#e67e22" : "#ecf0f1").css("color", isSel ? "white" : "#2c3e50");
+                    item.click(function () {
+                        Sound.click();
+                        remakeSelection = inst.id;
+                        refreshLicRemakeOptions();
                     });
                     options.append(item);
                 });
@@ -2879,6 +3071,7 @@
                 GameManager.company.adjustCash(-fee, "Franchise License Fee: " + franchise.name);
 
                 var bIds = (type === "bundle" ? bundleSelection : null);
+                var rTarget = ((type === "remaster" || type === "remake") ? remakeSelection : null);
                 var bScore = 0;
                 if (type === "bundle") {
                     var tot = 0;
@@ -2889,7 +3082,7 @@
                     bScore = tot / bundleSelection.length;
                 }
 
-                startSubsidiaryFranchiseProject(s, franchise, type, size, bIds, bScore);
+                startSubsidiaryFranchiseProject(s, franchise, type, size, bIds, bScore, rTarget);
                 onBack();
             });
             modal.append(btn);
@@ -2935,7 +3128,7 @@
 
                 if (GameManager.company && GameManager.company.cash < playerCost) { alert("Not enough cash!"); return; }
 
-                var weeks = Math.floor(budget / 100000) + 8;
+                var weeks = Math.min(300, Math.floor(Math.pow(budget / 100000, 0.75)) + 8);
                 var p = {
                     id: "MEDIA_" + Date.now(),
                     type: "movie",
@@ -2961,6 +3154,10 @@
                 studio.currentDeal = p;
                 if (!store.data.mediaProjects) store.data.mediaProjects = [];
                 store.data.mediaProjects.push(p);
+
+                if (!f.mediaProperties) f.mediaProperties = [];
+                f.mediaProperties.push({ title: p.title, type: "movie", budget: budget });
+
                 GameManager.company.adjustCash(-playerCost, "Studio Pitch Deal: " + studio.name);
                 onBack();
             });
@@ -3172,8 +3369,10 @@
                         if (exists) { alert("A franchise with this name already exists!"); return; }
 
                         if (GameManager.company.cash < cost) { alert("Not enough cash!"); return; }
+                        store.data.lastFranchiseNumId = (store.data.lastFranchiseNumId || 0) + 1;
                         var f = {
-                            id: "FRAN_" + Date.now(),
+                            id: "FRAN_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+                            numId: store.data.lastFranchiseNumId,
                             name: name,
                             ownerId: "player",
                             originGameId: game.id,
@@ -3183,7 +3382,7 @@
                             tier: 1,
                             totalRevenue: game.totalSalesCash,
                             installments: [{
-                                id: "FE_" + Date.now(),
+                                id: "FE_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
                                 type: "original",
                                 title: game.title,
                                 gameId: game.id,
@@ -3229,6 +3428,8 @@
                         GameManager.company.adjustCash(-f.salePrice, "Franchise Acquisition: " + f.name);
                         f.ownerId = "player";
                         f.isForSale = false;
+                        if (!f.acquisitionHistory) f.acquisitionHistory = [];
+                        f.acquisitionHistory.push({ week: Math.floor(GameManager.company.currentWeek), newOwner: "player", price: f.salePrice });
                         Sound.click();
                         refresh();
                     });
@@ -3253,6 +3454,8 @@
                             GameManager.company.adjustCash(-salePrice, "Acquired Franchise: " + f.name);
                             f.ownerId = "player";
                             f.isForSale = false;
+                            if (!f.acquisitionHistory) f.acquisitionHistory = [];
+                            f.acquisitionHistory.push({ week: Math.floor(GameManager.company.currentWeek), newOwner: "player", price: salePrice });
                             GameManager.company.notifications.push(new Notification({
                                 header: "Acquisition Complete!",
                                 text: "You are now the proud owner of the " + f.name + " franchise.",
@@ -3465,7 +3668,7 @@
 
                     if (GameManager.company.cash < budget) { alert("Not enough cash!"); return; }
 
-                    var weeks = Math.floor(budget / 100000) + 8;
+                    var weeks = Math.min(300, Math.floor(Math.pow(budget / 100000, 0.75)) + 8);
                     if (type === "soundtrack") weeks = 6;
 
                     var totalSeasons = (function () {
@@ -3570,7 +3773,7 @@
 
         var labelWrapper = $('<div style="flex: 1;"></div>');
         labelWrapper.append('<div style="font-weight: bold; cursor: pointer;">Disable Feature Overload Malus</div>');
-        labelWrapper.append('<div style="font-size: 10pt; color: #7f8c8d; margin-top: 5px; display: block; border-top: 1px solid #eee; padding-top: 5px;">When enabled, this removes the penalty for having too many features in a game and proactively cleans up 80% of project bugs.</div>');
+        labelWrapper.append('<div style="font-size: 10pt; color: #7f8c8d; margin-top: 5px; display: block; border-top: 1px solid #eee; padding-top: 5px;">When enabled, this removes the penalty for having too many features in a game and proactively cleans up 80% of project bugs. (Experimental)</div>');
 
         overloadDiv.append(overloadCheck).append(labelWrapper);
         container.append(overloadDiv);
@@ -3804,8 +4007,22 @@
         }
     }
 
-    function showSearchableList(title, items, onSelect) {
-        var modal = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; padding: 15px; display: flex; flex-direction: column; overflow: hidden;"></div>');
+    function showSearchableList(title, items, onSelect, inlineContainer) {
+        var modal = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; padding: 15px; display: flex; flex-direction: column; overflow: hidden; position: relative;' + (inlineContainer ? ' width: 100%; height: 100%; box-sizing: border-box;' : '') + '"></div>');
+        
+        var closeAction = function() {
+            if (inlineContainer) {
+                modal.remove();
+                inlineContainer.children().show();
+            } else {
+                $.modal.close();
+            }
+        };
+
+        var xBtn = $('<div style="position: absolute; right: 10px; top: 10px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>');
+        xBtn.click(closeAction);
+        xBtn.hover(function () { $(this).css('background', '#c0392b'); }, function () { $(this).css('background', '#e74c3c'); });
+        modal.append(xBtn);
         modal.append('<h2 style="text-align: center; color: #2c3e50; margin: 0 0 10px 0; font-size: 15pt;">' + title + '</h2>');
 
         var searchInput = $('<input type="text" placeholder="Search..." style="width: 100%; padding: 10px; font-size: 12pt; margin-bottom: 10px; border: 1px solid #bdc3c7; border-radius: 4px; color: black; box-sizing: border-box;">');
@@ -3827,7 +4044,7 @@
                     row.click(function () {
                         Sound.click();
                         onSelect(n);
-                        $.modal.close();
+                        closeAction();
                     });
                     listContainer.append(row);
                 })(name);
@@ -3840,27 +4057,32 @@
         renderItems("");
 
         var closeBtn = $('<div class="selectorButton orangeButton" style="width: 100px; margin: 10px auto 0 auto; text-align: center;">Close</div>');
-        closeBtn.click(function () { $.modal.close(); });
+        closeBtn.click(closeAction);
         modal.append(closeBtn);
 
-        modal.modal({
-            overlayClose: true,
-            opacity: 80,
-            overlayCss: { backgroundColor: "#000" },
-            containerCss: { width: "400px", height: "500px" }
-        });
-        setTimeout(function () { searchInput.focus(); }, 100);
+        if (inlineContainer) {
+            inlineContainer.children().hide();
+            inlineContainer.append(modal);
+            setTimeout(function () { searchInput.focus(); }, 100);
+        } else {
+            modal.modal({
+                overlayClose: true,
+                opacity: 80,
+                overlayCss: { backgroundColor: "#000" },
+                containerCss: { width: "400px", height: "500px", backgroundColor: "transparent", border: "none" }
+            });
+            setTimeout(function () { searchInput.focus(); }, 100);
+        }
     }
 
     function renderPublishingForm(container, prefilled) {
         container.css({ opacity: 0 });
         container.empty();
 
-        var formBox = $('<div style="background-color: #fdf6e3; border: 4px solid #f1c40f; border-radius: 12px; padding: 20px; position: relative; box-shadow: 0 8px 16px rgba(0,0,0,0.2); font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif;"></div>');
+        var formBox = $('<div class="windowBorder" style="background-color: #ecf0f1; border: 1px solid #bdc3c7; padding: 20px; margin-bottom: 20px;"></div>');
 
         var titleContainer = $('<div style="text-align: center; margin-bottom: 20px;"></div>');
-        titleContainer.append('<div style="font-size: 24pt; font-weight: bold; color: #2c3e50; margin-bottom: 5px;">Game Concept</div>');
-        titleContainer.append('<div style="height: 2px; background: #2980b9; width: 80%; margin: 0 auto;"></div>');
+        titleContainer.append('<div style="font-size: 20pt; font-weight: bold; color: #2c3e50; margin-bottom: 5px;">Game Concept</div>');
         formBox.append(titleContainer);
 
         var row1 = $('<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"></div>');
@@ -3904,7 +4126,7 @@
             showSearchableList("Select Topic", Topics.topics, function (name) {
                 selectedTopic = name;
                 topicBtn.text('Pick Topic (' + selectedTopic + ')');
-            });
+            }, container);
         });
         formBox.append(topicBtn);
 
@@ -3916,7 +4138,7 @@
             showSearchableList("Select Main Genre", GameGenre.getAll(), function (name) {
                 selectedGenre = name;
                 g1Btn.text('Pick Genre (' + selectedGenre + ')');
-            });
+            }, container);
         });
         g2Btn.click(function () {
             var gList = [{ name: "None" }].concat(GameGenre.getAll());
@@ -3928,38 +4150,47 @@
                     selectedGenre2 = name;
                     g2Btn.text('Pick Genre (' + selectedGenre2 + ')');
                 }
-            });
+            }, container);
         });
         genreRow.append(g1Btn).append(g2Btn);
         formBox.append(genreRow);
 
-        var platRow = $('<div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;"></div>');
         var currentWk = GameManager.company.currentWeek;
+        function parseGameWeek(dateVal) {
+            if (!dateVal) return 0;
+            if (typeof dateVal === 'number') return dateVal;
+            if (typeof General !== 'undefined' && General.getWeekFromDateString) return General.getWeekFromDateString(dateVal);
+            var parts = dateVal.split('/');
+            if (parts.length === 3) return (parseInt(parts[0]) - 1) * 48 + (parseInt(parts[1]) - 1) * 4 + parseInt(parts[2]);
+            return 0;
+        }
+
         var myPlats = Platforms.allPlatforms.filter(function (p) {
-            return (p.published && p.published <= currentWk) && (!p.retireDate || p.retireDate > currentWk);
+            var pubWk = parseGameWeek(p.published);
+            var retWk = p.retireDate ? parseGameWeek(p.retireDate) : Infinity;
+            return (pubWk <= currentWk) && (retWk > currentWk);
         });
         if (myPlats.length === 0) myPlats = [Platforms.allPlatforms[0]];
 
+        var p1 = myPlats[0] ? myPlats[0].name : "PC";
+        var p2 = "None";
+        var p3 = "None";
+        var platRow = $('<div style="display: flex; gap: 8px; margin-bottom: 20px; justify-content: center;"></div>');
+        var pList = [{name: "None"}].concat(myPlats);
+
         function updatePlatShelf() {
             platRow.empty();
-            myPlats.slice(0, 6).forEach(function (p) {
-                var isSel = selectedPlats.indexOf(p.name) !== -1;
-                var pBtn = $('<div class="selectorButton" style="padding: 6px 12px; font-size: 10pt; border-radius: 4px; cursor: pointer; border: 1px solid #bdc3c7;">' + p.name + '</div>');
-                if (isSel) pBtn.css({ "background-color": "#3498db", "color": "white", "border-color": "#2980b9" });
-                else pBtn.css({ "background-color": "#ecf0f1", "color": "#2c3e50" });
+            var b1 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 6px;">Slot 1 (' + p1 + ')</div>');
+            b1.click(function () { showSearchableList("Select Platform 1", pList, function (name) { p1 = name; updatePlatShelf(); }, container); });
+            platRow.append(b1);
 
-                pBtn.click(function () {
-                    Sound.click();
-                    var idx = selectedPlats.indexOf(p.name);
-                    if (idx === -1) {
-                        if (selectedPlats.length < 3) selectedPlats.push(p.name);
-                    } else {
-                        selectedPlats.splice(idx, 1);
-                    }
-                    updatePlatShelf();
-                });
-                platRow.append(pBtn);
-            });
+            var b2 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 6px;">Slot 2 (' + p2 + ')</div>');
+            b2.click(function () { showSearchableList("Select Platform 2", pList, function (name) { p2 = name; updatePlatShelf(); }, container); });
+            platRow.append(b2);
+
+            var b3 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 6px;">Slot 3 (' + p3 + ')</div>');
+            b3.click(function () { showSearchableList("Select Platform 3", pList, function (name) { p3 = name; updatePlatShelf(); }, container); });
+            platRow.append(b3);
         }
         updatePlatShelf();
         formBox.append(platRow);
@@ -3971,7 +4202,8 @@
         var confirmBtn = $('<div class="selectorButton orangeButton" style="width: 160px; text-align: center; font-size: 12pt; font-weight: bold; border-radius: 6px;">Post Offer</div>');
         confirmBtn.click(function () {
             var advance = sizes.filter(function (x) { return x.id === selectedSize; })[0].cost;
-            if (selectedPlats.length === 0) selectedPlats = [myPlats[0].name];
+            selectedPlats = [p1, p2, p3].filter(function(x) { return x !== "None"; });
+            if (selectedPlats.length === 0) selectedPlats = [myPlats[0] ? myPlats[0].name : "PC"];
 
             if (GameManager.company.cash >= advance) {
                 GameManager.company.adjustCash(-advance, "Posted Publishing Deal");
@@ -4090,7 +4322,7 @@
                                     store.data.dlcData[game.id].activeDLCs.push({
                                         pendingPlayerDev: 10,
                                         gameTitle: game.title,
-                                        weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.05)
+                                        weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.015)
                                     });
                                     store.data.dlcData[game.id].count++;
                                     $.modal.close();
@@ -4109,7 +4341,7 @@
                                                 name: game.title + " DLC",
                                                 isDLC: true,
                                                 gameId: game.id,
-                                                weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.05),
+                                                weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.015),
                                                 weeksRemaining: 18
                                             };
                                             if (!store.data.dlcData[game.id]) store.data.dlcData[game.id] = { count: 0, activeDLCs: [] };
@@ -4600,25 +4832,28 @@
         pSizeSelect.append('<option value="AAA">AAA</option>');
         formContainer.append('<div>Game Size:</div>').append(pSizeSelect);
 
-        var platSearch = $('<input type="text" placeholder="Search platforms..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
-        formContainer.append('<div>Platforms (CTRL+Select):</div>').append(platSearch);
-        var platformSelect = $('<select id="inst_platform" multiple style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; height: 80px; border: 1px solid #bdc3c7; border-radius: 3px; box-sizing: border-box;"></select>');
-        var myPlats = [];
-        if (GameManager.company.availablePlatforms) myPlats = myPlats.concat(GameManager.company.availablePlatforms);
-        if (GameManager.company.licencedPlatforms) myPlats = myPlats.concat(GameManager.company.licencedPlatforms);
-        if (myPlats.length === 0) myPlats = Platforms.allPlatforms.slice(0, 3);
-        myPlats.forEach(function (p) { platformSelect.append('<option value="' + p.name + '">' + p.name + '</option>'); });
-        formContainer.append(platformSelect);
+        var p1 = myPlats[0] ? myPlats[0].name : "PC";
+        var p2 = "None";
+        var p3 = "None";
+        var pList = [{name: "None"}].concat(myPlats);
+        var platRow = $('<div style="display: flex; gap: 8px; margin-bottom: 20px; justify-content: center;"></div>');
 
-        platSearch.on('input', function () {
-            var term = $(this).val().toLowerCase();
-            $('#inst_platform').empty();
-            myPlats.forEach(function (p) {
-                if (p.name.toLowerCase().indexOf(term) !== -1) {
-                    $('#inst_platform').append('<option value="' + p.name + '">' + p.name + '</option>');
-                }
-            });
-        });
+        function updatePlatShelf() {
+            platRow.empty();
+            var b1 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 6px 0; border-radius: 4px;">Slot 1 (' + p1 + ')</div>');
+            b1.click(function () { showSearchableList("Select Platform 1", pList, function (n) { p1 = n; updatePlatShelf(); }, contentArea); });
+            platRow.append(b1);
+
+            var b2 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 6px 0; border-radius: 4px;">Slot 2 (' + p2 + ')</div>');
+            b2.click(function () { showSearchableList("Select Platform 2", pList, function (n) { p2 = n; updatePlatShelf(); }, contentArea); });
+            platRow.append(b2);
+
+            var b3 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 6px 0; border-radius: 4px;">Slot 3 (' + p3 + ')</div>');
+            b3.click(function () { showSearchableList("Select Platform 3", pList, function (n) { p3 = n; updatePlatShelf(); }, contentArea); });
+            platRow.append(b3);
+        }
+        updatePlatShelf();
+        formContainer.append('<div>Platforms (Max 3):</div>').append(platRow);
 
         contentArea.append(formContainer);
 
@@ -4629,7 +4864,8 @@
                 var selectedTopic = $('#inst_topic').val();
                 var selectedGenre = $('#inst_genre').val();
                 var selectedSize = $('#inst_size').val();
-                var selectedPlats = $('#inst_platform').val() || [myPlats[0].name];
+                var selectedPlats = [p1, p2, p3].filter(function(x) { return x !== "None"; });
+                if (selectedPlats.length === 0) selectedPlats = [p1];
 
                 GameManager.company.adjustCash(-1000000, "Subsidiary Funding: " + studio.name);
 
@@ -4669,7 +4905,11 @@
         var cost = 5000000;
         if (GameManager.company.cash >= cost) {
             $.modal.close();
-            var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; padding: 14px; text-align: center;"></div>');
+            var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; padding: 14px; text-align: center; position: relative;"></div>');
+            var xBtn = $('<div style="position: absolute; right: 10px; top: 10px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>');
+            xBtn.click(function () { $.modal.close(); });
+            xBtn.hover(function () { $(this).css('background', '#c0392b'); }, function () { $(this).css('background', '#e74c3c'); });
+            container.append(xBtn);
             container.append('<h2 style="color: #d35400; font-size: 13pt; margin: 0 0 10px 0;">Found New Studio</h2>');
             container.append('<div style="margin: 10px 0; font-size: 11pt; color: #34495e;">Enter a name for your new subsidiary:</div>');
             var input = $('<input type="text" style="font-size: 12pt; padding: 4px 6px; width: 80%; margin-bottom: 12px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; box-sizing: border-box;">');
@@ -4711,7 +4951,7 @@
                 overlayClose: false,
                 opacity: 80,
                 overlayCss: { backgroundColor: "#000" },
-                containerCss: { width: "420px", height: "auto" }
+                containerCss: { width: "420px", height: "auto", backgroundColor: "transparent", border: "none" }
             });
             setTimeout(function () { input.focus(); }, 100);
         } else {
@@ -4805,13 +5045,13 @@
     function showMarketDropdown(game, el) {
         $('.cs-market-dropdown').remove();
         var dropdown = $('<div class="cs-market-dropdown" style="position: absolute; z-index: 20000; background: #2c3e50; color: white; border: 1px solid #34495e; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); padding: 8px; width: 180px; font-family: Segoe UI, Tahoma, sans-serif;"></div>');
-        
+
         dropdown.append('<div style="font-size: 10pt; font-weight: bold; border-bottom: 1px solid #555; margin-bottom: 8px; padding-bottom: 4px; color: #ecf0f1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + game.title + '</div>');
 
         // Withdraw
         var withdrawAction = $('<div style="padding: 6px; cursor: pointer; font-size: 9pt; border-radius: 4px; transition: background 0.2s; color: #e74c3c;">\u26D4 Withdraw from Market</div>');
-        withdrawAction.hover(function() { $(this).css('background', '#3d1c1c'); }, function() { $(this).css('background', 'transparent'); });
-        withdrawAction.click(function() {
+        withdrawAction.hover(function () { $(this).css('background', '#3d1c1c'); }, function () { $(this).css('background', 'transparent'); });
+        withdrawAction.click(function () {
             if (confirm("Withdraw " + game.title + " from the market?")) {
                 Sound.click();
                 game.releaseWeek = GameManager.company.currentWeek - 1000;
@@ -4823,8 +5063,8 @@
         // Maintain
         var mCost = Math.floor((game.totalSalesCash || 100000) * 0.05) + 20000;
         var maintainAction = $('<div style="padding: 6px; cursor: pointer; font-size: 9pt; border-radius: 4px; transition: background 0.2s; color: #2ecc71;">\u267B Maintain (+$' + UI.getShortNumberString(mCost) + ')</div>');
-        maintainAction.hover(function() { $(this).css('background', '#1b3d2c'); }, function() { $(this).css('background', 'transparent'); });
-        maintainAction.click(function() {
+        maintainAction.hover(function () { $(this).css('background', '#1b3d2c'); }, function () { $(this).css('background', 'transparent'); });
+        maintainAction.click(function () {
             if (GameManager.company.cash >= mCost) {
                 Sound.click();
                 GameManager.company.adjustCash(-mCost, "Market Maintenance: " + game.title);
@@ -4840,8 +5080,8 @@
         var offset = $(el).offset();
         dropdown.css({ top: offset.top, left: offset.left - 190 });
 
-        setTimeout(function() {
-            $(document).one('click', function() { $('.cs-market-dropdown').remove(); });
+        setTimeout(function () {
+            $(document).one('click', function () { $('.cs-market-dropdown').remove(); });
         }, 10);
     }
 
