@@ -2410,6 +2410,7 @@
 
             // Catalogue Deal Upkeep
             var totalCatMaint = 0;
+            if (!store.data.activeCatalogueDeals) store.data.activeCatalogueDeals = [];
             for (var cdi = store.data.activeCatalogueDeals.length - 1; cdi >= 0; cdi--) {
                 var cd = store.data.activeCatalogueDeals[cdi];
                 if (currentWeek >= cd.endWeek) {
@@ -7156,7 +7157,7 @@
             return;
         }
 
-        container.append('<div class="selectorButton whiteBoardButton" style="margin-bottom: 15px; display: inline-block; cursor: pointer; padding: 5px 15px;"> < Back to Studios</div>').children().last().click(function () { routeModMenu("film_subs", "media"); });
+        container.append('<div class="selectorButton whiteBoardButton" style="margin-bottom: 15px; display: inline-block; cursor: pointer; padding: 5px 15px;">&lt; Back to Studios</div>').children().last().click(function () { routeModMenu("film_subs", "media"); });
 
         container.append('<h2 style="color: #f39c12; margin-top: 0; font-size: 16pt; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px;">Catalogue Negotiation: ' + ms.name + '</h2>');
         container.append('<p style="font-size: 10pt; color: #2c3e50; margin-bottom: 15px;">A Catalogue Deal grants you <b>automatic, zero-fee access</b> to all of this studio\'s new releases for your Grid platform for 104 weeks.</p>');
@@ -7203,6 +7204,7 @@
                     endWeek: Math.floor(GameManager.company.currentWeek) + 104,
                     weeklyMaintenance: weekly
                 });
+                csAutoRouteMediaCatalog(ms);
                 store.data.activeCatalogueNegotiation = null;
                 routeModMenu("film_subs", "media");
             });
