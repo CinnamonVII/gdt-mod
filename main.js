@@ -459,6 +459,26 @@
         }
     }
 
+    function csShowAlert(msg) {
+        var id = "cs_alert_" + Date.now();
+        var overlay = $('<div id="' + id + '" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100000; display: flex; align-items: center; justify-content: center; font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif;"></div>');
+        var dialog = $('<div class="windowBorder" style="background-color: #ecf0f1; border-radius: 12px; padding: 25px; width: 450px; text-align: center; color: #2c3e50; border: 4px solid #d35400; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></div>');
+        
+        dialog.append('<h2 style="margin-top: 0; color: #d35400; font-size: 18pt; border-bottom: 2px solid #e67e22; padding-bottom: 10px; margin-bottom: 20px;">Concurrent Studios</h2>');
+        dialog.append('<div style="font-size: 12pt; margin: 20px 0; line-height: 1.5; font-weight: 500;">' + msg + '</div>');
+        
+        var okBtn = $('<div class="selectorButton orangeButton" style="width: 120px; display: inline-block; margin-top: 15px; padding: 10px; font-weight: bold; cursor: pointer;">OK</div>');
+        okBtn.click(function () { $("#" + id).remove(); });
+        dialog.append(okBtn);
+        
+        overlay.append(dialog);
+        $('body').append(overlay);
+    }
+
+    function csNotify(msg) {
+        csShowAlert(msg);
+    }
+
     function csLog(msg) {
         try {
             if (!store || !store.data) return;
@@ -805,13 +825,13 @@
         if (!platform || !mediaProject) return;
         var currentWeek = Math.floor(GameManager.company.currentWeek);
 
-        if (platform.acceptsType.indexOf(mediaProject.type) === -1) { alert("This platform does not accept this content type!"); return; }
+        if (platform.acceptsType.indexOf(mediaProject.type) === -1) { csNotify("This platform does not accept this content type!"); return; }
         if (mediaProject.distributionStatus !== "pending") return;
-        if (currentWeek - (platform.bookingCooldownWeek || -100) < 16) { alert("Must wait 16 weeks between deals with this platform."); return; }
+        if (currentWeek - (platform.bookingCooldownWeek || -100) < 16) { csNotify("Must wait 16 weeks between deals with this platform."); return; }
 
         if (isExclusive) {
             var currentExclusiveCount = platform.activeDeals.filter(function (d) { return d.isExclusive; }).length;
-            if (currentExclusiveCount >= platform.exclusivitySlots) { alert("This platform has no exclusive slots left."); return; }
+            if (currentExclusiveCount >= platform.exclusivitySlots) { csNotify("This platform has no exclusive slots left."); return; }
         }
 
         var advanceMultiplier = platform.advanceMultiplier || 1.0;
@@ -864,10 +884,10 @@
 
     function csConfirmTheaterRelease(mediaProject, theaterChain) {
         if (!theaterChain || !mediaProject) return;
-        if (mediaProject.type !== "movie") { alert("Theatrical releases are only available for feature films."); return; }
+        if (mediaProject.type !== "movie") { csNotify("Theatrical releases are only available for feature films."); return; }
         if (mediaProject.distributionStatus !== "pending") return;
-        if (theaterChain.activeRelease !== null) { alert("This theater chain is already running another release!"); return; }
-        if (GameManager.company.cash < theaterChain.bookingFee) { alert("Not enough cash for booking fee."); return; }
+        if (theaterChain.activeRelease !== null) { csNotify("This theater chain is already running another release!"); return; }
+        if (GameManager.company.cash < theaterChain.bookingFee) { csNotify("Not enough cash for booking fee."); return; }
 
         GameManager.company.adjustCash(-theaterChain.bookingFee, "Theater Booking: " + theaterChain.name);
 
@@ -914,7 +934,7 @@
         if (!store.data.gridService || !store.data.gridService.isActive) return;
         if (!mediaProject || mediaProject.distributionStatus !== "pending") return;
         var validTypes = ["movie", "tvSeries", "animatedShow", "comicBook", "soundtrack"];
-        if (validTypes.indexOf(mediaProject.type) === -1) { alert("Grid does not support this content type."); return; }
+        if (validTypes.indexOf(mediaProject.type) === -1) { csNotify("Grid does not support this content type."); return; }
 
         var grid = store.data.gridService;
         if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
@@ -922,7 +942,7 @@
         
         for (var i = 0; i < grid.contentLibrary.length; i++) {
             if (grid.contentLibrary[i].mediaProjectId === mediaProject.id) {
-                alert("Already in Grid Library."); return;
+                csNotify("Already in Grid Library."); return;
             }
         }
 
@@ -1868,14 +1888,15 @@
 
                     store.data.aiLicensingOffers.push(offer);
 
+                    var notifyText = chosenStudio.name + " wants to license your '" + chosenFran.name + "' franchise!";
                     GameManager.company.notifications.push(new Notification({
                         header: "Licensing Proposal",
-                        text: chosenStudio.name + " wants to license your '" + chosenFran.name + "' franchise!",
+                        text: notifyText,
                         image: "",
                         buttonText: "Review Proposal",
                         onClick: function () {
                             store.data.activeLicensingOffer = offer;
-                            routeModMenu("licensing_review", "media");
+                            showModMenu("licensing_review", "media");
                         }
                     }));
                 }
@@ -2131,7 +2152,7 @@
                 Sound.click();
                 $.modal.close();
             } else {
-                alert("Not enough cash to fund this production.");
+                csNotify("Not enough cash to fund this production.");
             }
         });
 
@@ -2334,7 +2355,7 @@
                     if (Math.random() < 0.10) {
                         var pBudget = ms.valuation * 0.05;
                         ms.currentProject = {
-                            title: ms.name + " " + ["Blockbuster", "Original", "Feature"][Math.floor(Math.random() * 3)],
+                            title: csGenerateMovieTitle(),
                             type: ["movie", "tvSeries", "animatedShow"][Math.floor(Math.random() * 3)],
                             weeksTotal: 24,
                             weeksRemaining: 24,
@@ -3193,7 +3214,7 @@
                     isShowingDraft = false;
                     studio.draftCooldown = 4;
                     $.modal.close();
-                } else { alert("You need $" + UI.getShortNumberString(cost) + " to fund this draft!"); }
+                } else { csNotify("You need $" + UI.getShortNumberString(cost) + " to fund this draft!"); }
             });
 
             var btnDecline = $('<div class=\"selectorButton deleteButton\" style=\"flex: 1; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 6px;\">Decline</div>');
@@ -3725,7 +3746,7 @@
                 game.modMarketExtension = (game.modMarketExtension || 0) + 4;
                 $.modal.close();
             } else {
-                alert("Not enough funds!");
+                csNotify("Not enough funds!");
             }
         });
 
@@ -3857,9 +3878,7 @@
             { id: "catalogue_negotiation", label: "Negotiation", type: "media" },
             { id: "media", label: "Media", type: "media" },
             { id: "marketing", label: "Marketing", type: "studios" },
-            { id: "settings", label: "Settings", type: "studios" },
-            { id: "debug", label: "Debug", type: "studios" },
-            { id: "debug", label: "Debug", type: "media" }
+            { id: "settings", label: "Settings", type: "studios" }
         ];
 
         var tabs = allTabs.filter(function (t) { return t.type === menuType; });
@@ -4238,9 +4257,9 @@
         var internalBtn = $('<div class="selectorButton orangeButton" style="text-align: center; padding: 10px 0; font-size: 11pt; font-weight: bold;">Develop Internally</div>');
         internalBtn.click(function () {
             var bCount = (type === "bundle") ? bundleSelection.length : 1;
-            if (type === "bundle" && bCount < 2) { alert("Select at least 2 games for a bundle!"); return; }
+            if (type === "bundle" && bCount < 2) { csNotify("Select at least 2 games for a bundle!"); return; }
             var cost = getEntryTypeCost(type, size, franchise, bCount);
-            if (GameManager.company.cash < cost) { alert("Not enough cash!"); return; }
+            if (GameManager.company.cash < cost) { csNotify("Not enough cash!"); return; }
             var entry = { franchiseId: franchise.id, entryType: type, size: size, bundledIds: (type === "bundle" ? bundleSelection : null), remakeTargetId: ((type === "remake" || type === "remaster") ? remakeSelection : null) };
             if (type === "bundle") {
                 var tot = 0;
@@ -4357,9 +4376,9 @@
             var subBtn = $('<div class="selectorButton greenButton" style="text-align: center; padding: 6px 0; font-size: 10pt;">Assign to Studio</div>');
             subBtn.click(function () {
                 var bCount = (type === "bundle") ? bundleSelection.length : 1;
-                if (type === "bundle" && bCount < 2) { alert("Select at least 2 games for a bundle!"); return; }
+                if (type === "bundle" && bCount < 2) { csNotify("Select at least 2 games for a bundle!"); return; }
                 var cost = getEntryTypeCost(type, size, franchise, bCount);
-                if (GameManager.company.cash < cost) { alert("Not enough cash!"); return; }
+                if (GameManager.company.cash < cost) { csNotify("Not enough cash!"); return; }
                 var studioId = subSelect.val();
                 var studio = studiosArr.filter(function (s) { return s.id === studioId; })[0];
                 if (!studio) return;
@@ -4495,7 +4514,7 @@
                 var size = sizeSelect.val();
 
                 var bCount = (type === "bundle") ? bundleSelection.length : 1;
-                if (type === "bundle" && bCount < 2) { alert("Select at least 2 games for a bundle!"); return; }
+                if (type === "bundle" && bCount < 2) { csNotify("Select at least 2 games for a bundle!"); return; }
 
                 if (s.currentProject && !confirm(s.name + " is currently busy with '" + (s.currentProject.title || s.currentProject.name) + "'. Assigning a new project will cancel the current one. Proceed?")) return;
 
@@ -4509,7 +4528,7 @@
                 }
 
                 var fee = (franchise.tier === 1) ? 5000 : (franchise.tier === 2) ? 12500 : (franchise.tier === 3) ? 25000 : (franchise.tier === 4) ? 50000 : 125000;
-                if (GameManager.company.cash < fee) { alert("Not enough cash for license fee ($" + UI.getShortNumberString(fee) + ")!"); return; }
+                if (GameManager.company.cash < fee) { csNotify("Not enough cash for license fee ($" + UI.getShortNumberString(fee) + ")!"); return; }
                 GameManager.company.adjustCash(-fee, "Franchise License Fee: " + franchise.name);
 
                 var bIds = (type === "bundle" ? bundleSelection : null);
@@ -4560,15 +4579,15 @@
             var btn = $('<div class="selectorButton orangeButton" style="text-align:center; padding: 12px 0; font-weight: bold;">Send Pitch</div>');
             btn.click(function () {
                 var fId = fSelect.val();
-                if (!fId) { alert("Please select a franchise first!"); return; }
+                if (!fId) { csNotify("Please select a franchise first!"); return; }
                 var f = getFranchiseById(fId);
-                if (!f) { alert("Error identifying franchise."); onBack(); return; }
+                if (!f) { csNotify("Error identifying franchise."); onBack(); return; }
 
                 var budget = parseInt(budgetInput.val());
                 var pShare = studio.totalDealsCompleted >= 3 ? 0.5 : 0.4;
                 var playerCost = budget * pShare;
 
-                if (GameManager.company && GameManager.company.cash < playerCost) { alert("Not enough cash!"); return; }
+                if (GameManager.company && GameManager.company.cash < playerCost) { csNotify("Not enough cash!"); return; }
 
                 var weeks = Math.min(300, Math.floor(Math.pow(budget / 100000, 0.75)) + 8);
                 var p = {
@@ -4610,7 +4629,7 @@
     function showCrossoverModal(container, onBack) {
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         if (currentWeek - store.data.lastCrossoverWeek < 20) {
-            alert("Crossover events are on cooldown (20 weeks). Remaining: " + (20 - (currentWeek - store.data.lastCrossoverWeek)) + " weeks.");
+            csNotify("Crossover events are on cooldown (20 weeks). Remaining: " + (20 - (currentWeek - store.data.lastCrossoverWeek)) + " weeks.");
             return;
         }
 
@@ -4637,8 +4656,8 @@
         btn.click(function () {
             var f1 = getFranchiseById(sel1.val());
             var f2 = getFranchiseById(sel2.val());
-            if (f1.id === f2.id) { alert("Must select two different franchises!"); return; }
-            if (GameManager.company.cash < 3000000) { alert("Not enough cash!"); return; }
+            if (f1.id === f2.id) { csNotify("Must select two different franchises!"); return; }
+            if (GameManager.company.cash < 3000000) { csNotify("Not enough cash!"); return; }
 
             GameManager.company.adjustCash(-3000000, "Crossover Event: " + f1.name + " x " + f2.name);
             store.data.lastCrossoverWeek = currentWeek;
@@ -4746,7 +4765,7 @@
                     if (f.fanbaseScore <= 0) {
                         var reviveBtn = $('<div class="selectorButton" style="flex: 1; text-align: center; font-size: 10pt; padding: 6px 0; background: #95a5a6; color: white;">Revive ($1M)</div>');
                         reviveBtn.click(function () {
-                            if (GameManager.company.cash < 1000000) { alert("Not enough cash!"); return; }
+                            if (GameManager.company.cash < 1000000) { csNotify("Not enough cash!"); return; }
                             GameManager.company.adjustCash(-1000000, "Franchise Revival: " + f.name);
                             f.fanbaseScore = 15;
                             f.isDead = false;
@@ -4809,9 +4828,9 @@
                         var name = nameInput.val() || game.title;
                         var fransArr = store.data.franchises || [];
                         var exists = fransArr.some(function (fr) { return fr.name.toLowerCase() === name.toLowerCase(); });
-                        if (exists) { alert("A franchise with this name already exists!"); return; }
+                        if (exists) { csNotify("A franchise with this name already exists!"); return; }
 
-                        if (GameManager.company.cash < cost) { alert("Not enough cash!"); return; }
+                        if (GameManager.company.cash < cost) { csNotify("Not enough cash!"); return; }
                         store.data.lastFranchiseNumId = (store.data.lastFranchiseNumId || 0) + 1;
                         var f = {
                             id: "FRAN_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
@@ -4867,7 +4886,7 @@
 
                     var buyBtn = $('<div class="selectorButton greenButton" style="width: 100%; text-align: center; margin-top: 12px; padding: 8px 0;">Acquire Franchise</div>');
                     buyBtn.click(function () {
-                        if (GameManager.company.cash < f.salePrice) { alert("Not enough cash!"); return; }
+                        if (GameManager.company.cash < f.salePrice) { csNotify("Not enough cash!"); return; }
                         GameManager.company.adjustCash(-f.salePrice, "Franchise Acquisition: " + f.name);
                         f.ownerId = "player";
                         f.isForSale = false;
@@ -4893,7 +4912,7 @@
 
                         var buyBtn = $('<div class="selectorButton greenButton" style="padding: 10px 20px; font-weight: bold;">Buy ($' + UI.getShortNumberString(salePrice) + ')</div>');
                         buyBtn.click(function () {
-                            if (GameManager.company.cash < salePrice) { alert("Not enough cash!"); return; }
+                            if (GameManager.company.cash < salePrice) { csNotify("Not enough cash!"); return; }
                             GameManager.company.adjustCash(-salePrice, "Acquired Franchise: " + f.name);
                             f.ownerId = "player";
                             f.isForSale = false;
@@ -4933,8 +4952,8 @@
                     offerBtn.click(function () {
                         var f = getFranchiseById(fSelect.val());
                         var price = parseInt(priceInput.val());
-                        if (isNaN(price) || price <= 0) { alert("Invalid price!"); return; }
-                        if (GameManager.company.cash < price) { alert("Not enough cash!"); return; }
+                        if (isNaN(price) || price <= 0) { csNotify("Invalid price!"); return; }
+                        if (GameManager.company.cash < price) { csNotify("Not enough cash!"); return; }
 
 
                         var thresh = f.totalRevenue * 1.5 + 2000000;
@@ -4949,7 +4968,7 @@
                             }));
                             refresh();
                         } else {
-                            alert("The studio has rejected your offer.");
+                            csNotify("The studio has rejected your offer.");
                         }
                     });
                     offerDiv.append(offerBtn);
@@ -5145,25 +5164,25 @@
                     var f = fid ? getFranchiseById(fid) : null;
 
                     if (isNaN(budget) || budget <= 0) {
-                        alert("Please enter a valid production budget.");
+                        csNotify("Please enter a valid production budget.");
                         return;
                     }
 
                     if (!type) {
-                        alert("Please select a project type.");
+                        csNotify("Please select a project type.");
                         return;
                     }
 
                     var minReqObj = types.filter(function (t) { return t.id === type; })[0];
                     var minReq = minReqObj ? minReqObj.min : 0;
-                    if (budget < minReq) { alert("Insufficient budget for this type! Minimum: $" + UI.getShortNumberString(minReq)); return; }
+                    if (budget < minReq) { csNotify("Insufficient budget for this type! Minimum: $" + UI.getShortNumberString(minReq)); return; }
 
                     if (type === "soundtrack" && budget > 500000) {
-                        alert("Soundtrack budget cannot exceed $500,000 as per technical specifications.");
+                        csNotify("Soundtrack budget cannot exceed $500,000 as per technical specifications.");
                         return;
                     }
 
-                    if (GameManager.company.cash < budget) { alert("Not enough cash!"); return; }
+                    if (GameManager.company.cash < budget) { csNotify("Not enough cash!"); return; }
 
                     var weeks = Math.min(300, Math.floor(Math.pow(budget / 100000, 0.75)) + 8);
                     if (type === "soundtrack") weeks = 6;
@@ -5278,7 +5297,7 @@
                         routeModMenu("settings");
                     }
                 } else {
-                    alert("Not enough funds! Need $50M.");
+                    csNotify("Not enough funds! Need $50M.");
                 }
             });
             container.append(gridRnD);
@@ -5324,7 +5343,7 @@
         healBtn.click(function () {
             var d = parseInt(dInput.val());
             var t = parseInt(tInput.val());
-            if (isNaN(d) || isNaN(t)) { alert("Please enter valid numbers!"); return; }
+            if (isNaN(d) || isNaN(t)) { csNotify("Please enter valid numbers!"); return; }
 
             Sound.click();
             var log = GameManager.company.gameLog;
@@ -5342,7 +5361,7 @@
             if (typeof GameManager.company.lastTechPoints !== 'undefined') GameManager.company.lastTechPoints = t;
 
 
-            alert("Baselines successfully recovered! Entire history adjusted to D:" + d + " / T:" + t + ".");
+            csNotify("Baselines successfully recovered! Entire history adjusted to D:" + d + " / T:" + t + ".");
         });
         healerDiv.append(healBtn);
         container.append(healerDiv);
@@ -5797,7 +5816,7 @@
                     entryType: (prefilled && prefilled.entryType) ? prefilled.entryType : null
                 });
                 routeModMenu("publishing");
-            } else { alert("You need at least $" + UI.getShortNumberString(advance) + " to fund this advance!"); }
+            } else { csNotify("You need at least $" + UI.getShortNumberString(advance) + " to fund this advance!"); }
         });
 
         footer.append(cancelBtn).append(confirmBtn);
@@ -5902,7 +5921,7 @@
                                     store.data.dlcData[game.id].count++;
                                     $.modal.close();
                                 } else {
-                                    alert("Not enough funds!");
+                                    csNotify("Not enough funds!");
                                 }
                             });
                             dlcControls.append(dlcBtn);
@@ -6073,7 +6092,7 @@
                     boostFactor: selectedC.boost
                 });
                 routeModMenu("marketing");
-            } else { alert("Insufficient funds for this campaign!"); }
+            } else { csNotify("Insufficient funds for this campaign!"); }
         });
         formBox.append(launchBtn);
 
@@ -6161,7 +6180,7 @@
                     GameManager.company.adjustCash(-tenPercentValue, "Bought 10% of " + studio.name);
                     studio.sharesOwned = Math.min(100, studio.sharesOwned + 10);
                     routeModMenu(getRoute(studio.sharesOwned));
-                } else { alert("Not enough cash!"); }
+                } else { csNotify("Not enough cash!"); }
             });
             topBtns.append(buyBtn);
         }
@@ -6177,19 +6196,19 @@
                 if (GameManager.company.cash >= starTiers[t].hire) {
                     GameManager.company.adjustCash(-starTiers[t].hire, "Hired " + starTiers[t].label + " Staff: " + studio.name);
                     studio.staff[t]++; routeModMenu("subsidiaries");
-                } else { alert("Not enough cash!"); }
+                } else { csNotify("Not enough cash!"); }
             });
 
             var fireBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; font-size: 10pt; padding: 4px; text-align: center;">Fire</div>');
             fireBtn.click(function () {
                 var t = parseInt($('#staff_tier_' + studio.id).val());
                 if (studio.staff[t] > 0) {
-                    if (studio.staff[1] + studio.staff[2] + studio.staff[3] + studio.staff[4] + studio.staff[5] <= 1) { alert("A studio must have at least 1 employee!"); return; }
+                    if (studio.staff[1] + studio.staff[2] + studio.staff[3] + studio.staff[4] + studio.staff[5] <= 1) { csNotify("A studio must have at least 1 employee!"); return; }
                     if (GameManager.company.cash >= starTiers[t].fire) {
                         GameManager.company.adjustCash(-starTiers[t].fire, "Severance for " + starTiers[t].label + ": " + studio.name);
                         studio.staff[t]--; routeModMenu("subsidiaries");
-                    } else { alert("Not enough cash for severance!"); }
-                } else { alert("No " + starTiers[t].label + " staff to fire!"); }
+                    } else { csNotify("Not enough cash for severance!"); }
+                } else { csNotify("No " + starTiers[t].label + " staff to fire!"); }
             });
             middleBtns.append(staffSelect).append(hireBtn).append(fireBtn);
 
@@ -6206,7 +6225,7 @@
 
             var instructBtn = $('<button class="selectorButton orangeButton" style="flex: 1.1; font-size: 10pt; padding: 4px 6px; white-space: nowrap;">Manage Dev</button>');
             instructBtn.click(function () {
-                if (studio.currentProject) { alert(studio.name + " is busy!"); return; }
+                if (studio.currentProject) { csNotify(studio.name + " is busy!"); return; }
                 instructStudio(studio);
             });
             bottomBtns.append(instructBtn);
@@ -6234,7 +6253,7 @@
 
                         studio.currentProject = { name: "Co-Dev Support", isCoDev: true, isPublishedByPlayer: false };
                         routeModMenu("subsidiaries");
-                    } else { alert("You need an active game in development to co-develop!"); }
+                    } else { csNotify("You need an active game in development to co-develop!"); }
                 });
                 bottomBtns.append(coDevBtn);
             }
@@ -6472,7 +6491,7 @@
                 }));
                 routeModMenu("subsidiaries");
             } else {
-                alert("You need at least $1M to fund a subsidiary project!");
+                csNotify("You need at least $1M to fund a subsidiary project!");
             }
         });
 
@@ -6540,7 +6559,7 @@
             });
             setTimeout(function () { input.focus(); }, 100);
         } else {
-            alert("You need at least $5M to found a new studio!");
+            csNotify("You need at least $5M to found a new studio!");
         }
     }
 
@@ -6656,7 +6675,7 @@
                 game.modMarketExtension = (game.modMarketExtension || 0) + 4;
                 dropdown.remove();
             } else {
-                alert("Insufficient funds!");
+                csNotify("Insufficient funds!");
             }
         });
         dropdown.append(maintainAction);
@@ -6751,7 +6770,7 @@
                     Sound.click();
                     var penalty = Math.floor((d.weeklyRevenue * (d.weeksTotal - d.weeksActive)) * 1.5) || 500000;
                     if (confirm("Break the distribution contract for '" + d.title + "' with " + p.name + "?\n\nPenalty Fee: $" + UI.getShortNumberString(penalty) + "\nThe project will become available for distribution again.")) {
-                        if (GameManager.company.cash < penalty) { alert("You cannot afford the contract breach penalty."); return; }
+                        if (GameManager.company.cash < penalty) { csNotify("You cannot afford the contract breach penalty."); return; }
                         GameManager.company.adjustCash(-penalty, "Contract Breach Penalty: " + p.name);
                         
                         
@@ -6804,7 +6823,7 @@
                     Sound.click();
                     var penalty = 2000000;
                     if (confirm("Cancel the remaining theater run for '" + tr.title + "' at " + chainName + "?\n\nCancellation Fee: $" + UI.getShortNumberString(penalty) + "\nThe project will become available for distribution again.")) {
-                        if (GameManager.company.cash < penalty) { alert("You cannot afford the cancellation fee."); return; }
+                        if (GameManager.company.cash < penalty) { csNotify("You cannot afford the cancellation fee."); return; }
                         GameManager.company.adjustCash(-penalty, "Theater Cancellation Fee: " + chainName);
                         
                         tr.status = "abandoned";
@@ -7303,7 +7322,7 @@
     function csShowGameLicensingModal(ms) {
         var log = GameManager.company.gameLog;
         if (!log || log.length === 0) {
-            alert("You haven't completed any games to adapt!");
+            csNotify("You haven't completed any games to adapt!");
             return;
         }
 
@@ -7422,7 +7441,7 @@
                     GameManager.company.adjustCash(-chunkCost, "Purchased 10% of " + ms.name);
                     ms.sharesOwned += 10;
                     routeModMenu("film_subs", "media");
-                } else alert("Not enough funds.");
+                } else csNotify("Not enough funds.");
             });
             actionRow.append(buyBtn);
         } else {
@@ -7519,34 +7538,62 @@
 
     function csRenderLicensingReview(container) {
         container.empty();
-        var offer = store.data.activeLicensingOffer;
-        if (!offer) {
-            container.append('<div style="text-align: center; color: #7f8c8d; font-style: italic; margin-top: 50px;">Nothing to display yet! Wait for a studio to approach you with a licensing proposal.</div>');
+        var allOffers = store.data.aiLicensingOffers || [];
+        var activeOffer = store.data.activeLicensingOffer;
+
+        if (!activeOffer && allOffers.length > 0) {
+            activeOffer = allOffers[0];
+            store.data.activeLicensingOffer = activeOffer;
+        }
+
+        if (!activeOffer) {
+            container.append('<div style="text-align: center; color: #7f8c8d; font-style: italic; margin-top: 50px; font-size: 14pt;">No active licensing proposals.</div>');
+            container.append('<div style="text-align: center; color: #95a5a6; font-size: 10pt; margin-top: 10px;">Wait for automated film studios to approach you with interest in your franchises.</div>');
             return;
         }
+
+        if (allOffers.length > 1) {
+            var selector = $('<div style="background: #e0e6ed; padding: 10px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; border: 1px solid #bdc3c7;"></div>');
+            allOffers.forEach(function (off) {
+                var isSel = off.id === activeOffer.id;
+                var offBtn = $('<div style="padding: 6px 12px; background: ' + (isSel ? '#d35400' : '#bdc3c7') + '; color: ' + (isSel ? 'white' : '#2c3e50') + '; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 9pt; font-weight: bold;">' + off.franchiseName + ' (' + off.studioName + ')</div>');
+                offBtn.click(function () {
+                    store.data.activeLicensingOffer = off;
+                    csRenderLicensingReview(container);
+                });
+                selector.append(offBtn);
+            });
+            container.append(selector);
+        }
+
         var backBtn = $('<div class="selectorButton" style="padding: 8px 15px; margin-bottom: 15px; display: inline-block; cursor: pointer;"> < Back to Franchises</div>');
         backBtn.click(function () { routeModMenu("franchises", "media"); });
         container.append(backBtn);
-        container.append('<h2 style="margin-top: 0; color: #d35400;">Licensing Proposal: ' + offer.franchiseName + '</h2>');
-        var terms = $('<div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #f39c12; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"></div>');
-        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt;">Upfront Payment</label><h3 style="margin: 5px 0; color: #27ae60;">$' + UI.getShortNumberString(offer.upfront) + '</h3></div>');
-        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt;">Duration</label><h3 style="margin: 5px 0; color: #2980b9;">' + offer.filmsCount + ' Films</h3></div>');
-        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt;">Your Royalties</label><h3 style="margin: 5px 0; color: #8e44ad;">' + (offer.royaltyRate * 100).toFixed(0) + '%</h3></div>');
-        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt;">Studio Reputation</label><h3 style="margin: 5px 0; color: #d35400;">' + (offer.studioReputation || 3.0).toFixed(1) + '/5</h3></div>');
+
+        container.append('<h2 style="margin-top: 0; color: #d35400;">Licensing Proposal: ' + activeOffer.franchiseName + '</h2>');
+        
+        var terms = $('<div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #f39c12; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt; text-transform: uppercase; font-weight: bold;">Upfront Payment</label><h2 style="margin: 5px 0; color: #27ae60;">$' + UI.getShortNumberString(activeOffer.upfront) + '</h2></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt; text-transform: uppercase; font-weight: bold;">Duration</label><h2 style="margin: 5px 0; color: #2980b9;">' + activeOffer.filmsCount + ' Films</h2></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt; text-transform: uppercase; font-weight: bold;">Your Royalties</label><h2 style="margin: 5px 0; color: #8e44ad;">' + (activeOffer.royaltyRate * 100).toFixed(0) + '%</h2></div>');
+        terms.append('<div><label style="display: block; color: #7f8c8d; font-size: 9pt; text-transform: uppercase; font-weight: bold;">Studio Reputation</label><h2 style="margin: 5px 0; color: #d35400;">' + (activeOffer.studioReputation || 3.0).toFixed(1) + '/5</h2></div>');
         container.append(terms);
-        var actions = $('<div style="display: flex; gap: 15px;"></div>');
-        var acceptBtn = $('<div class="selectorButton greenButton" style="flex: 1; padding: 12px; font-weight: bold; text-align: center;">Accept Deal</div>');
-        var declineBtn = $('<div class="selectorButton redButton" style="flex: 1; padding: 12px; font-weight: bold; text-align: center;">Decline</div>');
+
+        var actions = $('<div style="display: flex; gap: 20px; margin-top: 20px;"></div>');
+        var acceptBtn = $('<div class="selectorButton greenButton" style="flex: 1; padding: 15px; font-weight: bold; text-align: center; font-size: 13pt;">Accept Deal</div>');
+        var declineBtn = $('<div class="selectorButton redButton" style="flex: 1; padding: 15px; font-weight: bold; text-align: center; font-size: 13pt;">Decline</div>');
+
         acceptBtn.click(function () {
-            csHandleAILicensingResponse(offer, true);
+            csHandleAILicensingResponse(activeOffer, true);
             store.data.activeLicensingOffer = null;
             routeModMenu("franchises", "media");
         });
         declineBtn.click(function () {
-            csHandleAILicensingResponse(offer, false);
+            csHandleAILicensingResponse(activeOffer, false);
             store.data.activeLicensingOffer = null;
             routeModMenu("franchises", "media");
         });
+
         actions.append(acceptBtn);
         actions.append(declineBtn);
         container.append(actions);
@@ -7598,7 +7645,7 @@
             var actionRow = $('<div style="display: flex; gap: 10px; margin-top: 15px;"></div>');
             var acceptBtn = $('<div class="selectorButton greenButton" style="flex: 1; padding: 12px; font-size: 12pt; text-align: center;">Accept Offer</div>');
             acceptBtn.click(function() {
-                if (GameManager.company.cash < offerPrice) { Sound.click(); alert("Insufficient funds!"); return; }
+                if (GameManager.company.cash < offerPrice) { Sound.click(); csNotify("Insufficient funds!"); return; }
                 Sound.click();
                 GameManager.company.adjustCash(-offerPrice, "Inbound Catalogue Deal: " + signStudioName);
                 store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
@@ -7628,24 +7675,47 @@
             var repMultiplier = 1.0 + ((ms.reputation || 1) * 0.1);
             var discountMultiplier = 1.0 - (subPower * 0.5);
             var minThreshold = Math.floor(baseValue * repMultiplier * discountMultiplier);
+            var maxThreshold = Math.floor(minThreshold * 1.5);
+            
+            var isMajorityOwner = ms.sharesOwned >= 50;
+
+            if (isMajorityOwner) {
+                termsBox.append('<div style="background: #e8f8f5; border-left: 4px solid #27ae60; padding: 10px; margin-bottom: 15px; font-size: 10pt; color: #145a32;">' +
+                                '<b>Ownership Benefit:</b> As majority owner of ' + ms.name + ', you can sign this catalogue deal for <b>FREE</b>.' +
+                                '</div>');
+            } else {
+                termsBox.append('<div style="background: #fff; border-left: 4px solid #3498db; padding: 10px; margin-bottom: 15px; font-size: 10pt; color: #34495e;">' +
+                                '<b>Market Analysis:</b> Based on ' + ms.name + '\'s reputation and your Grid reach, a bid between <b>$' + minThreshold.toLocaleString() + '</b> (Uncertain) and <b>$' + maxThreshold.toLocaleString() + '</b> (Guaranteed) is recommended.' +
+                                '</div>');
+            }
 
             termsBox.append('<div style="margin-bottom: 15px;">');
             termsBox.append('<label style="font-weight: bold; color: #2c3e50; display: block; margin-bottom: 5px;">Your Cash Offer ($):</label>');
-            termsBox.append('<input type="number" id="cs_catalogue_bid" value="' + Math.floor(minThreshold) + '" style="font-size: 14pt; padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; border-radius: 4px;">');
+            var initialBid = isMajorityOwner ? 0 : Math.floor(minThreshold);
+            termsBox.append('<input type="number" id="cs_catalogue_bid" value="' + initialBid + '" ' + (isMajorityOwner ? 'disabled' : '') + ' style="font-size: 14pt; padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; border-radius: 4px; background: ' + (isMajorityOwner ? '#f1f1f1' : '#fff') + ';">');
             termsBox.append('</div>');
 
-            var bidBtn = $('<div class="selectorButton orangeButton" style="width: 100%; padding: 12px; font-size: 12pt; font-weight: bold; text-align: center;">Submit Offer</div>');
+            var btnText = isMajorityOwner ? "Finalize Free Deal" : "Submit Offer";
+            var bidBtn = $('<div class="selectorButton orangeButton" style="width: 100%; padding: 12px; font-size: 12pt; font-weight: bold; text-align: center;">' + btnText + '</div>');
             bidBtn.click(function() {
                 Sound.click();
-                var offer = parseInt($('#cs_catalogue_bid').val(), 10);
-                if (isNaN(offer) || offer <= 0) { alert("Enter a valid offer."); return; }
-                if (GameManager.company.cash < offer) { alert("You don't have enough cash."); return; }
+                var offer = isMajorityOwner ? 0 : parseInt($('#cs_catalogue_bid').val(), 10);
+                if (!isMajorityOwner && (isNaN(offer) || offer <= 0)) { csNotify("Enter a valid offer."); return; }
+                if (GameManager.company.cash < offer) { csNotify("You don't have enough cash."); return; }
                 
                 var ratio = offer / minThreshold;
                 var chance = 0;
-                if (ratio >= 1.5) chance = 1.0;
-                else if (ratio <= 0.5) chance = 0.0;
-                else chance = ratio - 0.5;
+                
+                csLog("Bidding: Offer=" + offer + ", Min=" + minThreshold + ", Max=" + maxThreshold + ", Ratio=" + ratio);
+
+                if (isMajorityOwner || offer >= maxThreshold) {
+                    chance = 1.0;
+                } else {
+                    if (ratio <= 0.5) chance = 0.0;
+                    else chance = ratio - 0.5;
+                }
+                
+                csLog("Bidding Result: Chance=" + (chance * 100).toFixed(1) + "%");
 
                 if (Math.random() <= chance) {
                     GameManager.company.adjustCash(-offer, "Catalogue Deal Bidding: " + signStudioName);
@@ -7653,11 +7723,11 @@
                     store.data.activeCatalogueDeals.push({ studioId: signStudioId, studioName: signStudioName, startWeek: Math.floor(GameManager.company.currentWeek), endWeek: Math.floor(GameManager.company.currentWeek) + 104 });
                     store.data.activeCatalogueNegotiation = null;
                     try { csAutoRouteMediaCatalog(); } catch (e) { }
-                    alert("Success! " + signStudioName + " accepted your offer of $" + UI.getShortNumberString(offer) + ".");
+                    csNotify("Success! " + signStudioName + " accepted your offer of $" + UI.getShortNumberString(offer) + ".");
                     routeModMenu("film_subs", "media");
                 } else {
                     ms.negotiationCooldown = Math.floor(GameManager.company.currentWeek) + 4;
-                    alert("Refused! " + signStudioName + " found your offer insulting. They will refuse to negotiate for 4 weeks.");
+                    csNotify("Refused! " + signStudioName + " found your offer insulting. They will refuse to negotiate for 4 weeks.");
                     routeModMenu("film_subs", "media");
                 }
             });
@@ -7666,17 +7736,31 @@
         }
     }
 
+    function csGenerateMovieTitle() {
+        var p = ["The", "Beyond", "Into", "Last", "Hidden", "Secret", "Lost", "Final", "Golden", "Dark", "Infinite", "Ancient", "Cyber", "Virtual", "Digital", "Grand", "Super", "Mega", "Alpha", "Omega", "Red", "Blue", "Iron", "Steel", "Crystal", "Shadow", "Neon", "Magic", "Royal", "Global", "Space", "Time", "Epic", "Urban", "Wild", "Deadly", "Silent", "Loud", "Strange", "Cold", "Solar", "Lunar", "Star", "Cloud"];
+        var a = ["Eternal", "Forgotten", "Broken", "Rising", "Falling", "Burning", "Frozen", "Heavy", "Light", "Fast", "Slow", "Giant", "Small", "Invisible", "Electric", "Nuclear", "Atomic", "Mechanical", "Organic", "Synthetic", "Natural", "Alien", "Human", "Robot", "Dragon", "Zombie", "Vampire", "Knight", "Pirate", "Ninja", "Hero", "Villain", "Master", "Student", "Teacher", "Doctor", "Agent", "Hunter", "Warrior"];
+        var n = ["Horizon", "Shadow", "Legacy", "Empire", "Kingdom", "Quest", "Journey", "War", "Peace", "Destiny", "Fate", "Dream", "Nightmare", "Vision", "Truth", "Lie", "Game", "Player", "World", "Universe", "Galaxy", "Star", "Planet", "Earth", "City", "Village", "House", "Room", "Door", "Key", "Lock", "Gate", "Bridge", "Tower", "Wall", "Sword", "Shield", "Heart", "Soul", "Mind", "Spirit"];
+        
+        var t = "";
+        var r = Math.random();
+        if (r < 0.2) t = p[Math.floor(Math.random() * p.length)] + " " + n[Math.floor(Math.random() * n.length)];
+        else if (r < 0.5) t = a[Math.floor(Math.random() * a.length)] + " " + n[Math.floor(Math.random() * n.length)];
+        else t = p[Math.floor(Math.random() * p.length)] + " " + a[Math.floor(Math.random() * a.length)] + " " + n[Math.floor(Math.random() * n.length)];
+        
+        if (Math.random() < 0.1) t += " (" + (Math.floor(Math.random() * 5) + 1) + ")";
+        return t;
+    }
+
     function csSeedFilmMarket() {
-        var titles = ["Space Odyssey", "The Old World", "Cyber-Night", "Detective Holmes", "Magic Kingdom"];
-        var studios = ["Global Cine", "Indie Pixels", "Mega-Media", "FilmStar"];
+        var studios = ["Global Cine", "Indie Pixels", "Mega-Media", "FilmStar", "Visionary Films", "Art House", "Blockbuster Inc", "CineMax"];
         var seeds = [];
-        for (var i = 0; i < titles.length; i++) {
+        for (var i = 0; i < 25; i++) {
             seeds.push({
-                id: "SEED_" + i,
-                title: titles[i],
+                id: "SEED_" + Math.floor(Math.random() * 1000000),
+                title: csGenerateMovieTitle(),
                 platformIds: ["movie"],
-                score: Math.floor(Math.random() * 4) + 6,
-                studioName: studios[i % studios.length]
+                score: Math.floor(Math.random() * 5) + 5, // 5 to 10
+                studioName: studios[Math.floor(Math.random() * studios.length)]
             });
         }
         return seeds;
@@ -7720,7 +7804,7 @@
                     if (actualIdx > -1) store.data.releaseHistory.splice(actualIdx, 1);
 
                     routeModMenu("film_market", "media");
-                } else alert("Not enough cash to acquire this license!");
+                } else csNotify("Not enough cash to acquire this license!");
             });
 
             row.append(btn);

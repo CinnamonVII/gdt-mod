@@ -1,0 +1,1548 @@
+[3745] (1:11:28 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:11:28 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:11:28 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:11:28 AM) [FILM-2] Studio count: 12
+[3745] (1:11:28 AM) [FILM-3] Studios sorted OK.
+[3745] (1:11:28 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:11:28 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:11:28 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 1 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:11:28 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:11:28 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:11:28 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:11:28 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:11:28 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 6 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:11:28 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:11:28 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:11:28 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:11:28 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:11:28 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:11:28 AM) [FILM-5] Building card 11 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:11:28 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:11:28 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:11:28 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:11:28 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:11:28 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:11:28 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:11:37 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3745] (1:11:37 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:11:37 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:11:38 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:11:38 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:11:38 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:11:38 AM) [FILM-2] Studio count: 12
+[3745] (1:11:38 AM) [FILM-3] Studios sorted OK.
+[3745] (1:11:38 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:11:38 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:11:38 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:11:38 AM) [FILM-5] Building card 1 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:11:38 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:11:38 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:11:38 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:11:38 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:11:38 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:11:38 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:11:38 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:11:38 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:11:38 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:11:38 AM) [FILM-5] Building card 6 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:11:38 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:11:38 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:11:38 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:11:38 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:11:38 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:11:39 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:11:39 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:11:39 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:11:39 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:11:39 AM) [FILM-5] Building card 11 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:11:39 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:11:39 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:11:39 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:11:39 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:11:39 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:11:39 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:11:41 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3745] (1:11:41 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:11:41 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:13:31 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:13:31 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:13:31 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:13:31 AM) [FILM-2] Studio count: 12
+[3745] (1:13:31 AM) [FILM-3] Studios sorted OK.
+[3745] (1:13:31 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:13:31 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:13:31 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 1 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:13:31 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:13:31 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:13:31 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:13:31 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:13:31 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:13:31 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:13:31 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:13:31 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:13:31 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:13:31 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:13:31 AM) [FILM-5] Building card 11 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:13:31 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:13:31 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:13:31 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:13:31 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:13:31 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:13:31 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:13:39 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:13:39 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:13:39 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:13:39 AM) [FILM-2] Studio count: 12
+[3745] (1:13:39 AM) [FILM-3] Studios sorted OK.
+[3745] (1:13:39 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:13:39 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:13:39 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 1 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:13:39 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:13:39 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 3 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:13:39 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:13:39 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:13:39 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 6 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:13:39 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:13:39 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:13:39 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:13:39 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:13:39 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:13:39 AM) [FILM-5] Building card 11 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:13:39 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:13:39 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:13:39 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:13:39 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:13:39 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:13:39 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:13:44 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3745] (1:13:44 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:13:44 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:13:50 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:13:50 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:13:50 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:13:50 AM) [FILM-2] Studio count: 12
+[3745] (1:13:50 AM) [FILM-3] Studios sorted OK.
+[3745] (1:13:50 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:13:50 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:13:50 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 1 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:13:50 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:13:50 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 3 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:13:50 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:13:50 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:13:50 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:13:50 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:13:50 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:13:50 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:13:50 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:13:50 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:13:50 AM) [FILM-5] Building card 11 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:13:50 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:13:50 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:13:50 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:13:50 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:13:50 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:13:50 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:13:54 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3745] (1:13:54 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:13:54 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:13:57 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:13:57 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:13:57 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:13:57 AM) [FILM-2] Studio count: 12
+[3745] (1:13:57 AM) [FILM-3] Studios sorted OK.
+[3745] (1:13:57 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:13:57 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:13:57 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 1 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:13:57 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:13:57 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 3 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:13:57 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:13:57 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:13:57 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 6 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:13:57 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:13:57 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:13:57 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:13:57 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:13:57 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:13:57 AM) [FILM-5] Building card 11 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:13:57 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:13:57 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:13:57 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:13:57 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:13:57 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:13:57 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:14:35 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3745] (1:14:35 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:14:35 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:14:36 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:14:36 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:14:36 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:14:36 AM) [FILM-2] Studio count: 12
+[3745] (1:14:36 AM) [FILM-3] Studios sorted OK.
+[3745] (1:14:36 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:14:36 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:14:36 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 1 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:14:36 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:14:36 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 3 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:14:36 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:14:36 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:14:36 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:14:36 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:14:36 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:14:36 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:14:36 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:14:36 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:14:36 AM) [FILM-5] Building card 11 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:14:36 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:14:36 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:14:36 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:14:36 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:14:36 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:14:36 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:27:27 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:27:27 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:27:27 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:27:27 AM) [FILM-2] Studio count: 12
+[3745] (1:27:27 AM) [FILM-3] Studios sorted OK.
+[3745] (1:27:27 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:27:27 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:27:27 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 1 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:27:27 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:27:27 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:27:27 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:27:27 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:27:27 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:27:27 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:27:27 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:27:27 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:27:27 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:27:27 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:27:27 AM) [FILM-5] Building card 11 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:27:27 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:27:27 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:27:27 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:27:27 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:27:27 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:27:27 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:27:28 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3745] (1:27:28 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:27:28 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:27:32 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:27:32 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:27:32 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:27:32 AM) [FILM-2] Studio count: 12
+[3745] (1:27:32 AM) [FILM-3] Studios sorted OK.
+[3745] (1:27:32 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:27:32 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:27:32 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 1 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:27:32 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:27:32 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:27:32 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:27:32 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:27:32 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 6 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:27:32 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:27:32 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:27:32 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:27:32 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:27:32 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:27:32 AM) [FILM-5] Building card 11 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:27:32 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:27:32 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:27:32 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:27:32 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:27:32 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:27:32 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:27:38 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3745] (1:27:38 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:27:38 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:27:46 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:27:46 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:27:46 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:27:46 AM) [FILM-2] Studio count: 12
+[3745] (1:27:46 AM) [FILM-3] Studios sorted OK.
+[3745] (1:27:46 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:27:46 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:27:46 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 1 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:27:46 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:27:46 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:27:46 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:27:46 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:27:46 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 6 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:27:46 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:27:46 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:27:46 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:27:46 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:27:46 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:27:46 AM) [FILM-5] Building card 11 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:27:46 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:27:46 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:27:46 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:27:46 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:27:46 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:27:46 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:28:08 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3745] (1:28:08 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:28:08 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:28:11 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3745] (1:28:11 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:28:11 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:28:11 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3745] (1:28:11 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:28:11 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:28:12 AM) [ROUTE-1] routeModMenu called: tab=franchises type=media
+[3745] (1:28:12 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:28:12 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:28:13 AM) [ROUTE-1] routeModMenu called: tab=licensing_review type=media
+[3745] (1:28:13 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:28:13 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:28:13 AM) [ROUTE-1] routeModMenu called: tab=media type=media
+[3745] (1:28:13 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:28:13 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:28:14 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3745] (1:28:14 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:28:14 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:28:15 AM) [ROUTE-1] routeModMenu called: tab=grid_dashboard type=media
+[3745] (1:28:15 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:28:15 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:28:36 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:28:36 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:28:36 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:28:36 AM) [FILM-2] Studio count: 12
+[3746] (1:28:36 AM) [FILM-3] Studios sorted OK.
+[3746] (1:28:36 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:28:36 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:28:36 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 1 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:28:36 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:28:36 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:28:36 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:28:36 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:28:36 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:28:36 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3746] (1:28:36 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3746] (1:28:36 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:28:36 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:28:36 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:28:36 AM) [FILM-5] Building card 11 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:28:36 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:28:36 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:28:36 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:28:36 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:28:36 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:28:36 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:28:37 AM) [ROUTE-1] routeModMenu called: tab=franchises type=media
+[3746] (1:28:37 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:28:37 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:28:38 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3746] (1:28:38 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:28:38 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:28:39 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:28:39 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:28:39 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:28:39 AM) [FILM-2] Studio count: 12
+[3746] (1:28:39 AM) [FILM-3] Studios sorted OK.
+[3746] (1:28:39 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:28:39 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:28:39 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 1 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:28:39 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:28:39 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:28:39 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:28:39 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:28:39 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 6 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:28:39 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3746] (1:28:39 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3746] (1:28:39 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:28:39 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:28:39 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:28:39 AM) [FILM-5] Building card 11 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:28:39 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:28:39 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:28:39 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:28:39 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:28:39 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:28:39 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:28:47 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:28:47 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:28:47 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:28:47 AM) [FILM-2] Studio count: 12
+[3746] (1:28:47 AM) [FILM-3] Studios sorted OK.
+[3746] (1:28:47 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:28:47 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3746] (1:28:47 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:28:47 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:28:47 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:28:47 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:28:47 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3746] (1:28:47 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:28:47 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:28:47 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:28:47 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:28:47 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:28:47 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:28:47 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:28:47 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:28:47 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:28:47 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:28:47 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:28:47 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:28:47 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:28:49 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:28:49 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:28:49 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:28:49 AM) [FILM-2] Studio count: 12
+[3746] (1:28:49 AM) [FILM-3] Studios sorted OK.
+[3746] (1:28:49 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:28:49 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=10 val=86240352
+[3746] (1:28:49 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:28:49 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:28:49 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:28:49 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:28:49 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3746] (1:28:49 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:28:49 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:28:49 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:28:49 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:28:49 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:28:49 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:28:49 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:28:49 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:28:49 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:28:49 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:28:49 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:28:49 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:28:49 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:28:50 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:28:50 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:28:50 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:28:50 AM) [FILM-2] Studio count: 12
+[3746] (1:28:50 AM) [FILM-3] Studios sorted OK.
+[3746] (1:28:50 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:28:50 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=20 val=86240352
+[3746] (1:28:50 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:28:50 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:28:50 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:28:50 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:28:50 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3746] (1:28:50 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:28:50 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:28:50 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:28:50 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:28:50 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:28:50 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:28:50 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:28:50 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:28:50 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:28:50 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:28:50 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:28:50 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:28:50 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:28:50 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:28:50 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:28:50 AM) [FILM-2] Studio count: 12
+[3746] (1:28:50 AM) [FILM-3] Studios sorted OK.
+[3746] (1:28:50 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:28:50 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=30 val=86240352
+[3746] (1:28:50 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:28:50 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:28:50 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:28:50 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:28:50 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3746] (1:28:50 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:28:50 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:28:50 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:28:50 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:28:50 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:28:50 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:28:50 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:28:50 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:28:50 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:28:50 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:28:50 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:28:50 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:28:50 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:28:51 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:28:51 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:28:51 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:28:51 AM) [FILM-2] Studio count: 12
+[3746] (1:28:51 AM) [FILM-3] Studios sorted OK.
+[3746] (1:28:51 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:28:51 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:28:51 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:28:51 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:28:51 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:28:51 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:28:51 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3746] (1:28:51 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:28:51 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:28:51 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:28:51 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:28:51 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:28:51 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:28:51 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:28:51 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:28:51 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:28:51 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:28:51 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:28:51 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:28:51 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:23 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:23 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:23 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:23 AM) [FILM-2] Studio count: 12
+[3746] (1:29:23 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:23 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:23 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:23 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:23 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:29:23 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:23 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:23 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=10 val=55223260
+[3746] (1:29:23 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:23 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:23 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:23 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:23 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:23 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:23 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:23 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:23 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:23 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:23 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:23 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:23 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:23 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:23 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:23 AM) [FILM-2] Studio count: 12
+[3746] (1:29:23 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:23 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:23 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:23 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:23 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:29:23 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:23 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:23 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=20 val=55223260
+[3746] (1:29:23 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:23 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:23 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:23 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:23 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:23 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:23 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:23 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:23 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:23 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:23 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:23 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:23 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:23 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:23 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:23 AM) [FILM-2] Studio count: 12
+[3746] (1:29:23 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:23 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:23 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:23 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:23 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:29:23 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:23 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:23 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=30 val=55223260
+[3746] (1:29:23 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:23 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:23 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:23 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:23 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:23 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:23 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:23 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:23 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:23 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:23 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:23 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:23 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:23 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:23 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:23 AM) [FILM-2] Studio count: 12
+[3746] (1:29:23 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:23 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:23 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:23 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:23 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:29:23 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:23 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:23 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=40 val=55223260
+[3746] (1:29:23 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:23 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:23 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:23 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:23 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:23 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:23 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:23 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:23 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:23 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:23 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:23 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:23 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:24 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:24 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:24 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:24 AM) [FILM-2] Studio count: 12
+[3746] (1:29:24 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:24 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:24 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:24 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:24 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:29:24 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:24 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:24 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=50 val=55223260
+[3746] (1:29:24 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:24 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:24 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:24 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:24 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:24 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:24 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:24 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:24 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:24 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:24 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:24 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:24 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:29 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:29 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:29 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:29 AM) [FILM-2] Studio count: 12
+[3746] (1:29:29 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:29 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:29 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:29 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:29 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=10 val=71822483
+[3746] (1:29:29 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:29 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:29 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=50 val=55223260
+[3746] (1:29:29 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:29 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:29 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:29 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:29 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:29 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:29 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:29 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:29 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:29 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:29 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:29 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:29 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:29 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:29 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:29 AM) [FILM-2] Studio count: 12
+[3746] (1:29:29 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:29 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:29 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:29 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:29 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=20 val=71822483
+[3746] (1:29:29 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:29 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:29 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=50 val=55223260
+[3746] (1:29:29 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:29 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:29 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:29 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:29 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:29 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:29 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:29 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:29 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:29 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:29 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:29 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:29 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:29 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:29 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:29 AM) [FILM-2] Studio count: 12
+[3746] (1:29:29 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:29 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:29 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:29 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:29 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=30 val=71822483
+[3746] (1:29:29 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:29 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:29 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=50 val=55223260
+[3746] (1:29:29 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:29 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:29 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:29 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:29 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:29 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:29 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:29 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:29 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:29 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:29 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:29 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:29 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:30 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:30 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:30 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:30 AM) [FILM-2] Studio count: 12
+[3746] (1:29:30 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:30 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:30 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:30 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:30 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=40 val=71822483
+[3746] (1:29:30 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:30 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:30 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=50 val=55223260
+[3746] (1:29:30 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:30 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:30 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:30 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:30 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:30 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:30 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:30 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:30 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:30 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:30 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:30 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:30 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:30 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:30 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:30 AM) [FILM-2] Studio count: 12
+[3746] (1:29:30 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:30 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:30 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:30 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:30 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=50 val=71822483
+[3746] (1:29:30 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:30 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:30 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=50 val=55223260
+[3746] (1:29:30 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:30 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:30 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:30 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:30 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:30 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:30 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:30 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:30 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:30 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:30 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:30 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:30 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:29:38 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:29:38 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:29:38 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:29:38 AM) [FILM-2] Studio count: 12
+[3746] (1:29:38 AM) [FILM-3] Studios sorted OK.
+[3746] (1:29:38 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:29:38 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:29:38 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:29:38 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=50 val=71822483
+[3746] (1:29:38 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:29:38 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:29:38 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=50 val=55223260
+[3746] (1:29:38 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:29:38 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:29:38 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:29:38 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:29:38 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:29:38 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:29:38 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:29:38 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:29:38 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:29:38 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:29:38 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:29:38 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:29:38 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:04 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:30:04 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:30:04 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:30:04 AM) [FILM-2] Studio count: 12
+[3746] (1:30:04 AM) [FILM-3] Studios sorted OK.
+[3746] (1:30:04 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:30:04 AM) [FILM-5] Building card 0 for: Apple TV+ Studios id=MS_8 shares=40 val=86240352
+[3746] (1:30:04 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 1 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:30:04 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 2 for: A24 Interactive id=MS_6 shares=50 val=71822483
+[3746] (1:30:04 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 3 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:30:04 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 4 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:30:04 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 5 for: Netflix Films & Games id=MS_7 shares=50 val=55223260
+[3746] (1:30:04 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:30:04 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 7 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:30:04 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 8 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:30:04 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 9 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:30:04 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 10 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:30:04 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:30:04 AM) [FILM-5] Building card 11 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:30:04 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:30:04 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:30:04 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:30:04 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:30:04 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:04 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:06 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3746] (1:30:06 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:06 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:06 AM) [ROUTE-1] routeModMenu called: tab=franchises type=media
+[3746] (1:30:06 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:06 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:07 AM) [ROUTE-1] routeModMenu called: tab=licensing_review type=media
+[3746] (1:30:07 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:07 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:07 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3746] (1:30:07 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:07 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:08 AM) [ROUTE-1] routeModMenu called: tab=media type=media
+[3746] (1:30:08 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:08 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:08 AM) [ROUTE-1] routeModMenu called: tab=debug type=media
+[3746] (1:30:08 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:08 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:09 AM) [ROUTE-1] routeModMenu called: tab=grid_dashboard type=media
+[3746] (1:30:09 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:09 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:17 AM) [ROUTE-1] routeModMenu called: tab=market type=studios
+[3746] (1:30:18 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:18 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:19 AM) [ROUTE-1] routeModMenu called: tab=subsidiaries type=studios
+[3746] (1:30:19 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:19 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:20 AM) [ROUTE-1] routeModMenu called: tab=publishing type=studios
+[3746] (1:30:20 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:20 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:22 AM) [ROUTE-1] routeModMenu called: tab=schedule type=studios
+[3746] (1:30:22 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:22 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:22 AM) [ROUTE-1] routeModMenu called: tab=leaderboard type=studios
+[3746] (1:30:22 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:22 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:23 AM) [ROUTE-1] routeModMenu called: tab=dlc type=studios
+[3746] (1:30:23 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:23 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:24 AM) [ROUTE-1] routeModMenu called: tab=franchises type=studios
+[3746] (1:30:24 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:24 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:25 AM) [ROUTE-1] routeModMenu called: tab=marketing type=studios
+[3746] (1:30:25 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:25 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:26 AM) [ROUTE-1] routeModMenu called: tab=settings type=studios
+[3746] (1:30:26 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:26 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:28 AM) [ROUTE-1] routeModMenu called: tab=debug type=studios
+[3746] (1:30:28 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:28 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:41 AM) [ROUTE-1] routeModMenu called: tab=settings type=studios
+[3746] (1:30:41 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:41 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:41 AM) [ROUTE-1] routeModMenu called: tab=marketing type=studios
+[3746] (1:30:41 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:41 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:42 AM) [ROUTE-1] routeModMenu called: tab=franchises type=studios
+[3746] (1:30:42 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:42 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:43 AM) [ROUTE-1] routeModMenu called: tab=dlc type=studios
+[3746] (1:30:43 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:43 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:43 AM) [ROUTE-1] routeModMenu called: tab=leaderboard type=studios
+[3746] (1:30:43 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:43 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:30:44 AM) [ROUTE-1] routeModMenu called: tab=schedule type=studios
+[3746] (1:30:44 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:30:44 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:02 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:37:02 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:37:02 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:37:02 AM) [FILM-2] Studio count: 12
+[3745] (1:37:02 AM) [FILM-3] Studios sorted OK.
+[3745] (1:37:02 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:37:02 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:37:02 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 1 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:37:02 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:37:02 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:37:02 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:37:02 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:37:02 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:37:02 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:37:02 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:37:02 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:37:02 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:37:02 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:37:02 AM) [FILM-5] Building card 11 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:37:02 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:37:02 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:37:02 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:37:02 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:37:02 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:02 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:09 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3745] (1:37:09 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:09 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:10 AM) [ROUTE-1] routeModMenu called: tab=grid_dashboard type=media
+[3745] (1:37:10 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:10 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:13 AM) [ROUTE-1] routeModMenu called: tab=media type=media
+[3745] (1:37:13 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:13 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:14 AM) [ROUTE-1] routeModMenu called: tab=grid_dashboard type=media
+[3745] (1:37:14 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:14 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:16 AM) [ROUTE-1] routeModMenu called: tab=media type=media
+[3745] (1:37:16 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:16 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:22 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3745] (1:37:22 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:22 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:25 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3745] (1:37:25 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3745] (1:37:25 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3745] (1:37:25 AM) [FILM-2] Studio count: 12
+[3745] (1:37:25 AM) [FILM-3] Studios sorted OK.
+[3745] (1:37:25 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3745] (1:37:25 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3745] (1:37:25 AM) [FILM-5b] Card 0 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 1 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3745] (1:37:25 AM) [FILM-5b] Card 1 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3745] (1:37:25 AM) [FILM-5b] Card 2 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3745] (1:37:25 AM) [FILM-5b] Card 3 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3745] (1:37:25 AM) [FILM-5b] Card 4 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3745] (1:37:25 AM) [FILM-5b] Card 5 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 6 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3745] (1:37:25 AM) [FILM-5b] Card 6 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3745] (1:37:25 AM) [FILM-5b] Card 7 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3745] (1:37:25 AM) [FILM-5b] Card 8 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3745] (1:37:25 AM) [FILM-5b] Card 9 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3745] (1:37:25 AM) [FILM-5b] Card 10 built OK.
+[3745] (1:37:25 AM) [FILM-5] Building card 11 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3745] (1:37:25 AM) [FILM-5b] Card 11 built OK.
+[3745] (1:37:25 AM) [FILM-6] All cards built. Appending to container.
+[3745] (1:37:25 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3745] (1:37:25 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3745] (1:37:25 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:25 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:28 AM) [ROUTE-1] routeModMenu called: tab=grid_dashboard type=media
+[3745] (1:37:28 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:28 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:29 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3745] (1:37:29 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:29 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:30 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3745] (1:37:30 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:30 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:30 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3745] (1:37:30 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:30 AM) [ROUTE-9] routeModMenu returning.
+[3745] (1:37:32 AM) [ROUTE-1] routeModMenu called: tab=franchises type=media
+[3745] (1:37:32 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3745] (1:37:32 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:37:41 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:37:41 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:37:41 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:37:41 AM) [FILM-2] Studio count: 12
+[3746] (1:37:41 AM) [FILM-3] Studios sorted OK.
+[3746] (1:37:41 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:37:41 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:37:41 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 1 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:37:41 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:37:41 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:37:41 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:37:41 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:37:41 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 6 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:37:41 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3746] (1:37:41 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3746] (1:37:41 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:37:41 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:37:41 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:37:41 AM) [FILM-5] Building card 11 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:37:41 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:37:41 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:37:41 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:37:41 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:37:41 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:37:41 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:37:44 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3746] (1:37:44 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:37:44 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:37:45 AM) [ROUTE-1] routeModMenu called: tab=franchises type=media
+[3746] (1:37:45 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:37:45 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:37:46 AM) [ROUTE-1] routeModMenu called: tab=licensing_review type=media
+[3746] (1:37:46 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:37:46 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:37:47 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3746] (1:37:47 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:37:47 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:37:47 AM) [ROUTE-1] routeModMenu called: tab=media type=media
+[3746] (1:37:47 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:37:47 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:37:55 AM) [ROUTE-1] routeModMenu called: tab=grid_dashboard type=media
+[3746] (1:37:55 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:37:55 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:38:07 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3746] (1:38:07 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3746] (1:38:07 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3746] (1:38:07 AM) [FILM-2] Studio count: 12
+[3746] (1:38:07 AM) [FILM-3] Studios sorted OK.
+[3746] (1:38:07 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3746] (1:38:07 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3746] (1:38:07 AM) [FILM-5b] Card 0 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 1 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3746] (1:38:07 AM) [FILM-5b] Card 1 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3746] (1:38:07 AM) [FILM-5b] Card 2 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3746] (1:38:07 AM) [FILM-5b] Card 3 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3746] (1:38:07 AM) [FILM-5b] Card 4 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3746] (1:38:07 AM) [FILM-5b] Card 5 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54721234
+[3746] (1:38:07 AM) [FILM-5b] Card 6 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3746] (1:38:07 AM) [FILM-5b] Card 7 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3746] (1:38:07 AM) [FILM-5b] Card 8 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3746] (1:38:07 AM) [FILM-5b] Card 9 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3746] (1:38:07 AM) [FILM-5b] Card 10 built OK.
+[3746] (1:38:07 AM) [FILM-5] Building card 11 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3746] (1:38:07 AM) [FILM-5b] Card 11 built OK.
+[3746] (1:38:07 AM) [FILM-6] All cards built. Appending to container.
+[3746] (1:38:07 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3746] (1:38:07 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3746] (1:38:07 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:38:07 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:38:07 AM) [ROUTE-1] routeModMenu called: tab=grid_dashboard type=media
+[3746] (1:38:07 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:38:07 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:38:10 AM) [ROUTE-1] routeModMenu called: tab=market type=studios
+[3746] (1:38:10 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:38:10 AM) [ROUTE-9] routeModMenu returning.
+[3746] (1:38:11 AM) [ROUTE-1] routeModMenu called: tab=settings type=studios
+[3746] (1:38:11 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3746] (1:38:11 AM) [ROUTE-9] routeModMenu returning.
+[3747] (1:38:18 AM) csProcessMediaStudios: Tick release for Paramount Interactive - Title: Paramount Interactive Blockbuster, PlayerFunded: false
+[3747] (1:38:33 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3747] (1:38:33 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3747] (1:38:33 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3747] (1:38:33 AM) [FILM-2] Studio count: 12
+[3747] (1:38:33 AM) [FILM-3] Studios sorted OK.
+[3747] (1:38:33 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3747] (1:38:33 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3747] (1:38:33 AM) [FILM-5b] Card 0 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 1 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3747] (1:38:33 AM) [FILM-5b] Card 1 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3747] (1:38:33 AM) [FILM-5b] Card 2 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3747] (1:38:33 AM) [FILM-5b] Card 3 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=51880895
+[3747] (1:38:33 AM) [FILM-5b] Card 4 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3747] (1:38:33 AM) [FILM-5b] Card 5 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 6 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3747] (1:38:33 AM) [FILM-5b] Card 6 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3747] (1:38:33 AM) [FILM-5b] Card 7 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3747] (1:38:33 AM) [FILM-5b] Card 8 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3747] (1:38:33 AM) [FILM-5b] Card 9 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3747] (1:38:33 AM) [FILM-5b] Card 10 built OK.
+[3747] (1:38:33 AM) [FILM-5] Building card 11 for: Paramount Interactive id=MS_0 shares=0 val=54994840
+[3747] (1:38:33 AM) [FILM-5b] Card 11 built OK.
+[3747] (1:38:33 AM) [FILM-6] All cards built. Appending to container.
+[3747] (1:38:33 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3747] (1:38:33 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3747] (1:38:33 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3747] (1:38:33 AM) [ROUTE-9] routeModMenu returning.
+[3747] (1:38:34 AM) [ROUTE-1] routeModMenu called: tab=franchises type=media
+[3747] (1:38:34 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3747] (1:38:34 AM) [ROUTE-9] routeModMenu returning.
+[3747] (1:38:35 AM) [ROUTE-1] routeModMenu called: tab=licensing_review type=media
+[3747] (1:38:35 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3747] (1:38:35 AM) [ROUTE-9] routeModMenu returning.
+[3747] (1:38:36 AM) [ROUTE-1] routeModMenu called: tab=catalogue_negotiation type=media
+[3747] (1:38:36 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3747] (1:38:36 AM) [ROUTE-9] routeModMenu returning.
+[3747] (1:38:36 AM) [ROUTE-1] routeModMenu called: tab=licensing_review type=media
+[3747] (1:38:36 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3747] (1:38:36 AM) [ROUTE-9] routeModMenu returning.
+[3747] (1:38:37 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3747] (1:38:37 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3747] (1:38:37 AM) [ROUTE-9] routeModMenu returning.
+[3747] (1:38:38 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3747] (1:38:38 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3747] (1:38:38 AM) [ROUTE-9] routeModMenu returning.
+[3747] (1:38:39 AM) [ROUTE-1] routeModMenu called: tab=grid_dashboard type=media
+[3747] (1:38:39 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3747] (1:38:39 AM) [ROUTE-9] routeModMenu returning.
+[3748] (1:38:48 AM) csProcessMediaStudios: Tick release for Disney Interactive Reborn - Title: Disney Interactive Reborn Blockbuster, PlayerFunded: false
+[3749] (1:38:57 AM) [ROUTE-1] routeModMenu called: tab=market type=studios
+[3749] (1:38:57 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:38:57 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:00 AM) [ROUTE-1] routeModMenu called: tab=subsidiaries type=studios
+[3749] (1:39:00 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:00 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:05 AM) [ROUTE-1] routeModMenu called: tab=publishing type=studios
+[3749] (1:39:05 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:05 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:06 AM) [ROUTE-1] routeModMenu called: tab=subsidiaries type=studios
+[3749] (1:39:06 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:06 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:31 AM) [ROUTE-1] routeModMenu called: tab=leaderboard type=studios
+[3749] (1:39:31 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:31 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:32 AM) [ROUTE-1] routeModMenu called: tab=schedule type=studios
+[3749] (1:39:32 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:32 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:33 AM) [ROUTE-1] routeModMenu called: tab=publishing type=studios
+[3749] (1:39:33 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:33 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:34 AM) [ROUTE-1] routeModMenu called: tab=franchises type=studios
+[3749] (1:39:34 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:34 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:35 AM) [ROUTE-1] routeModMenu called: tab=marketing type=studios
+[3749] (1:39:35 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:35 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:36 AM) [ROUTE-1] routeModMenu called: tab=settings type=studios
+[3749] (1:39:36 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:36 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:38 AM) [ROUTE-1] routeModMenu called: tab=market type=studios
+[3749] (1:39:38 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:38 AM) [ROUTE-9] routeModMenu returning.
+[3749] (1:39:42 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3749] (1:39:42 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3749] (1:39:42 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3749] (1:39:42 AM) [FILM-2] Studio count: 12
+[3749] (1:39:42 AM) [FILM-3] Studios sorted OK.
+[3749] (1:39:42 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3749] (1:39:42 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3749] (1:39:42 AM) [FILM-5b] Card 0 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 1 for: Paramount Interactive id=MS_0 shares=0 val=54994840
+[3749] (1:39:42 AM) [FILM-5b] Card 1 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3749] (1:39:42 AM) [FILM-5b] Card 2 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3749] (1:39:42 AM) [FILM-5b] Card 3 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=52140299
+[3749] (1:39:42 AM) [FILM-5b] Card 4 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3749] (1:39:42 AM) [FILM-5b] Card 5 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 6 for: Blumhouse Interactive id=MS_11 shares=0 val=46562741
+[3749] (1:39:42 AM) [FILM-5b] Card 6 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3749] (1:39:42 AM) [FILM-5b] Card 7 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3749] (1:39:42 AM) [FILM-5b] Card 8 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62343087
+[3749] (1:39:42 AM) [FILM-5b] Card 9 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3749] (1:39:42 AM) [FILM-5b] Card 10 built OK.
+[3749] (1:39:42 AM) [FILM-5] Building card 11 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3749] (1:39:42 AM) [FILM-5b] Card 11 built OK.
+[3749] (1:39:42 AM) [FILM-6] All cards built. Appending to container.
+[3749] (1:39:42 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3749] (1:39:42 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3749] (1:39:42 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3749] (1:39:42 AM) [ROUTE-9] routeModMenu returning.
+[3750] (1:39:42 AM) csProcessMediaStudios: Tick release for MGM Digital - Title: MGM Digital Feature, PlayerFunded: false
+[3750] (1:39:43 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3750] (1:39:43 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3750] (1:39:43 AM) [ROUTE-9] routeModMenu returning.
+[3750] (1:39:44 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3750] (1:39:44 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3750] (1:39:44 AM) [ROUTE-9] routeModMenu returning.
+[3751] (1:39:47 AM) csProcessMediaStudios: Tick release for Blumhouse Interactive - Title: Blumhouse Interactive Feature, PlayerFunded: false
+[3752] (1:40:01 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3752] (1:40:01 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3752] (1:40:01 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3752] (1:40:01 AM) [FILM-2] Studio count: 12
+[3752] (1:40:01 AM) [FILM-3] Studios sorted OK.
+[3752] (1:40:01 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3752] (1:40:01 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3752] (1:40:01 AM) [FILM-5b] Card 0 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 1 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3752] (1:40:01 AM) [FILM-5b] Card 1 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3752] (1:40:01 AM) [FILM-5b] Card 2 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3752] (1:40:01 AM) [FILM-5b] Card 3 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=52140299
+[3752] (1:40:01 AM) [FILM-5b] Card 4 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3752] (1:40:01 AM) [FILM-5b] Card 5 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 6 for: Paramount Interactive id=MS_0 shares=0 val=54994840
+[3752] (1:40:01 AM) [FILM-5b] Card 6 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3752] (1:40:01 AM) [FILM-5b] Card 7 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3752] (1:40:01 AM) [FILM-5b] Card 8 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62654802
+[3752] (1:40:01 AM) [FILM-5b] Card 9 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3752] (1:40:01 AM) [FILM-5b] Card 10 built OK.
+[3752] (1:40:01 AM) [FILM-5] Building card 11 for: Blumhouse Interactive id=MS_11 shares=0 val=46795554
+[3752] (1:40:01 AM) [FILM-5b] Card 11 built OK.
+[3752] (1:40:01 AM) [FILM-6] All cards built. Appending to container.
+[3752] (1:40:01 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3752] (1:40:01 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3752] (1:40:01 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3752] (1:40:01 AM) [ROUTE-9] routeModMenu returning.
+[3752] (1:40:02 AM) [ROUTE-1] routeModMenu called: tab=licensing_review type=media
+[3752] (1:40:02 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3752] (1:40:02 AM) [ROUTE-9] routeModMenu returning.
+[3752] (1:40:02 AM) [ROUTE-1] routeModMenu called: tab=franchises type=media
+[3752] (1:40:02 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3752] (1:40:02 AM) [ROUTE-9] routeModMenu returning.
+[3752] (1:40:03 AM) [ROUTE-1] routeModMenu called: tab=film_market type=media
+[3752] (1:40:03 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3752] (1:40:03 AM) [ROUTE-9] routeModMenu returning.
+[3752] (1:40:03 AM) [ROUTE-1] routeModMenu called: tab=film_subs type=media
+[3752] (1:40:03 AM) [ROUTE-2] About to call csRenderFilmSubsTab
+[3752] (1:40:03 AM) [FILM-1] csRenderFilmSubsTab: entered
+[3752] (1:40:03 AM) [FILM-2] Studio count: 12
+[3752] (1:40:03 AM) [FILM-3] Studios sorted OK.
+[3752] (1:40:03 AM) [FILM-4] Sort UI built. Building 12 cards...
+[3752] (1:40:03 AM) [FILM-5] Building card 0 for: Sony Pictures Gaming id=MS_3 shares=100 val=17999283
+[3752] (1:40:03 AM) [FILM-5b] Card 0 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 1 for: Blumhouse Interactive id=MS_11 shares=0 val=46795554
+[3752] (1:40:03 AM) [FILM-5b] Card 1 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 2 for: Warner Bros. Digital id=MS_2 shares=0 val=56818405
+[3752] (1:40:03 AM) [FILM-5b] Card 2 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 3 for: A24 Interactive id=MS_6 shares=0 val=71822483
+[3752] (1:40:03 AM) [FILM-5b] Card 3 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 4 for: Disney Interactive Reborn id=MS_4 shares=0 val=52140299
+[3752] (1:40:03 AM) [FILM-5b] Card 4 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 5 for: Lionsgate Games id=MS_5 shares=0 val=43306824
+[3752] (1:40:03 AM) [FILM-5b] Card 5 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 6 for: Universal Pixels id=MS_1 shares=0 val=52029568
+[3752] (1:40:03 AM) [FILM-5b] Card 6 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 7 for: Netflix Films & Games id=MS_7 shares=0 val=55223260
+[3752] (1:40:03 AM) [FILM-5b] Card 7 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 8 for: Apple TV+ Studios id=MS_8 shares=0 val=86240352
+[3752] (1:40:03 AM) [FILM-5b] Card 8 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 9 for: MGM Digital id=MS_9 shares=0 val=62654802
+[3752] (1:40:03 AM) [FILM-5b] Card 9 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 10 for: Legendary Games id=MS_10 shares=0 val=81683480
+[3752] (1:40:03 AM) [FILM-5b] Card 10 built OK.
+[3752] (1:40:03 AM) [FILM-5] Building card 11 for: Paramount Interactive id=MS_0 shares=0 val=54994840
+[3752] (1:40:03 AM) [FILM-5b] Card 11 built OK.
+[3752] (1:40:03 AM) [FILM-6] All cards built. Appending to container.
+[3752] (1:40:03 AM) [FILM-7] csRenderFilmSubsTab returning.
+[3752] (1:40:03 AM) [ROUTE-3] csRenderFilmSubsTab completed OK.
+[3752] (1:40:03 AM) [ROUTE-4] Tab rendered. Fast animation...
+[3752] (1:40:03 AM) [ROUTE-9] routeModMenu returning.
