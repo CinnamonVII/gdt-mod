@@ -107,6 +107,8 @@
             '}',
 
 
+            '.simplemodal-container { display: flex !important; flex-direction: column !important; }',
+            '.simplemodal-data { flex: 1 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; min-height: 0 !important; }',
             '#modUI_content { scroll-behavior: smooth; }',
             '#modUI_content::-webkit-scrollbar { width: 6px; }',
             '#modUI_content::-webkit-scrollbar-track { background: #ecf0f1; }',
@@ -3927,18 +3929,18 @@
 
         csLog("[ROUTE-4] Tab rendered. Fast animation...");
 
-        
         setTimeout(function () {
             try {
+                csDrawPieCharts();
                 if (contentArea.length > 0) {
                     contentArea.removeClass('cs-animate-in').addClass('cs-animate-in');
                     var staggerItems = contentArea.find('.studioCard, .dlcItem, .cs-stagger-item');
-                    staggerItems.css({ opacity: 1 }); 
+                    staggerItems.css({ opacity: 1 });
                 }
             } catch (animErr) {
                 csLog("[ROUTE-5-ERR] CSS animation THREW: " + animErr.message);
             }
-        }, 0);
+        }, 10);
 
         setTimeout(function () {
             try {
@@ -5394,6 +5396,50 @@
                 container.append(item);
             })(studios[i]);
         }
+    }
+
+    function csDrawPieCharts() {
+        $('.pieChartCanvas').each(function () {
+            var c = this;
+            var ctx = c.getContext("2d");
+            var shares = parseInt($(this).attr('data-shares'), 10) || 0;
+            var centerX = 25;
+            var centerY = 25;
+            var outerR = 22;
+            var innerR = 14;
+
+            var sName = $(this).attr('data-name') || "?";
+            var initials = sName.split(' ').map(function (w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
+
+            ctx.clearRect(0, 0, 50, 50);
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, outerR, 0, 2 * Math.PI, false);
+            ctx.fillStyle = "#dfe6e9";
+            ctx.fill();
+
+            if (shares > 0) {
+                var startAngle = -0.5 * Math.PI;
+                var endAngle = startAngle + (shares / 100) * 2 * Math.PI;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, outerR, startAngle, endAngle, false);
+                ctx.arc(centerX, centerY, innerR, endAngle, startAngle, true);
+                ctx.closePath();
+                ctx.fillStyle = shares >= 50 ? "#e74c3c" : "#e67e22";
+                ctx.fill();
+            }
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, innerR, 0, 2 * Math.PI, false);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+
+            ctx.fillStyle = "#2c3e50";
+            ctx.font = "bold 11px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(initials, centerX, centerY);
+        });
     }
 
     function renderSubsidiariesTab(container) {
@@ -7468,42 +7514,6 @@
         }
         csLog("[FILM-6] All cards built. Appending to container.");
 
-        setTimeout(function () {
-            $('.pieChartCanvas').each(function () {
-                var c = this;
-                var ctx = c.getContext("2d");
-                var shares = parseInt($(this).attr('data-shares'), 10) || 0;
-                var radius = 22;
-                var centerX = 25;
-                var centerY = 25;
-
-                var sName = $(this).attr('data-name') || "?";
-                var initials = sName.split(' ').map(function (w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
-
-                ctx.clearRect(0, 0, 50, 50);
-
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-                ctx.fillStyle = shares >= 50 ? "#c0392b" : "#7f8c8d";
-                ctx.fill();
-
-                if (shares > 0) {
-                    var endAngle = (shares / 100) * 2 * Math.PI;
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, centerY);
-                    ctx.arc(centerX, centerY, radius, -0.5 * Math.PI, -0.5 * Math.PI + endAngle, false);
-                    ctx.closePath();
-                    ctx.fillStyle = shares >= 50 ? "#e74c3c" : "#e67e22";
-                    ctx.fill();
-                }
-
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 14px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(initials, centerX, centerY);
-            });
-        }, 10);
         csLog("[FILM-7] csRenderFilmSubsTab returning.");
     }
 
