@@ -291,6 +291,7 @@
         if (!store.data.activeCatalogueDeals) store.data.activeCatalogueDeals = [];
         if (!store.data.activeLicensingOffer) store.data.activeLicensingOffer = null;
         if (!store.data.activeCatalogueNegotiation) store.data.activeCatalogueNegotiation = null;
+        if (!store.data.debugLogs) store.data.debugLogs = [];
 
         // Repair older franchises
         if (store.data.franchises) {
@@ -469,6 +470,33 @@
 
                 if (repairedCount > 0) console.log("[Mod] Heuristic Baseline Repair: Scrubbed " + repairedCount + " data-points. Solo potential restored.");
             }
+        }
+    }
+
+    function csLog(msg) {
+        try {
+            if (!store || !store.data) return;
+            if (!store.data.debugLogs) store.data.debugLogs = [];
+            
+            var week = (typeof GameManager !== 'undefined' && GameManager.company) ? Math.floor(GameManager.company.currentWeek) : 0;
+            var timestamp = new Date().toLocaleTimeString();
+            var fullMsg = "[" + week + "] (" + timestamp + ") " + msg;
+            
+            store.data.debugLogs.unshift(fullMsg);
+            if (store.data.debugLogs.length > 100) store.data.debugLogs.pop();
+            
+            console.log("[CS_DEBUG] " + fullMsg);
+
+            // File logging for local debugging (Steam/Electron)
+            if (typeof require !== 'undefined') {
+                try {
+                   var fs = require('fs');
+                   var logPath = "/home/deck/gdt-mod/cs_debug.log";
+                   fs.appendFileSync(logPath, fullMsg + "\n");
+                } catch (fsErr) {}
+            }
+        } catch (e) {
+            console.error("csLog failed:", e);
         }
     }
 
@@ -2044,6 +2072,7 @@
         }
 
         if (transferred > 0) {
+            csLog("csAutoRouteMediaCatalog: Transferred " + transferred + " titles from " + ms.name + " to Grid library.");
             GameManager.company.notifications.push(new Notification({
                 header: "Catalog Acquired",
                 text: transferred + " titles from " + ms.name + " have been permanently transferred to your Grid library as originals!",
@@ -2062,21 +2091,24 @@
             if (ms.currentProject) {
                 ms.currentProject.weeksRemaining--;
                 if (ms.currentProject.weeksRemaining <= 0) {
+                    var proj = ms.currentProject;
+                    ms.currentProject = null;
+                    csLog("csProcessMediaStudios: Tick release for " + ms.name + " - Title: " + proj.title + ", PlayerFunded: " + proj.isPlayerFunded);
                     // Release it
-                    if (ms.currentProject.isPlayerFunded) {
+                    if (proj.isPlayerFunded) {
                         // Deliver to player pending distribution
-                        var finalScore = Math.min(10, Math.floor(ms.currentProject.score + (Math.random() * 2 - 0.5)));
+                        var finalScore = Math.min(10, Math.floor(proj.score + (Math.random() * 2 - 0.5)));
                         finalScore = Math.max(1, finalScore);
-                        var baseRev = Math.floor(ms.currentProject.budget * (1.2 + (finalScore / 10)));
+                        var baseRev = Math.floor(proj.budget * (1.2 + (finalScore / 10)));
 
                         var newProj = {
                             id: "FP_" + Date.now() + "_" + i,
-                            title: ms.currentProject.title,
-                            type: ms.currentProject.type,
+                            title: proj.title,
+                            type: proj.type,
                             producedBy: "player",
                             status: "released",
                             score: finalScore,
-                            budget: ms.currentProject.budget,
+                            budget: proj.budget,
                             estimatedRevenue: baseRev,
                             distributionStatus: "pending",
                             distributionDeadlineWeek: currentWk + 4
@@ -2116,31 +2148,32 @@
                         // Autonomous release
                         var catDeal = (store.data.activeCatalogueDeals || []).filter(function (d) { return d.studioId === ms.id && currentWk < d.endWeek; })[0];
                         if (catDeal && store.data.gridService && store.data.gridService.isActive) {
-                            var pseudoMovie = { title: ms.currentProject.title, score: ms.currentProject.score, studioName: ms.name };
+                            var pseudoMovie = { title: proj.title, score: proj.score, studioName: ms.name };
+                            csLog("csProcessMediaStudios: Catalogue Deal Active for " + ms.name + ". Routing " + proj.title + " to Grid.");
                             csLicenseExternalToGrid(pseudoMovie, 0, 104);
                         } else {
                             if (!store.data.releaseHistory) store.data.releaseHistory = [];
                             store.data.releaseHistory.push({
                                 id: "FR_" + Date.now() + "_" + i,
-                                title: ms.currentProject.title,
+                                title: proj.title,
                                 platformIds: ["movie"],
-                                score: ms.currentProject.score,
+                                score: proj.score,
                                 studioName: ms.name
                             });
                         }
 
                         // Royalty payment for licensed projects
-                        if (ms.currentProject.modLicenseId) {
-                            var lic = store.data.activeAILicenses.filter(function (l) { return l.id === ms.currentProject.modLicenseId; })[0];
+                        if (proj.modLicenseId) {
+                            var lic = store.data.activeAILicenses.filter(function (l) { return l.id === proj.modLicenseId; })[0];
                             if (lic) {
-                                var estBoxOffice = Math.floor(ms.currentProject.budget * 2.5 * (ms.currentProject.score / 5));
+                                var estBoxOffice = Math.floor(proj.budget * 2.5 * (proj.score / 5));
                                 var playerCut = Math.floor(estBoxOffice * lic.royaltyRate);
                                 if (playerCut > 0) {
-                                    GameManager.company.adjustCash(playerCut, "Licensing Royalties: " + ms.currentProject.title);
+                                    GameManager.company.adjustCash(playerCut, "Licensing Royalties: " + proj.title);
                                     lic.totalRoyaltiesEarned += playerCut;
                                     GameManager.company.notifications.push(new Notification({
                                         header: "Royalty Payment",
-                                        text: ms.name + " released " + ms.currentProject.title + ". Your " + (lic.royaltyRate * 100).toFixed(0) + "% royalty: $" + UI.getShortNumberString(playerCut),
+                                        text: ms.name + " released " + proj.title + ". Your " + (lic.royaltyRate * 100).toFixed(0) + "% royalty: $" + UI.getShortNumberString(playerCut),
                                         image: ""
                                     }));
                                 }
@@ -2155,9 +2188,8 @@
                             }
                         }
 
-                        ms.valuation += Math.floor(ms.currentProject.budget * 0.1);
+                        ms.valuation += Math.floor(proj.budget * 0.1);
                     }
-                    ms.currentProject = null;
                 }
             } else {
                 if (ms.sharesOwned >= 50) {
@@ -3604,6 +3636,32 @@
         routeModMenu(activeTab, menuType);
     }
 
+    function renderDebugTab(container) {
+        container.empty();
+        container.append('<h2 style="color: #c0392b; font-size: 14pt; margin: 0 0 10px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px;">Mod Debug Logs</h2>');
+        
+        var btnRow = $('<div style="margin-bottom: 15px;"></div>');
+        var clearBtn = $('<div class="selectorButton redButton" style="display: inline-block; padding: 5px 15px; cursor: pointer;">Clear Logs</div>');
+        clearBtn.click(function() {
+            store.data.debugLogs = [];
+            csLog("Logs cleared.");
+            renderDebugTab(container);
+        });
+        btnRow.append(clearBtn);
+        container.append(btnRow);
+
+        var logList = $('<div style="background: #1a1a1a; color: #2ecc71; font-family: monospace; font-size: 9pt; padding: 10px; border-radius: 4px; border: 1px solid #333; overflow-y: auto; max-height: 450px;"></div>');
+        var logs = store.data.debugLogs || [];
+        if (logs.length === 0) {
+            logList.append('<div style="color: #7f8c8d; font-style: italic;">No logs yet. Try performing actions like signing a deal.</div>');
+        } else {
+            logs.forEach(function(l) {
+                logList.append('<div style="margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px;">' + l + '</div>');
+            });
+        }
+        container.append(logList);
+    }
+
     function routeModMenu(activeTab, menuType) {
         menuType = menuType || $('#modUI').data('menuType') || "studios";
         var header = $('#modUI_header');
@@ -3628,7 +3686,9 @@
             { id: "catalogue_negotiation", label: "Negotiation", type: "media" },
             { id: "media", label: "Media", type: "media" },
             { id: "marketing", label: "Marketing", type: "studios" },
-            { id: "settings", label: "Settings", type: "studios" }
+            { id: "settings", label: "Settings", type: "studios" },
+            { id: "debug", label: "Debug", type: "studios" },
+            { id: "debug", label: "Debug", type: "media" }
         ];
 
         var tabs = allTabs.filter(function (t) { return t.type === menuType; });
@@ -3684,12 +3744,16 @@
             csRenderCatalogueNegotiation(contentArea);
         } else if (activeTab === "settings") {
             renderSettingsTab(contentArea);
+        } else if (activeTab === "debug") {
+            renderDebugTab(contentArea);
         }
 
 
-        contentArea.removeClass('cs-animate-in');
-        void contentArea[0].offsetWidth;
-        contentArea.addClass('cs-animate-in');
+        if (contentArea.length > 0) {
+            contentArea.removeClass('cs-animate-in');
+            void contentArea[0].offsetWidth;
+            contentArea.addClass('cs-animate-in');
+        }
 
 
         contentArea.find('.studioCard, .dlcItem, .cs-stagger-item').each(function (i) {
@@ -7183,6 +7247,7 @@
         } else {
             var signBtn = $('<div class="selectorButton greenButton" style="width: 100%; padding: 12px; font-size: 12pt; font-weight: bold; text-align: center;">Sign Final Agreement</div>');
             signBtn.click(function () {
+                csLog("Sign Button Clicked: Starting Catalogue Agreement flow for " + ms.name);
                 if (GameManager.company.cash < upfront) {
                     Sound.click();
                     // FIX 1: Added 'image: ""' here to prevent the game's notification engine from crashing
@@ -7204,6 +7269,7 @@
                     endWeek: Math.floor(GameManager.company.currentWeek) + 104,
                     weeklyMaintenance: weekly
                 });
+                csLog("Sign Button: Deal pushed to activeCatalogueDeals. Studio: " + ms.name + ", EndWeek: " + (Math.floor(GameManager.company.currentWeek) + 104));
                 csAutoRouteMediaCatalog(ms);
                 store.data.activeCatalogueNegotiation = null;
                 routeModMenu("film_subs", "media");
