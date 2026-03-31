@@ -2,150 +2,51 @@
     console.log("Concurrent Studios mod loaded.");
 
     
-    window.onerror = function (msg, url, line, col, err) {
-        var errMsg = "[GLOBAL_ERROR] " + msg + " at " + url + ":" + line + ":" + col;
-        if (err && err.stack) errMsg += "\nStack: " + err.stack;
-        console.error(errMsg);
-        try {
-            var fs = require('fs');
-            fs.appendFileSync("/home/deck/gdt-mod/cs_debug.log", "[" + new Date().toLocaleTimeString() + "] " + errMsg + "\n");
-        } catch (e) { }
-        return false; 
+    window.onerror = function(msg,url,line,col,err){
+        var e="[GLOBAL_ERROR] "+msg+" at "+url+":"+line+":"+col+(err&&err.stack?"\nStack: "+err.stack:"");
+        console.error(e);
+        try{require('fs').appendFileSync("/home/deck/gdt-mod/cs_debug.log","["+new Date().toLocaleTimeString()+"] "+e+"\n");}catch(x){}
+        return false;
     };
-    if (typeof window.onunhandledrejection === 'undefined' || !window.onunhandledrejection) {
-        window.onunhandledrejection = function (event) {
-            var errMsg = "[UNHANDLED_PROMISE] " + (event.reason || "unknown");
-            console.error(errMsg);
-            try {
-                var fs = require('fs');
-                fs.appendFileSync("/home/deck/gdt-mod/cs_debug.log", "[" + new Date().toLocaleTimeString() + "] " + errMsg + "\n");
-            } catch (e) { }
-        };
-    }
+    if(!window.onunhandledrejection){window.onunhandledrejection=function(ev){
+        var e="[UNHANDLED_PROMISE] "+(ev.reason||"unknown"); console.error(e);
+        try{require('fs').appendFileSync("/home/deck/gdt-mod/cs_debug.log","["+new Date().toLocaleTimeString()+"] "+e+"\n");}catch(x){}};}
 
     (function injectModStyles() {
         if (document.getElementById('cs-mod-styles')) return;
         var css = document.createElement('style');
         css.id = 'cs-mod-styles';
-        css.textContent = [
-
-            '#modUI .selectorButton, #modUI button, .simplemodal-data .selectorButton, .simplemodal-data button {',
-            '  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease !important;',
-            '}',
-            '.mod-franchise-icon { display: inline-block; color: #d35400; font-weight: bold; margin-right: 5px; cursor: help; }',
-            '#modUI .selectorButton:hover, #modUI button:hover, .simplemodal-data .selectorButton:hover, .simplemodal-data button:hover {',
-            '  transform: translateY(-1px) !important;',
-            '  box-shadow: 0 3px 8px rgba(0,0,0,0.18) !important;',
-            '  filter: brightness(1.08) !important;',
-            '}',
-            '#modUI .selectorButton:active, #modUI button:active, .simplemodal-data .selectorButton:active, .simplemodal-data button:active {',
-            '  transform: translateY(0px) scale(0.97) !important;',
-            '  box-shadow: 0 1px 2px rgba(0,0,0,0.15) !important;',
-            '  filter: brightness(0.95) !important;',
-            '}',
-
-
-            '.studioCard {',
-            '  transition: transform 0.2s ease, box-shadow 0.2s ease !important;',
-            '}',
-            '.studioCard:hover {',
-            '  transform: translateY(-2px) !important;',
-            '  box-shadow: 0 4px 12px rgba(0,0,0,0.14) !important;',
-            '}',
-
-
-            '.dlcItem {',
-            '  transition: transform 0.2s ease, box-shadow 0.2s ease !important;',
-            '}',
-            '.dlcItem:hover {',
-            '  transform: translateY(-2px) !important;',
-            '  box-shadow: 0 4px 12px rgba(0,0,0,0.14) !important;',
-            '}',
-
-
-            '.cs-stagger-item {',
-            '  transition: transform 0.2s ease, box-shadow 0.2s ease !important;',
-            '}',
-            '.cs-stagger-item:hover {',
-            '  transform: translateY(-2px) !important;',
-            '  box-shadow: 0 4px 12px rgba(0,0,0,0.14) !important;',
-            '}',
-
-
-            '#modUI_header > div {',
-            '  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease !important;',
-            '}',
-            '#modUI_header > div:hover {',
-            '  filter: brightness(1.06);',
-            '  transform: translateY(-1px);',
-            '}',
-
-
-            '#modUI input:focus, #modUI select:focus, .simplemodal-data input:focus, .simplemodal-data select:focus {',
-            '  border-color: #d35400 !important;',
-            '  box-shadow: 0 0 0 2px rgba(211,84,0,0.15) !important;',
-            '  outline: none !important;',
-            '  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;',
-            '}',
-
-
-            '@keyframes csFadeSlideIn {',
-            '  from { opacity: 0; transform: translateY(8px); }',
-            '  to { opacity: 1; transform: translateY(0); }',
-            '}',
-            '.cs-animate-in {',
-            '  animation: csFadeSlideIn 0.25s ease-out forwards !important;',
-            '}',
-
-
-            '@keyframes csCardEnter {',
-            '  from { opacity: 0; transform: translateX(-12px); }',
-            '  to { opacity: 1; transform: translateX(0); }',
-            '}',
-            '.cs-card-enter {',
-            '  animation: csCardEnter 0.3s ease-out forwards !important;',
-            '}',
-
-
-            '.simplemodal-container { display: flex !important; flex-direction: column !important; }',
-            '.simplemodal-data { flex: 1 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; min-height: 0 !important; }',
-            '#modUI_content { scroll-behavior: smooth; }',
-            '#modUI_content::-webkit-scrollbar { width: 6px; }',
-            '#modUI_content::-webkit-scrollbar-track { background: #ecf0f1; }',
-            '#modUI_content::-webkit-scrollbar-thumb { background: #bdc3c7; border-radius: 3px; }',
-            '#modUI_content::-webkit-scrollbar-thumb:hover { background: #95a5a6; }',
-
-
-            '.fran-tier-1 { background: #95a5a6; color: white; }',
-            '.fran-tier-2 { background: #2980b9; color: white; }',
-            '.fran-tier-3 { background: #27ae60; color: white; }',
-            '.fran-tier-4 { background: #d35400; color: white; }',
-            '.fran-tier-5 { background: #f39c12; color: white; box-shadow: 0 2px 8px rgba(243,156,18,0.5); }',
-
-
-
-            '.fanbase-bar-track { background: #ddd; border-radius: 6px; height: 8px; overflow: hidden; }',
-            '.fanbase-bar-fill  { height: 100%; border-radius: 6px; transition: width 0.4s ease; }',
-
-
-            '.entry-type-btn { display: inline-block; padding: 10px 15px; margin: 5px; background: #bdc3c7; color: #2c3e50; border-radius: 4px; cursor: pointer; font-size: 10pt; font-weight: bold; transition: background 0.2s, transform 0.1s; border: 1px solid rgba(0,0,0,0.1); }',
-            '.entry-type-btn:hover:not(.disabled) { background: #d35400; color: white; transform: translateY(-2px); }',
-            '.entry-type-btn.selected { background: #d35400; color: white; border: 1px solid #a04000; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }',
-            '.entry-type-btn.disabled { opacity: 0.5; cursor: not-allowed; background: #eee; color: #999; }',
-
-
-            '.media-type-card { border: 2px solid #bdc3c7; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s, transform 0.15s; }',
-            '.media-type-card:hover { border-color: #d35400; transform: translateY(-1px); }',
-            '.media-type-card.selected { border-color: #d35400; background: #fef9f7; }',
-
-
-            '.cs-progress-track { background: #ecf0f1; border-radius: 4px; height: 10px; overflow: hidden; margin-top: 6px; }',
-            '.cs-progress-fill  { height: 100%; background: #d35400; border-radius: 4px; transition: width 0.3s ease; }',
-
-
-            '@keyframes goldPulse { 0%,100%{box-shadow:0 0 0 0 rgba(243,156,18,0.5);} 50%{box-shadow:0 0 10px 4px rgba(243,156,18,0.3);} }',
-            '.fran-legendary { animation: goldPulse 2s infinite; }'
-        ].join('\n');
+        css.textContent =
+            '#modUI .selectorButton,#modUI button,.simplemodal-data .selectorButton,.simplemodal-data button{transition:transform .15s ease,box-shadow .15s ease,filter .15s ease !important;}'+
+            '.mod-franchise-icon{display:inline-block;color:#d35400;font-weight:bold;margin-right:5px;cursor:help;}'+
+            '#modUI .selectorButton:hover,#modUI button:hover,.simplemodal-data .selectorButton:hover,.simplemodal-data button:hover{transform:translateY(-1px) !important;box-shadow:0 3px 8px rgba(0,0,0,0.18) !important;filter:brightness(1.08) !important;}'+
+            '#modUI .selectorButton:active,#modUI button:active,.simplemodal-data .selectorButton:active,.simplemodal-data button:active{transform:translateY(0px) scale(0.97) !important;box-shadow:0 1px 2px rgba(0,0,0,0.15) !important;filter:brightness(0.95) !important;}'+
+            '.studioCard,.dlcItem,.cs-stagger-item{transition:transform .2s ease,box-shadow .2s ease !important;}'+
+            '.studioCard:hover,.dlcItem:hover,.cs-stagger-item:hover{transform:translateY(-2px) !important;box-shadow:0 4px 12px rgba(0,0,0,0.14) !important;}'+
+            '#modUI_header > div{transition:background-color .2s ease,color .2s ease,transform .15s ease !important;}'+
+            '#modUI_header > div:hover{filter:brightness(1.06);transform:translateY(-1px);}'+
+            '#modUI input:focus,#modUI select:focus,.simplemodal-data input:focus,.simplemodal-data select:focus{border-color:#d35400 !important;box-shadow:0 0 0 2px rgba(211,84,0,0.15) !important;outline:none !important;transition:border-color .2s ease,box-shadow .2s ease !important;}'+
+            '@keyframes csFadeSlideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}'+
+            '.cs-animate-in{animation:csFadeSlideIn .25s ease-out forwards !important;}'+
+            '@keyframes csCardEnter{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:translateX(0);}}'+
+            '.cs-card-enter{animation:csCardEnter .3s ease-out forwards !important;}'+
+            '.simplemodal-container{display:flex !important;flex-direction:column !important;}'+
+            '.simplemodal-data{flex:1 !important;display:flex !important;flex-direction:column !important;overflow:hidden !important;min-height:0 !important;}'+
+            '#modUI_content{scroll-behavior:smooth;}#modUI_content::-webkit-scrollbar{width:6px;}#modUI_content::-webkit-scrollbar-track{background:#ecf0f1;}'+
+            '#modUI_content::-webkit-scrollbar-thumb{background:#bdc3c7;border-radius:3px;}#modUI_content::-webkit-scrollbar-thumb:hover{background:#95a5a6;}'+
+            '.fran-tier-1,.fran-tier-2,.fran-tier-3,.fran-tier-4,.fran-tier-5{color:white;}'+
+            '.fran-tier-1{background:#95a5a6;}.fran-tier-2{background:#2980b9;}.fran-tier-3{background:#27ae60;}.fran-tier-4{background:#d35400;}.fran-tier-5{background:#f39c12;box-shadow:0 2px 8px rgba(243,156,18,0.5);}'+
+            '.fanbase-bar-track{background:#ddd;border-radius:6px;height:8px;overflow:hidden;}.fanbase-bar-fill{height:100%;border-radius:6px;transition:width 0.4s ease;}'+
+            '.entry-type-btn{display:inline-block;padding:10px 15px;margin:5px;background:#bdc3c7;color:#2c3e50;border-radius:4px;cursor:pointer;font-size:10pt;font-weight:bold;transition:background .2s,transform .1s;border:1px solid rgba(0,0,0,0.1);}'+
+            '.entry-type-btn:hover:not(.disabled){background:#d35400;color:white;transform:translateY(-2px);}'+
+            '.entry-type-btn.selected{background:#d35400;color:white;border:1px solid #a04000;box-shadow:inset 0 2px 4px rgba(0,0,0,0.2);}'+
+            '.entry-type-btn.disabled{opacity:0.5;cursor:not-allowed;background:#eee;color:#999;}'+
+            '.media-type-card{border:2px solid #bdc3c7;border-radius:8px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,transform .15s;}'+
+            '.media-type-card:hover{border-color:#d35400;transform:translateY(-1px);}.media-type-card.selected{border-color:#d35400;background:#fef9f7;}'+
+            '.cs-progress-track{background:#ecf0f1;border-radius:4px;height:10px;overflow:hidden;margin-top:6px;}'+
+            '.cs-progress-fill{height:100%;background:#d35400;border-radius:4px;transition:width .3s ease;}'+
+            '@keyframes goldPulse{0%,100%{box-shadow:0 0 0 0 rgba(243,156,18,0.5);}50%{box-shadow:0 0 10px 4px rgba(243,156,18,0.3);}}'+
+            '.fran-legendary{animation:goldPulse 2s infinite;}';
         document.head.appendChild(css);
     })();
 
@@ -217,192 +118,83 @@
         }
     });
 
+    function _d(o,k,v)  { if(typeof o[k]==='undefined') o[k]=v; }
+    function _dn(o,k,v) { if(typeof o[k]==='undefined'||isNaN(o[k])||!isFinite(o[k])) o[k]=v; }
+    function _da(o,k)   { if(!Array.isArray(o[k])) o[k]=[]; }
+    function notify(h,t){ GameManager.company.notifications.push(new Notification({header:h,text:t,image:""})); }
+
     function initData() {
-        if (!store.data.studios || store.data.studios.length === 0) {
-            store.data.studios = generateInitialStudios();
-        }
-        if (!store.data.playerProjectMapping) {
-            store.data.playerProjectMapping = {};
-        }
-        if (!store.data.dlcData) {
-            store.data.dlcData = {};
-        }
-        if (typeof store.data.lastCrossoverWeek === 'undefined') store.data.lastCrossoverWeek = -100;
-        if (!store.data.globalSequelHistory) store.data.globalSequelHistory = [];
+        _da(store.data,'studios'); if(store.data.studios.length===0) store.data.studios=generateInitialStudios();
+        _d(store.data,'playerProjectMapping',{}); _d(store.data,'dlcData',{});
+        _d(store.data,'lastCrossoverWeek',-100); _da(store.data,'globalSequelHistory');
+        _da(store.data,'releaseHistory'); _da(store.data,'publishingOffers');
+        _da(store.data,'activeAIGames'); _d(store.data,'coDevScrubMap',{});
+        _d(store.data,'lastSpawnWeek',-1); _d(store.data,'disableOverloadMalus',false);
+        _da(store.data,'activeCampaigns'); _da(store.data,'franchises');
 
-        if (!store.data.releaseHistory) {
-            store.data.releaseHistory = [];
-        }
-        if (!store.data.publishingOffers) {
-            store.data.publishingOffers = [];
-        }
-        if (!store.data.activeAIGames) {
-            store.data.activeAIGames = [];
-        }
-        if (!store.data.coDevScrubMap) {
-            store.data.coDevScrubMap = {};
-        }
-        if (typeof store.data.lastSpawnWeek === 'undefined') {
-            store.data.lastSpawnWeek = -1;
-        }
-        if (typeof store.data.disableOverloadMalus === 'undefined') {
-            store.data.disableOverloadMalus = false;
-        }
-        if (!store.data.activeCampaigns) {
-            store.data.activeCampaigns = [];
-        }
-
-
-        if (!store.data.franchises) store.data.franchises = [];
-        
-        if (!store.data.mediaProjects) store.data.mediaProjects = [];
-        store.data.mediaProjects.forEach(function (p) {
-            if (typeof p.currentEpisode === 'undefined' || isNaN(p.currentEpisode)) p.currentEpisode = 0;
-            if (typeof p.totalEpisodes === 'undefined' || isNaN(p.totalEpisodes) || p.totalEpisodes === 0) p.totalEpisodes = 1;
-
-            
-            if (typeof p.seasons === 'undefined' || isNaN(p.seasons)) p.seasons = 1;
-            if (typeof p.seasonsProduced === 'undefined' || isNaN(p.seasonsProduced)) p.seasonsProduced = 0;
-            if (typeof p.episodes === 'undefined' || isNaN(p.episodes)) p.episodes = 12;
-            if (typeof p.weeksRemaining === 'undefined' || isNaN(p.weeksRemaining)) p.weeksRemaining = 0;
-            if (typeof p.totalWeeks === 'undefined' || isNaN(p.totalWeeks)) {
-                var budgetTmp = (typeof p.budget === 'undefined' || isNaN(p.budget)) ? 250000 : p.budget;
-                var weeks = Math.min(300, Math.floor(Math.pow(budgetTmp / 100000, 0.75)) + 8);
-                if (p.type === "soundtrack") weeks = 6;
-                p.totalWeeks = weeks;
+        _da(store.data,'mediaProjects');
+        store.data.mediaProjects.forEach(function(p){
+            _dn(p,'currentEpisode',0); _dn(p,'totalEpisodes',1); if(p.totalEpisodes===0) p.totalEpisodes=1;
+            _dn(p,'seasons',1); _dn(p,'seasonsProduced',0); _dn(p,'episodes',12); _dn(p,'weeksRemaining',0);
+            if(typeof p.totalWeeks==='undefined'||isNaN(p.totalWeeks)){
+                var bt=(typeof p.budget==='undefined'||isNaN(p.budget))?250000:p.budget;
+                p.totalWeeks=(p.type==="soundtrack")?6:Math.min(300,Math.floor(Math.pow(bt/100000,0.75))+8);
             }
-            if (typeof p.weeksPerSeason === 'undefined' || isNaN(p.weeksPerSeason)) {
-                var totalS = (typeof p.seasons === 'undefined' || isNaN(p.seasons)) ? 1 : p.seasons;
-                p.weeksPerSeason = Math.floor(p.totalWeeks / totalS);
-            }
-            if (typeof p.budget === 'undefined' || isNaN(p.budget)) p.budget = 250000;
-
-            if (typeof p.nextReleaseWeek === 'undefined' || isNaN(p.nextReleaseWeek)) p.nextReleaseWeek = 0;
-            if (typeof p.decayRate === 'undefined' || isNaN(p.decayRate)) p.decayRate = 0.92;
-            if (typeof p.weeklyRevenue === 'undefined' || isNaN(p.weeklyRevenue)) p.weeklyRevenue = 0;
-            if (typeof p.totalRevenue === 'undefined' || isNaN(p.totalRevenue)) p.totalRevenue = 0;
-            if (typeof p.score === 'undefined' || isNaN(p.score)) p.score = 5;
-            if (typeof p.salesWeeksLeft === 'undefined' || isNaN(p.salesWeeksLeft)) p.salesWeeksLeft = 0;
-            if (p.producedBy === "player" && (typeof p.studioRepBonus === 'undefined' || isNaN(p.studioRepBonus))) p.studioRepBonus = 0;
-
-            if (typeof p.distributionStatus === 'undefined') p.distributionStatus = (p.status === "released" ? "legacy" : "pending");
-            if (typeof p.distributionDeadlineWeek === 'undefined' || isNaN(p.distributionDeadlineWeek)) p.distributionDeadlineWeek = 0;
-            if (typeof p.distributionPlatformId === 'undefined') p.distributionPlatformId = null;
-            if (typeof p.estimatedRevenue === 'undefined' || isNaN(p.estimatedRevenue)) p.estimatedRevenue = 0;
+            if(typeof p.weeksPerSeason==='undefined'||isNaN(p.weeksPerSeason)) p.weeksPerSeason=Math.floor(p.totalWeeks/(p.seasons||1));
+            _dn(p,'budget',250000); _dn(p,'nextReleaseWeek',0); _dn(p,'decayRate',0.92);
+            _dn(p,'weeklyRevenue',0); _dn(p,'totalRevenue',0); _dn(p,'score',5); _dn(p,'salesWeeksLeft',0);
+            if(p.producedBy==="player") _dn(p,'studioRepBonus',0);
+            _d(p,'distributionStatus',(p.status==="released"?"legacy":"pending"));
+            _dn(p,'distributionDeadlineWeek',0); _d(p,'distributionPlatformId',null); _dn(p,'estimatedRevenue',0);
         });
 
-        if (!store.data.movieStudios || store.data.movieStudios.length === 0) store.data.movieStudios = generateMovieStudios();
+        _da(store.data,'movieStudios'); if(store.data.movieStudios.length===0) store.data.movieStudios=generateMovieStudios();
+        store.data.movieStudios.forEach(function(ms){
+            _dn(ms,'valuation',Math.floor((Math.random()*80000000)+10000000)); _dn(ms,'sharesOwned',0);
+            _d(ms,'isFounded',true); _d(ms,'staff',{design:15,tech:15,speed:15});
+            _d(ms,'currentProject',null); _dn(ms,'draftCooldown',0);
+        });
 
+        _dn(store.data,'mediaMarketWeeksLeft',0); _d(store.data,'activePlayerFranchiseProject',null);
+        _da(store.data,'aiAcquisitionOffers'); _da(store.data,'activeAILicenses'); _da(store.data,'aiLicensingOffers');
+        _d(store.data,'activeDistributionChoice',null); _da(store.data,'activeCatalogueDeals');
+        _d(store.data,'activeLicensingOffer',null); _d(store.data,'activeCatalogueNegotiation',null);
+        _da(store.data,'debugLogs');
+
+        store.data.franchises.forEach(function(f){
+            if(typeof f.numId==='undefined'){ store.data.lastFranchiseNumId=(store.data.lastFranchiseNumId||0)+1; f.numId=store.data.lastFranchiseNumId; }
+            _dn(f,'totalRevenue',0); _dn(f,'fanbaseScore',50); _dn(f,'tier',1); _da(f,'last3Scores');
+        });
+
+        if(!store.data.streamingPlatforms) store.data.streamingPlatforms=csGenerateStreamingPlatforms();
+        store.data.streamingPlatforms.forEach(function(sp){
+            _dn(sp,'prestige',1); _dn(sp,'subscriberBase',1000000); _dn(sp,'revenueShareRate',0.35);
+            _da(sp,'activeDeals'); _dn(sp,'totalDealsCompleted',0); _dn(sp,'monthlyFee',0);
+            _dn(sp,'playerRelationship',50); _dn(sp,'exclusivitySlots',1);
+            if(!Array.isArray(sp.acceptsType)) sp.acceptsType=["movie","tvSeries","animatedShow","comicBook"];
+        });
+
+        if(!store.data.theaterChains) store.data.theaterChains=csGenerateTheaterChains();
+        store.data.theaterChains.forEach(function(tc){
+            _dn(tc,'screens',500); _dn(tc,'prestige',1); _d(tc,'activeRelease',null);
+            _dn(tc,'playerRelationship',50); _dn(tc,'distributionFeeRate',0.55);
+        });
+
+        _da(store.data,'theaterReleases');
+        if(!store.data.releaseHistory||store.data.releaseHistory.length===0) store.data.releaseHistory=csSeedFilmMarket();
         
-        if (store.data.movieStudios) {
-            store.data.movieStudios.forEach(function (ms) {
-                if (typeof ms.valuation === 'undefined' || isNaN(ms.valuation)) ms.valuation = Math.floor((Math.random() * 80000000) + 10000000);
-                if (typeof ms.sharesOwned === 'undefined' || isNaN(ms.sharesOwned)) ms.sharesOwned = 0;
-                if (typeof ms.isFounded === 'undefined') ms.isFounded = true;
-                if (typeof ms.staff === 'undefined') ms.staff = { design: 15, tech: 15, speed: 15 };
-                if (typeof ms.currentProject === 'undefined') ms.currentProject = null;
-                if (typeof ms.draftCooldown === 'undefined' || isNaN(ms.draftCooldown)) ms.draftCooldown = 0;
-            });
-        }
+        store.data.theaterReleases.forEach(function(tr){
+            _dn(tr,'weeksActive',0); _dn(tr,'peakWeeklyRevenue',0); _dn(tr,'totalBoxOffice',0);
+            _dn(tr,'playerShare',0); _d(tr,'theaterChainId',null); _d(tr,'mediaProjectId',null); _d(tr,'status',"active");
+        });
 
-        if (!store.data.mediaMarketWeeksLeft) store.data.mediaMarketWeeksLeft = 0;
-        if (!store.data.activePlayerFranchiseProject) store.data.activePlayerFranchiseProject = null;
-        if (!store.data.aiAcquisitionOffers) store.data.aiAcquisitionOffers = [];
-        if (!store.data.activeAILicenses) store.data.activeAILicenses = [];
-        if (!store.data.aiLicensingOffers) store.data.aiLicensingOffers = [];
-        if (!store.data.activeDistributionChoice) store.data.activeDistributionChoice = null;
-        if (!store.data.activeCatalogueDeals) store.data.activeCatalogueDeals = [];
-        if (!store.data.activeLicensingOffer) store.data.activeLicensingOffer = null;
-        if (!store.data.activeCatalogueNegotiation) store.data.activeCatalogueNegotiation = null;
-        if (!store.data.debugLogs) store.data.debugLogs = [];
-
-        
-        if (store.data.franchises) {
-            store.data.franchises.forEach(function (f) {
-                if (typeof f.numId === 'undefined') {
-                    store.data.lastFranchiseNumId = (store.data.lastFranchiseNumId || 0) + 1;
-                    f.numId = store.data.lastFranchiseNumId;
-                }
-                if (typeof f.totalRevenue === 'undefined' || isNaN(f.totalRevenue)) f.totalRevenue = 0;
-                if (typeof f.fanbaseScore === 'undefined' || isNaN(f.fanbaseScore)) f.fanbaseScore = 50;
-                if (typeof f.tier === 'undefined' || isNaN(f.tier)) f.tier = 1;
-                if (!f.last3Scores) f.last3Scores = [];
-            });
-        }
-
-        
-        if (!store.data.streamingPlatforms) {
-            store.data.streamingPlatforms = csGenerateStreamingPlatforms();
-        }
-
-        
-        if (store.data.streamingPlatforms) {
-            for (var spIdx = 0; spIdx < store.data.streamingPlatforms.length; spIdx++) {
-                var sp = store.data.streamingPlatforms[spIdx];
-                if (typeof sp.prestige === 'undefined' || isNaN(sp.prestige)) sp.prestige = 1;
-                if (typeof sp.subscriberBase === 'undefined' || isNaN(sp.subscriberBase)) sp.subscriberBase = 1000000;
-                if (typeof sp.revenueShareRate === 'undefined' || isNaN(sp.revenueShareRate)) sp.revenueShareRate = 0.35;
-                if (typeof sp.activeDeals === 'undefined' || !Array.isArray(sp.activeDeals)) sp.activeDeals = [];
-                if (typeof sp.totalDealsCompleted === 'undefined' || isNaN(sp.totalDealsCompleted)) sp.totalDealsCompleted = 0;
-                if (typeof sp.monthlyFee === 'undefined' || isNaN(sp.monthlyFee)) sp.monthlyFee = 0;
-                if (typeof sp.playerRelationship === 'undefined' || isNaN(sp.playerRelationship)) sp.playerRelationship = 50;
-                if (typeof sp.exclusivitySlots === 'undefined' || isNaN(sp.exclusivitySlots)) sp.exclusivitySlots = 1;
-                if (typeof sp.acceptsType === 'undefined' || !Array.isArray(sp.acceptsType)) sp.acceptsType = ["movie", "tvSeries", "animatedShow", "comicBook"];
-            }
-        }
-
-        
-        if (!store.data.theaterChains) {
-            store.data.theaterChains = csGenerateTheaterChains();
-        }
-
-        if (store.data.theaterChains) {
-            for (var tcIdx = 0; tcIdx < store.data.theaterChains.length; tcIdx++) {
-                var tc = store.data.theaterChains[tcIdx];
-                if (typeof tc.screens === 'undefined' || isNaN(tc.screens)) tc.screens = 500;
-                if (typeof tc.prestige === 'undefined' || isNaN(tc.prestige)) tc.prestige = 1;
-                if (typeof tc.activeRelease === 'undefined') tc.activeRelease = null;
-                if (typeof tc.playerRelationship === 'undefined' || isNaN(tc.playerRelationship)) tc.playerRelationship = 50;
-                if (typeof tc.distributionFeeRate === 'undefined' || isNaN(tc.distributionFeeRate)) tc.distributionFeeRate = 0.55;
-            }
-        }
-
-        if (!store.data.theaterReleases) store.data.theaterReleases = [];
-        if (!store.data.releaseHistory || store.data.releaseHistory.length === 0) {
-            store.data.releaseHistory = csSeedFilmMarket();
-        }
-
-        if (store.data.theaterReleases) {
-            for (var trIdx = 0; trIdx < store.data.theaterReleases.length; trIdx++) {
-                var tr = store.data.theaterReleases[trIdx];
-                if (typeof tr.weeksActive === 'undefined' || isNaN(tr.weeksActive)) tr.weeksActive = 0;
-                if (typeof tr.peakWeeklyRevenue === 'undefined' || isNaN(tr.peakWeeklyRevenue)) tr.peakWeeklyRevenue = 0;
-                if (typeof tr.totalBoxOffice === 'undefined' || isNaN(tr.totalBoxOffice)) tr.totalBoxOffice = 0;
-                if (typeof tr.playerShare === 'undefined' || isNaN(tr.playerShare)) tr.playerShare = 0;
-                if (typeof tr.theaterChainId === 'undefined') tr.theaterChainId = null;
-                if (typeof tr.mediaProjectId === 'undefined') tr.mediaProjectId = null;
-                if (typeof tr.status === 'undefined') tr.status = "active";
-            }
-        }
-
-        
-        if (!store.data.gridService) {
-            store.data.gridService = csCreateDefaultGrid();
-        }
+        if(!store.data.gridService) store.data.gridService=csCreateDefaultGrid();
         csRepairGrid(store.data.gridService);
 
-
-        
-        if (!store.data.pendingDistribution) store.data.pendingDistribution = [];
-
-        if (store.data.pendingDistribution) {
-            for (var pdIdx = 0; pdIdx < store.data.pendingDistribution.length; pdIdx++) {
-                var pd = store.data.pendingDistribution[pdIdx];
-                if (typeof pd.mediaProjectId === 'undefined') pd.mediaProjectId = null;
-                if (typeof pd.decisionDeadlineWeek === 'undefined' || isNaN(pd.decisionDeadlineWeek)) pd.decisionDeadlineWeek = 0;
-                if (typeof pd.notified === 'undefined') pd.notified = false;
-            }
-        }
+        _da(store.data,'pendingDistribution');
+        store.data.pendingDistribution.forEach(function(pd){
+            _d(pd,'mediaProjectId',null); _dn(pd,'decisionDeadlineWeek',0); _d(pd,'notified',false);
+        });
 
         if (typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.gameLog) {
             GameManager.company.gameLog = GameManager.company.gameLog.filter(function (g) {
@@ -480,105 +272,37 @@
     }
 
     function csLog(msg) {
-        try {
-            if (!store || !store.data) return;
-            if (!store.data.debugLogs) store.data.debugLogs = [];
-
-            var week = (typeof GameManager !== 'undefined' && GameManager.company) ? Math.floor(GameManager.company.currentWeek) : 0;
-            var timestamp = new Date().toLocaleTimeString();
-            var fullMsg = "[" + week + "] (" + timestamp + ") " + msg;
-
-            store.data.debugLogs.unshift(fullMsg);
-            if (store.data.debugLogs.length > 100) store.data.debugLogs.pop();
-
-            console.log("[CS_DEBUG] " + fullMsg);
-
-            
-            if (typeof require !== 'undefined') {
-                try {
-                    var fs = require('fs');
-                    var logPath = "/home/deck/gdt-mod/cs_debug.log";
-                    fs.appendFileSync(logPath, fullMsg + "\n");
-                } catch (fsErr) { }
-            }
-        } catch (e) {
-            console.error("csLog failed:", e);
-        }
+        if (!store || !store.data) return;
+        _da(store.data,'debugLogs');
+        var w = (typeof GameManager !== 'undefined' && GameManager.company) ? Math.floor(GameManager.company.currentWeek) : 0;
+        var fMsg = "[" + w + "] (" + new Date().toLocaleTimeString() + ") " + msg;
+        store.data.debugLogs.unshift(fMsg); if (store.data.debugLogs.length > 100) store.data.debugLogs.pop();
+        console.log("[CS_DEBUG] " + fMsg);
+        try { require('fs').appendFileSync("/home/deck/gdt-mod/cs_debug.log", fMsg + "\n"); } catch (e) {}
     }
 
     
     function csCreateDefaultGrid() {
-        return {
-            isActive: false,
-            isResearched: false,
-            launchCost: 25000000,
-            name: "Grid",
-            subscribers: 0,
-            subscriberGrowthRate: 0.02,
-            monthlySubFee: 14.99,
-            contentLibrary: [],
-            totalRevenue: 0,
-            marketingBudgetWeekly: 0,
-            churnRate: 0.01,
-            prestige: 1,
-            originalContentBonus: 0,
-            weeklyRevenue: 0,
-            launchWeek: -1,
-            pendingUpkeep: 0,
-            weeklyUpkeep: 0,
-            pendingRevenue: 0,
-            pendingMarketing: 0,
-            pendingLicenses: 0,
-            lastWeekSubscribers: 0,
-            revenueHistory: []
-        };
+        return { isActive:false, isResearched:false, launchCost:25000000, name:"Grid", subscribers:0,
+            subscriberGrowthRate:0.02, monthlySubFee:14.99, contentLibrary:[], totalRevenue:0, marketingBudgetWeekly:0,
+            churnRate:0.01, prestige:1, originalContentBonus:0, weeklyRevenue:0, launchWeek:-1, pendingUpkeep:0,
+            weeklyUpkeep:0, pendingRevenue:0, pendingMarketing:0, pendingLicenses:0, lastWeekSubscribers:0, revenueHistory:[] };
     }
-
-    var GRID_FIELD_DEFAULTS = {
-        isActive: false, isResearched: false, launchCost: 25000000,
-        name: "Grid", subscribers: 0, subscriberGrowthRate: 0.02,
-        monthlySubFee: 14.99, totalRevenue: 0, marketingBudgetWeekly: 0,
-        churnRate: 0.01, prestige: 1, originalContentBonus: 0,
-        weeklyRevenue: 0, launchWeek: -1, pendingUpkeep: 0,
-        weeklyUpkeep: 0, pendingRevenue: 0, pendingMarketing: 0,
-        pendingLicenses: 0, lastWeekSubscribers: 0
-    };
 
     function csRepairGrid(grid) {
         if (!grid) return;
-        var keys = Object.keys(GRID_FIELD_DEFAULTS);
-        for (var i = 0; i < keys.length; i++) {
-            var k = keys[i];
-            var def = GRID_FIELD_DEFAULTS[k];
-            if (typeof def === "number") {
-                if (typeof grid[k] === "undefined" || isNaN(grid[k]) || !isFinite(grid[k])) grid[k] = def;
-            } else if (typeof def === "boolean") {
-                if (typeof grid[k] === "undefined") grid[k] = def;
-            } else if (typeof def === "string") {
-                if (typeof grid[k] === "undefined") grid[k] = def;
-            }
-        }
-        if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
-        if (!Array.isArray(grid.revenueHistory)) grid.revenueHistory = [];
+        var def = csCreateDefaultGrid();
+        for (var k in def) { if(!Array.isArray(def[k])) _d(grid,k,def[k]); }
+        _da(grid,'contentLibrary'); _da(grid,'revenueHistory');
 
-        
-        for (var ci = 0; ci < grid.contentLibrary.length; ci++) {
-            var e = grid.contentLibrary[ci];
-            if (!e.id) e.id = "GC_MIG_" + Date.now() + "_" + ci;
-            if (typeof e.mediaProjectId === "undefined") e.mediaProjectId = null;
-            if (typeof e.title !== "string" || !e.title) e.title = "Unknown Media";
-            if (typeof e.type !== "string") e.type = "movie";
-            if (typeof e.addedWeek !== "number" || isNaN(e.addedWeek)) e.addedWeek = 0;
-            if (typeof e.score !== "number" || isNaN(e.score)) e.score = 5;
-            if (typeof e.viewsThisWeek !== "number" || isNaN(e.viewsThisWeek)) e.viewsThisWeek = 0;
-            if (typeof e.totalViews !== "number" || isNaN(e.totalViews)) e.totalViews = 0;
-            if (typeof e.subscriberContribution !== "number" || isNaN(e.subscriberContribution)) e.subscriberContribution = 0;
-            if (typeof e.isOriginal !== "boolean") e.isOriginal = true;
-            if (typeof e.licenseCostWeekly !== "number" || isNaN(e.licenseCostWeekly)) e.licenseCostWeekly = 0;
-            if (typeof e.licenseWeeksRemaining !== "number" || isNaN(e.licenseWeeksRemaining)) e.licenseWeeksRemaining = 0;
-            if (typeof e.franchiseId === "undefined") e.franchiseId = null;
-            if (typeof e.freshness !== "number" || isNaN(e.freshness) || e.freshness <= 0) e.freshness = 0.5;
-        }
+        grid.contentLibrary.forEach(function(e, ci){
+            _d(e,'id',"GC_MIG_"+Date.now()+"_"+ci); _d(e,'mediaProjectId',null);
+            if(typeof e.title!=="string"||!e.title) e.title="Unknown Media"; _d(e,'type',"movie");
+            _dn(e,'addedWeek',0); _dn(e,'score',5); _dn(e,'viewsThisWeek',0); _dn(e,'totalViews',0);
+            _dn(e,'subscriberContribution',0); _d(e,'isOriginal',true); _dn(e,'licenseCostWeekly',0);
+            _dn(e,'licenseWeeksRemaining',0); _d(e,'franchiseId',null);
+            if(typeof e.freshness!=="number"||isNaN(e.freshness)||e.freshness<=0) e.freshness=0.5;
+        });
     }
 
     function csCreateGridEntry(opts) {
@@ -1594,18 +1318,8 @@
             }
         }
 
-        try { processCompetitors(); } catch (e) { console.error("[Mod] processCompetitors error:", e); }
-        try { csProcessMediaStudios(); } catch (e) { console.error("[Mod] csProcessMediaStudios error:", e); }
-        try { processDLCs(); } catch (e) { console.error("[Mod] processDLCs error:", e); }
-        try { processAISales(); } catch (e) { console.error("[Mod] processAISales error:", e); }
-        try { processPublishingProjects(); } catch (e) { console.error("[Mod] processPublishingProjects error:", e); }
-        try { processCampaigns(); } catch (e) { console.error("[Mod] processCampaigns error:", e); }
-        try { processFranchisePassiveIncome(); } catch (e) { console.error("[Mod] processFranchisePassiveIncome error:", e); }
-        try { processMediaProjects(); } catch (e) { console.error("[Mod] processMediaProjects error:", e); }
-        try { csProcessStreamingContracts(); } catch (e) { console.error("[Mod] csProcessStreamingContracts error:", e); }
-        try { csProcessTheaterReleases(); } catch (e) { console.error("[Mod] csProcessTheaterReleases error:", e); }
-        try { csProcessGridService(); } catch (e) { console.error("[Mod] csProcessGridService error:", e); }
-        try { csUpdateAILicensingSystem(); } catch (e) { console.error("[Mod] csUpdateAILicensingSystem error:", e); }
+        var _processors = [processCompetitors, csProcessMediaStudios, processDLCs, processAISales, processPublishingProjects, processCampaigns, processFranchisePassiveIncome, processMediaProjects, csProcessStreamingContracts, csProcessTheaterReleases, csProcessGridService, csUpdateAILicensingSystem];
+        _processors.forEach(function(fn){ try{fn();}catch(e){console.error("[Mod] "+fn.name+" error:",e);} });
 
         try {
             if (GameManager.company && GameManager.company.gameLog) {
@@ -1688,11 +1402,7 @@
                                 isFounded: false
                             };
                             store.data.studios.push(spawn);
-                            GameManager.company.notifications.push(new Notification({
-                                header: "New Studio Founded",
-                                text: "A new competitor, " + spawn.name + ", has entered the market!",
-                                image: ""
-                            }));
+                            notify("New Studio Founded", "A new competitor, " + spawn.name + ", has entered the market!");
                         }
                     }
                 }
@@ -1709,11 +1419,7 @@
                 if (baseGame && !(baseGame.flags && baseGame.flags.mmo)) {
                     var dlcBonus = (g.score || 5) * 250000;
                     GameManager.company.adjustCash(dlcBonus, "Base Game Surge: " + baseGame.title);
-                    GameManager.company.notifications.push(new Notification({
-                        header: "Storefront Surge",
-                        text: "The DLC launch for " + baseGame.title + " generated a massive surge of $" + UI.getShortNumberString(dlcBonus) + " in classic back-catalog sales!",
-                        image: ""
-                    }));
+                    notify("Storefront Surge", "The DLC launch for " + baseGame.title + " generated a massive surge of $" + UI.getShortNumberString(dlcBonus) + " in classic back-catalog sales!");
                 }
             }
         }
@@ -2027,11 +1733,7 @@
                             f.fanbaseScore = Math.max(0, Math.min(100, f.fanbaseScore + (p.type === "comicBook" ? 1 : 2)));
                         }
 
-                        GameManager.company.notifications.push(new Notification({
-                            header: "New Release: " + p.title,
-                            text: (p.type === "comicBook" ? "Issue #" : "Episode #") + p.currentEpisode + " has been released!",
-                            image: ""
-                        }));
+                        notify("New Release: " + p.title, (p.type === "comicBook" ? "Issue #" : "Episode #") + p.currentEpisode + " has been released!");
 
                         if (p.currentEpisode >= p.totalEpisodes) {
                             p.status = "released";
@@ -2079,11 +1781,7 @@
                     });
                 }
 
-                GameManager.company.notifications.push(new Notification({
-                    header: "Distribution Decision Required",
-                    text: p.title + " is ready for distribution! Choose a channel within 4 weeks or it expires. Open the Media > Distribution tab.",
-                    image: ""
-                }));
+                notify("Distribution Decision Required", p.title + " is ready for distribution! Choose a channel within 4 weeks or it expires. Open the Media > Distribution tab.");
 
                 if (f) {
                     var pScore = isNaN(p.score) ? 5 : p.score;
@@ -2104,11 +1802,7 @@
                     expiredProj.totalRevenue = 0;
                     expiredProj.weeklyRevenue = 0;
                     expiredProj.salesWeeksLeft = 0;
-                    GameManager.company.notifications.push(new Notification({
-                        header: "Distribution Window Expired",
-                        text: expiredProj.title + " missed its distribution window and has been shelved. No revenue will be generated.",
-                        image: ""
-                    }));
+                    notify("Distribution Window Expired", expiredProj.title + " missed its distribution window and has been shelved. No revenue will be generated.");
                 }
                 store.data.pendingDistribution.splice(pdI, 1);
             }
@@ -2205,11 +1899,7 @@
 
         if (transferred > 0) {
             csLog("csAutoRouteMediaCatalog: Transferred " + transferred + " titles from " + ms.name + " to Grid library.");
-            GameManager.company.notifications.push(new Notification({
-                header: "Catalog Acquired",
-                text: transferred + " titles from " + ms.name + " have been permanently transferred to your Grid library as originals!",
-                image: ""
-            }));
+            notify("Catalog Acquired", transferred + " titles from " + ms.name + " have been permanently transferred to your Grid library as originals!");
         }
     }
 
@@ -2258,22 +1948,14 @@
                                 isOriginal: true,
                                 freshness: 1.0
                             }));
-                            GameManager.company.notifications.push(new Notification({
-                                header: "Grid Original Release",
-                                text: ms.name + " has delivered " + gridTitle + " directly to your streaming platform!",
-                                image: ""
-                            }));
+                            notify("Grid Original Release", ms.name + " has delivered " + gridTitle + " directly to your streaming platform!");
                         } else {
                             if (!store.data.mediaProjects) store.data.mediaProjects = [];
                             store.data.mediaProjects.push(newProj);
                             if (!store.data.pendingDistribution) store.data.pendingDistribution = [];
                             store.data.pendingDistribution.push({ mediaProjectId: newProj.id, decisionDeadlineWeek: newProj.distributionDeadlineWeek });
 
-                            GameManager.company.notifications.push(new Notification({
-                                header: "Subsidiary Media Finished",
-                                text: ms.name + " has delivered " + newProj.title + ". It awaits distribution.",
-                                image: ""
-                            }));
+                            notify("Subsidiary Media Finished", ms.name + " has delivered " + newProj.title + ". It awaits distribution.");
                         }
                     } else {
                         
@@ -2304,19 +1986,11 @@
                                 if (playerCut > 0) {
                                     GameManager.company.adjustCash(playerCut, "Licensing Royalties: " + proj.title);
                                     lic.totalRoyaltiesEarned += playerCut;
-                                    GameManager.company.notifications.push(new Notification({
-                                        header: "Royalty Payment",
-                                        text: ms.name + " released " + proj.title + ". Your " + (lic.royaltyRate * 100).toFixed(0) + "% royalty: $" + UI.getShortNumberString(playerCut),
-                                        image: ""
-                                    }));
+                                    notify("Royalty Payment", ms.name + " released " + proj.title + ". Your " + (lic.royaltyRate * 100).toFixed(0) + "% royalty: $" + UI.getShortNumberString(playerCut));
                                 }
                                 lic.filmsRemaining--;
                                 if (lic.filmsRemaining <= 0) {
-                                    GameManager.company.notifications.push(new Notification({
-                                        header: "License Expired",
-                                        text: ms.name + "'s license for your franchise has expired.",
-                                        image: ""
-                                    }));
+                                    notify("License Expired", ms.name + "'s license for your franchise has expired.");
                                 }
                             }
                         }
@@ -3904,46 +3578,20 @@
 
         csLog("[ROUTE-1] routeModMenu called: tab=" + activeTab + " type=" + menuType);
 
-        if (activeTab === "market") {
-            renderMarketTab(contentArea);
-        } else if (activeTab === "subsidiaries") {
-            renderSubsidiariesTab(contentArea);
-        } else if (activeTab === "film_subs") {
-            csLog("[ROUTE-2] About to call csRenderFilmSubsTab");
-            try {
-                csRenderFilmSubsTab(contentArea);
-                csLog("[ROUTE-3] csRenderFilmSubsTab completed OK.");
-            } catch (renderErr) {
-                csLog("[ROUTE-ERR] csRenderFilmSubsTab THREW: " + renderErr.message + " | Stack: " + (renderErr.stack || "N/A"));
-            }
-        } else if (activeTab === "film_market") {
-            csRenderFilmMarketTab(contentArea);
-        } else if (activeTab === "publishing") {
-            renderPublishingTab(contentArea);
-        } else if (activeTab === "schedule") {
-            renderScheduleTab(contentArea);
-        } else if (activeTab === "leaderboard") {
-            renderLeaderboardTab(contentArea);
-        } else if (activeTab === "dlc") {
-            renderDLCTab(contentArea);
-        } else if (activeTab === "franchises") {
-            renderFranchisesTab(contentArea);
-        } else if (activeTab === "media") {
-            renderMediaTab(contentArea);
-        } else if (activeTab === "marketing") {
-            renderMarketingTab(contentArea);
-        } else if (activeTab === "grid_dashboard") {
-            csRenderGridDashboard(contentArea);
-        } else if (activeTab === "distribution_offers") {
-            csRenderDistributionOffers(contentArea);
-        } else if (activeTab === "licensing_review") {
-            csRenderLicensingReview(contentArea);
-        } else if (activeTab === "catalogue_negotiation") {
-            csRenderCatalogueNegotiation(contentArea);
-        } else if (activeTab === "settings") {
-            renderSettingsTab(contentArea);
-        } else if (activeTab === "debug") {
-            renderDebugTab(contentArea);
+        var _tabRenderers = {
+            market: renderMarketTab, subsidiaries: renderSubsidiariesTab,
+            film_subs: csRenderFilmSubsTab, film_market: csRenderFilmMarketTab,
+            publishing: renderPublishingTab, schedule: renderScheduleTab,
+            leaderboard: renderLeaderboardTab, dlc: renderDLCTab,
+            franchises: renderFranchisesTab, media: renderMediaTab,
+            marketing: renderMarketingTab, grid_dashboard: csRenderGridDashboard,
+            distribution_offers: csRenderDistributionOffers, licensing_review: csRenderLicensingReview,
+            catalogue_negotiation: csRenderCatalogueNegotiation, settings: renderSettingsTab,
+            debug: renderDebugTab
+        };
+        if(_tabRenderers[activeTab]) {
+            try { _tabRenderers[activeTab](contentArea); }
+            catch(err) { csLog("[ROUTE-ERR] "+activeTab+" render THREW: "+err.message); }
         }
 
         csLog("[ROUTE-4] Tab rendered. Fast animation...");
