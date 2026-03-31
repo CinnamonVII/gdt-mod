@@ -1,6 +1,27 @@
 (function () {
     console.log("Concurrent Studios mod loaded.");
 
+    
+    window.onerror = function (msg, url, line, col, err) {
+        var errMsg = "[GLOBAL_ERROR] " + msg + " at " + url + ":" + line + ":" + col;
+        if (err && err.stack) errMsg += "\nStack: " + err.stack;
+        console.error(errMsg);
+        try {
+            var fs = require('fs');
+            fs.appendFileSync("/home/deck/gdt-mod/cs_debug.log", "[" + new Date().toLocaleTimeString() + "] " + errMsg + "\n");
+        } catch (e) { }
+        return false; 
+    };
+    if (typeof window.onunhandledrejection === 'undefined' || !window.onunhandledrejection) {
+        window.onunhandledrejection = function (event) {
+            var errMsg = "[UNHANDLED_PROMISE] " + (event.reason || "unknown");
+            console.error(errMsg);
+            try {
+                var fs = require('fs');
+                fs.appendFileSync("/home/deck/gdt-mod/cs_debug.log", "[" + new Date().toLocaleTimeString() + "] " + errMsg + "\n");
+            } catch (e) { }
+        };
+    }
 
     (function injectModStyles() {
         if (document.getElementById('cs-mod-styles')) return;
@@ -231,13 +252,13 @@
 
 
         if (!store.data.franchises) store.data.franchises = [];
-        // Repair older media projects
+        
         if (!store.data.mediaProjects) store.data.mediaProjects = [];
         store.data.mediaProjects.forEach(function (p) {
             if (typeof p.currentEpisode === 'undefined' || isNaN(p.currentEpisode)) p.currentEpisode = 0;
             if (typeof p.totalEpisodes === 'undefined' || isNaN(p.totalEpisodes) || p.totalEpisodes === 0) p.totalEpisodes = 1;
 
-            // NaN guards for seasons/production
+            
             if (typeof p.seasons === 'undefined' || isNaN(p.seasons)) p.seasons = 1;
             if (typeof p.seasonsProduced === 'undefined' || isNaN(p.seasonsProduced)) p.seasonsProduced = 0;
             if (typeof p.episodes === 'undefined' || isNaN(p.episodes)) p.episodes = 12;
@@ -270,7 +291,7 @@
 
         if (!store.data.movieStudios || store.data.movieStudios.length === 0) store.data.movieStudios = generateMovieStudios();
 
-        // Repair older movie studios
+        
         if (store.data.movieStudios) {
             store.data.movieStudios.forEach(function (ms) {
                 if (typeof ms.valuation === 'undefined' || isNaN(ms.valuation)) ms.valuation = Math.floor((Math.random() * 80000000) + 10000000);
@@ -293,7 +314,7 @@
         if (!store.data.activeCatalogueNegotiation) store.data.activeCatalogueNegotiation = null;
         if (!store.data.debugLogs) store.data.debugLogs = [];
 
-        // Repair older franchises
+        
         if (store.data.franchises) {
             store.data.franchises.forEach(function (f) {
                 if (typeof f.numId === 'undefined') {
@@ -307,12 +328,12 @@
             });
         }
 
-        // --- Distribution Platform Data ---
+        
         if (!store.data.streamingPlatforms) {
             store.data.streamingPlatforms = csGenerateStreamingPlatforms();
         }
 
-        // Repair older streaming platform records
+        
         if (store.data.streamingPlatforms) {
             for (var spIdx = 0; spIdx < store.data.streamingPlatforms.length; spIdx++) {
                 var sp = store.data.streamingPlatforms[spIdx];
@@ -328,7 +349,7 @@
             }
         }
 
-        // --- Theater Release Data ---
+        
         if (!store.data.theaterChains) {
             store.data.theaterChains = csGenerateTheaterChains();
         }
@@ -362,51 +383,14 @@
             }
         }
 
-        // --- Grid Streaming Service ---
+        
         if (!store.data.gridService) {
-            store.data.gridService = {
-                isActive: false,
-                isResearched: false,
-                launchCost: 25000000,
-                name: "Grid",
-                subscribers: 0,
-                subscriberGrowthRate: 0.02,
-                monthlySubFee: 14.99,
-                contentLibrary: [],
-                totalRevenue: 0,
-                marketingBudgetWeekly: 0,
-                churnRate: 0.01,
-                prestige: 1,
-                originalContentBonus: 0,
-                weeklyRevenue: 0,
-                launchWeek: -1
-            };
+            store.data.gridService = csCreateDefaultGrid();
         }
+        csRepairGrid(store.data.gridService);
 
-        // Repair older gridService records
-        if (store.data.gridService) {
-            if (typeof store.data.gridService.isActive === 'undefined') store.data.gridService.isActive = false;
-            if (typeof store.data.gridService.isResearched === 'undefined') store.data.gridService.isResearched = false;
-            if (typeof store.data.gridService.subscribers === 'undefined' || isNaN(store.data.gridService.subscribers)) store.data.gridService.subscribers = 0;
-            if (typeof store.data.gridService.subscriberGrowthRate === 'undefined' || isNaN(store.data.gridService.subscriberGrowthRate)) store.data.gridService.subscriberGrowthRate = 0.02;
-            if (typeof store.data.gridService.monthlySubFee === 'undefined' || isNaN(store.data.gridService.monthlySubFee)) store.data.gridService.monthlySubFee = 14.99;
-            if (!Array.isArray(store.data.gridService.contentLibrary)) store.data.gridService.contentLibrary = [];
-            if (typeof store.data.gridService.totalRevenue === 'undefined' || isNaN(store.data.gridService.totalRevenue)) store.data.gridService.totalRevenue = 0;
-            if (typeof store.data.gridService.marketingBudgetWeekly === 'undefined' || isNaN(store.data.gridService.marketingBudgetWeekly)) store.data.gridService.marketingBudgetWeekly = 0;
-            if (typeof store.data.gridService.churnRate === 'undefined' || isNaN(store.data.gridService.churnRate)) store.data.gridService.churnRate = 0.01;
-            if (typeof store.data.gridService.prestige === 'undefined' || isNaN(store.data.gridService.prestige)) store.data.gridService.prestige = 1;
-            if (typeof store.data.gridService.originalContentBonus === 'undefined' || isNaN(store.data.gridService.originalContentBonus)) store.data.gridService.originalContentBonus = 0;
-            if (typeof store.data.gridService.weeklyRevenue === 'undefined' || isNaN(store.data.gridService.weeklyRevenue)) store.data.gridService.weeklyRevenue = 0;
-            if (typeof store.data.gridService.launchWeek === 'undefined' || isNaN(store.data.gridService.launchWeek)) store.data.gridService.launchWeek = -1;
-            if (typeof store.data.gridService.launchCost === 'undefined' || isNaN(store.data.gridService.launchCost)) store.data.gridService.launchCost = 25000000;
-            if (typeof store.data.gridService.name === 'undefined') store.data.gridService.name = "Grid";
-            if (typeof store.data.gridService.monthlySubFee === 'undefined' || isNaN(store.data.gridService.monthlySubFee)) store.data.gridService.monthlySubFee = 14.99;
-            if (typeof store.data.gridService.churnRate === 'undefined' || isNaN(store.data.gridService.churnRate)) store.data.gridService.churnRate = 0.01;
-            if (typeof store.data.gridService.pendingUpkeep === 'undefined') store.data.gridService.pendingUpkeep = 0;
-            if (typeof store.data.gridService.weeklyUpkeep === 'undefined') store.data.gridService.weeklyUpkeep = 0;
-        }
 
-        // --- Pending Distribution Decisions ---
+        
         if (!store.data.pendingDistribution) store.data.pendingDistribution = [];
 
         if (store.data.pendingDistribution) {
@@ -477,28 +461,125 @@
         try {
             if (!store || !store.data) return;
             if (!store.data.debugLogs) store.data.debugLogs = [];
-            
+
             var week = (typeof GameManager !== 'undefined' && GameManager.company) ? Math.floor(GameManager.company.currentWeek) : 0;
             var timestamp = new Date().toLocaleTimeString();
             var fullMsg = "[" + week + "] (" + timestamp + ") " + msg;
-            
+
             store.data.debugLogs.unshift(fullMsg);
             if (store.data.debugLogs.length > 100) store.data.debugLogs.pop();
-            
+
             console.log("[CS_DEBUG] " + fullMsg);
 
-            // File logging for local debugging (Steam/Electron)
+            
             if (typeof require !== 'undefined') {
                 try {
-                   var fs = require('fs');
-                   var logPath = "/home/deck/gdt-mod/cs_debug.log";
-                   fs.appendFileSync(logPath, fullMsg + "\n");
-                } catch (fsErr) {}
+                    var fs = require('fs');
+                    var logPath = "/home/deck/gdt-mod/cs_debug.log";
+                    fs.appendFileSync(logPath, fullMsg + "\n");
+                } catch (fsErr) { }
             }
         } catch (e) {
             console.error("csLog failed:", e);
         }
     }
+
+    
+    function csCreateDefaultGrid() {
+        return {
+            isActive: false,
+            isResearched: false,
+            launchCost: 25000000,
+            name: "Grid",
+            subscribers: 0,
+            subscriberGrowthRate: 0.02,
+            monthlySubFee: 14.99,
+            contentLibrary: [],
+            totalRevenue: 0,
+            marketingBudgetWeekly: 0,
+            churnRate: 0.01,
+            prestige: 1,
+            originalContentBonus: 0,
+            weeklyRevenue: 0,
+            launchWeek: -1,
+            pendingUpkeep: 0,
+            weeklyUpkeep: 0,
+            pendingRevenue: 0,
+            pendingMarketing: 0,
+            pendingLicenses: 0,
+            lastWeekSubscribers: 0,
+            revenueHistory: []
+        };
+    }
+
+    var GRID_FIELD_DEFAULTS = {
+        isActive: false, isResearched: false, launchCost: 25000000,
+        name: "Grid", subscribers: 0, subscriberGrowthRate: 0.02,
+        monthlySubFee: 14.99, totalRevenue: 0, marketingBudgetWeekly: 0,
+        churnRate: 0.01, prestige: 1, originalContentBonus: 0,
+        weeklyRevenue: 0, launchWeek: -1, pendingUpkeep: 0,
+        weeklyUpkeep: 0, pendingRevenue: 0, pendingMarketing: 0,
+        pendingLicenses: 0, lastWeekSubscribers: 0
+    };
+
+    function csRepairGrid(grid) {
+        if (!grid) return;
+        var keys = Object.keys(GRID_FIELD_DEFAULTS);
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var def = GRID_FIELD_DEFAULTS[k];
+            if (typeof def === "number") {
+                if (typeof grid[k] === "undefined" || isNaN(grid[k]) || !isFinite(grid[k])) grid[k] = def;
+            } else if (typeof def === "boolean") {
+                if (typeof grid[k] === "undefined") grid[k] = def;
+            } else if (typeof def === "string") {
+                if (typeof grid[k] === "undefined") grid[k] = def;
+            }
+        }
+        if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
+        if (!Array.isArray(grid.revenueHistory)) grid.revenueHistory = [];
+
+        
+        for (var ci = 0; ci < grid.contentLibrary.length; ci++) {
+            var e = grid.contentLibrary[ci];
+            if (!e.id) e.id = "GC_MIG_" + Date.now() + "_" + ci;
+            if (typeof e.mediaProjectId === "undefined") e.mediaProjectId = null;
+            if (typeof e.title !== "string" || !e.title) e.title = "Unknown Media";
+            if (typeof e.type !== "string") e.type = "movie";
+            if (typeof e.addedWeek !== "number" || isNaN(e.addedWeek)) e.addedWeek = 0;
+            if (typeof e.score !== "number" || isNaN(e.score)) e.score = 5;
+            if (typeof e.viewsThisWeek !== "number" || isNaN(e.viewsThisWeek)) e.viewsThisWeek = 0;
+            if (typeof e.totalViews !== "number" || isNaN(e.totalViews)) e.totalViews = 0;
+            if (typeof e.subscriberContribution !== "number" || isNaN(e.subscriberContribution)) e.subscriberContribution = 0;
+            if (typeof e.isOriginal !== "boolean") e.isOriginal = true;
+            if (typeof e.licenseCostWeekly !== "number" || isNaN(e.licenseCostWeekly)) e.licenseCostWeekly = 0;
+            if (typeof e.licenseWeeksRemaining !== "number" || isNaN(e.licenseWeeksRemaining)) e.licenseWeeksRemaining = 0;
+            if (typeof e.franchiseId === "undefined") e.franchiseId = null;
+            if (typeof e.freshness !== "number" || isNaN(e.freshness) || e.freshness <= 0) e.freshness = 0.5;
+        }
+    }
+
+    function csCreateGridEntry(opts) {
+        var currentWeek = 0;
+        try { currentWeek = Math.floor(GameManager.company.currentWeek); } catch (e) { }
+        return {
+            id: "GC_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+            mediaProjectId: opts.mediaProjectId || null,
+            title: opts.title || "Unknown Media",
+            type: opts.type || "movie",
+            addedWeek: opts.addedWeek || currentWeek,
+            score: (typeof opts.score === "number" && !isNaN(opts.score)) ? Math.max(1, Math.min(10, opts.score)) : 5,
+            viewsThisWeek: 0,
+            totalViews: 0,
+            subscriberContribution: 0,
+            isOriginal: (typeof opts.isOriginal === "boolean") ? opts.isOriginal : true,
+            licenseCostWeekly: (typeof opts.licenseCostWeekly === "number" && !isNaN(opts.licenseCostWeekly)) ? opts.licenseCostWeekly : 0,
+            licenseWeeksRemaining: (typeof opts.licenseWeeksRemaining === "number" && !isNaN(opts.licenseWeeksRemaining)) ? opts.licenseWeeksRemaining : 0,
+            franchiseId: opts.franchiseId || null,
+            freshness: (typeof opts.freshness === "number" && !isNaN(opts.freshness)) ? opts.freshness : 1.0
+        };
+    }
+    
 
     function generateGameName(topic, genre) {
         var pre = ["Super", "Mega", "Ultra", "The", "Call of", "World of", "Age of", "Return to", "Escape from", "Chronicles of", "Legend of", "Project", "Secret of", "Rise of", "Fall of", "Dark", "Light", "Shadow", "Blood", "Iron"];
@@ -829,48 +910,56 @@
 
     function csAddToGrid(mediaProject) {
         if (!store.data.gridService || !store.data.gridService.isActive) return;
-        if (mediaProject.distributionStatus !== "pending") return;
+        if (!mediaProject || mediaProject.distributionStatus !== "pending") return;
         var validTypes = ["movie", "tvSeries", "animatedShow", "comicBook", "soundtrack"];
         if (validTypes.indexOf(mediaProject.type) === -1) { alert("Grid does not support this content type."); return; }
 
-        for (var i = 0; i < store.data.gridService.contentLibrary.length; i++) {
-            if (store.data.gridService.contentLibrary[i].mediaProjectId === mediaProject.id) {
+        var grid = store.data.gridService;
+        if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
+
+        
+        for (var i = 0; i < grid.contentLibrary.length; i++) {
+            if (grid.contentLibrary[i].mediaProjectId === mediaProject.id) {
                 alert("Already in Grid Library."); return;
             }
         }
 
-        var entry = {
-            id: "GC_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+        var entry = csCreateGridEntry({
             mediaProjectId: mediaProject.id,
             title: mediaProject.title,
             type: mediaProject.type,
-            addedWeek: Math.floor(GameManager.company.currentWeek),
-            score: (mediaProject.score || 5),
-            viewsThisWeek: 0,
-            totalViews: 0,
-            subscriberContribution: 0,
+            score: mediaProject.score,
             isOriginal: true,
-            licenseCostWeekly: 0,
-            licenseWeeksRemaining: 0,
-            franchiseId: mediaProject.franchiseId || null
-        };
+            franchiseId: mediaProject.franchiseId || null,
+            freshness: 1.0
+        });
 
-        store.data.gridService.contentLibrary.push(entry);
+        grid.contentLibrary.push(entry);
         mediaProject.distributionStatus = "grid";
 
+        
+        if (!store.data.pendingDistribution) store.data.pendingDistribution = [];
         for (var j = store.data.pendingDistribution.length - 1; j >= 0; j--) {
             if (store.data.pendingDistribution[j].mediaProjectId === mediaProject.id) {
                 store.data.pendingDistribution.splice(j, 1);
             }
         }
 
-        var mult = ((mediaProject.score || 5) >= 8) ? 3 : 1;
-        var instantSubBoost = Math.floor((mediaProject.score || 5) * 500 * mult);
-        store.data.gridService.subscribers += instantSubBoost;
+        
+        var safeScore = entry.score;
+        var franchiseBonus = 1.0;
+        if (entry.franchiseId) {
+            var fran = getFranchiseById(entry.franchiseId);
+            if (fran) franchiseBonus = 1.0 + ((fran.tier || 1) * 0.25);
+        }
+        var qualityMult = (safeScore >= 8) ? 3 : (safeScore >= 6 ? 1.5 : 1);
+        var instantSubBoost = Math.floor(safeScore * 500 * qualityMult * franchiseBonus);
+        if (isNaN(instantSubBoost) || instantSubBoost < 0) instantSubBoost = 500;
+        grid.subscribers = (grid.subscribers || 0) + instantSubBoost;
 
         GameManager.company.notifications.push(new Notification({
             header: "Added to Grid",
-            text: mediaProject.title + " added to Grid's library! +" + UI.getShortNumberString(instantSubBoost) + " instant subscribers.",
+            text: entry.title + " added to Grid's library! +" + UI.getShortNumberString(instantSubBoost) + " instant subscribers.",
             image: ""
         }));
     }
@@ -878,24 +967,21 @@
     function csLicenseExternalToGrid(movieEntry, weeklyCost, weeks) {
         if (!store.data.gridService || !store.data.gridService.isActive) return;
         if (!movieEntry) return;
+        var grid = store.data.gridService;
+        if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
 
-        var entry = {
-            id: "GC_LIC_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+        var entry = csCreateGridEntry({
             mediaProjectId: null,
             title: movieEntry.title || "Unknown Film",
-            type: "movie",
-            addedWeek: Math.floor(GameManager.company.currentWeek),
-            score: (movieEntry.score || 5),
-            viewsThisWeek: 0,
-            totalViews: 0,
-            subscriberContribution: 0,
+            type: movieEntry.type || "movie",
+            score: movieEntry.score,
             isOriginal: false,
-            licenseCostWeekly: (weeklyCost || 0),
-            licenseWeeksRemaining: (weeks || 52),
-            franchiseId: null
-        };
+            licenseCostWeekly: weeklyCost || 0,
+            licenseWeeksRemaining: weeks || 52,
+            freshness: 0.8
+        });
 
-        store.data.gridService.contentLibrary.push(entry);
+        grid.contentLibrary.push(entry);
         if (entry.licenseCostWeekly > 0) {
             GameManager.company.adjustCash(-entry.licenseCostWeekly, "Grid License (Wk 1): " + entry.title);
         }
@@ -906,6 +992,7 @@
             image: ""
         }));
     }
+
 
     function recalculateFranchiseTier(franchise) {
         var fb = franchise.fanbaseScore;
@@ -994,36 +1081,36 @@
         var playerProj = store.data.activePlayerFranchiseProject && store.data.activePlayerFranchiseProject.franchiseId === franchise.id;
 
 
-        // Ghost Project Cleanup
+        
         if (playerProj && typeof GameManager !== 'undefined' && GameManager.company && !GameManager.company.currentGame) {
             store.data.activePlayerFranchiseProject = null;
             playerProj = false;
         }
 
-        // Subsidiary Ghost Cleanup
+        
         studiosArr.forEach(function (s) {
             if (s.currentProject && s.currentProject.isFranchiseEntry && s.currentProject.franchiseId === franchise.id) {
-                if (s.currentProject.weeksRemaining <= -5) { // Should have cleared long ago
+                if (s.currentProject.weeksRemaining <= -5) { 
                     s.currentProject = null;
                 }
             }
         });
 
-        // Re-check subsidiary project after potential cleanup
+        
         subsidiaryProj = studiosArr.filter(function (s) {
             return s.currentProject && s.currentProject.isFranchiseEntry && s.currentProject.franchiseId === franchise.id;
         })[0];
 
-        // Refined Constraint logic:
-        // New entries: Sequel, Prequel, Spinoff, Reboot, Expansion
+        
+        
         var isNewEntry = (type === "sequel" || type === "spinoff" || type === "prequel" || type === "expansion" || type === "reboot");
 
-        // Blocking logic:
-        // 1. If type is a New Entry, it is blocked if ANY franchise project is active.
-        // 2. If type is NOT a New Entry (Remaster, Bundle), it is only blocked by other non-new entries?
-        // Actually, the user wants to start a Sequel while NOT developing anything.
-        // My fix above (Ghost Cleanup) should handle it if it was a ghost project.
-        // But I will also relax the check so Remasters/Bundles don't block anything else.
+        
+        
+        
+        
+        
+        
 
         if (isNewEntry && (playerProj || subsidiaryProj)) {
             var activeType = playerProj ? store.data.activePlayerFranchiseProject.type : subsidiaryProj.currentProject.type;
@@ -1103,7 +1190,7 @@
             entry.type = entry.type || "sequel";
         }
 
-        // Score Clamping for Remakes/Remasters (Player)
+        
         if (entry && (entry.type === "remake" || entry.type === "remaster")) {
             if (franchise.installments && franchise.installments.length > 0) {
                 var originScore = franchise.installments[0].score;
@@ -1306,30 +1393,51 @@
             store.data.modGridMigrationV3 = true;
             if (store.data.gridService && store.data.gridService.isActive) {
                 var grid = store.data.gridService;
-                // Migrate distributed player media
+                if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
+                
                 if (store.data.mediaProjects) {
                     for (var m = 0; m < store.data.mediaProjects.length; m++) {
                         var mp = store.data.mediaProjects[m];
                         var inGrid = false;
                         for (var g = 0; g < grid.contentLibrary.length; g++) {
-                            if (grid.contentLibrary[g].title === mp.title) { inGrid = true; break; }
+                            if (grid.contentLibrary[g].title === mp.title || grid.contentLibrary[g].mediaProjectId === mp.id) { inGrid = true; break; }
                         }
                         if (!inGrid && mp.distributionStatus !== "pending") {
-                            grid.contentLibrary.push({
+                            grid.contentLibrary.push(csCreateGridEntry({
+                                mediaProjectId: mp.id,
                                 title: mp.title,
                                 type: mp.type,
-                                isOriginal: true,
                                 score: mp.score,
+                                isOriginal: true,
                                 addedWeek: currentWeek,
-                                viewsThisWeek: 0,
-                                totalViews: 0,
-                                licenseCostWeekly: 0,
-                                licenseWeeksRemaining: 999
-                            });
+                                freshness: 0.5
+                            }));
                         }
                     }
                 }
-                // Migrate acquired studio media history
+                
+                
+                if (currentWeek % 4 === 0) {
+                    var available = (store.data.movieStudios || []).filter(function(s) {
+                        return !(store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === s.id && currentWeek < d.endWeek; });
+                    });
+                    if (available.length > 0) {
+                        var chance = 0.05 + ((grid.subscribers || 0) / 50000000);
+                        if (chance > 0.4) chance = 0.4;
+                        if (Math.random() < chance) {
+                            var studio = available[Math.floor(Math.random() * available.length)];
+                            var offerPrice = Math.floor((studio.valuation * 0.1) * (0.8 + Math.random() * 0.4));
+                            store.data.pendingInboundDeal = { studioId: studio.id, price: offerPrice, expires: currentWeek + 8 };
+                            GameManager.company.notifications.push(new Notification({
+                                header: "Inbound Deal: " + studio.name,
+                                text: studio.name + " wants to license their entire catalogue to Grid for $" + UI.getShortNumberString(offerPrice) + " (2-year term).\n\nOpen Media -> Film Studios -> 'Negotiate' to respond before the offer expires in 8 weeks.",
+                                image: ""
+                            }));
+                        }
+                    }
+                }
+
+                
                 if (store.data.movieStudios && store.data.releaseHistory) {
                     var ownedNames = [];
                     for (var o = 0; o < store.data.movieStudios.length; o++) {
@@ -1341,17 +1449,15 @@
                         for (var h = store.data.releaseHistory.length - 1; h >= 0; h--) {
                             var rh = store.data.releaseHistory[h];
                             if (rh.platformIds && rh.platformIds.indexOf("movie") !== -1 && ownedNames.indexOf(rh.studioName) !== -1) {
-                                grid.contentLibrary.push({
+                                grid.contentLibrary.push(csCreateGridEntry({
+                                    mediaProjectId: null,
                                     title: rh.title,
                                     type: "movie",
-                                    isOriginal: true,
                                     score: rh.score,
+                                    isOriginal: true,
                                     addedWeek: currentWeek,
-                                    viewsThisWeek: 0,
-                                    totalViews: 0,
-                                    licenseCostWeekly: 0,
-                                    licenseWeeksRemaining: 999
-                                });
+                                    freshness: 0.4
+                                }));
                                 store.data.releaseHistory.splice(h, 1);
                             }
                         }
@@ -1372,7 +1478,7 @@
             pg.featureOverloadPoints = 0;
         }
 
-        // --- TICK-BASED FRANCHISE MAPPING & POLL ---
+        
         if (pg && !pg.modProcessedCreation) {
             pg.modProcessedCreation = true;
 
@@ -1411,7 +1517,7 @@
                 pg.modBundleBaseScore = matchedBundleScore;
                 pg.modBundledIds = matchedBundledIds;
 
-                // Save persistent mapping link
+                
                 if (!store.data.playerProjectMapping) store.data.playerProjectMapping = {};
                 store.data.playerProjectMapping[pg.id] = {
                     franchiseId: matchedFranchiseId,
@@ -1497,7 +1603,7 @@
             }
         } catch (e) { console.error("[Mod] Update player franchise revenue error:", e); }
 
-        // Tick-based poll: register franchise installment as soon as GDT assigns a score > 0
+        
         try {
             if (store.data.playerProjectMapping) {
                 var pmKeys = Object.keys(store.data.playerProjectMapping);
@@ -1964,7 +2070,7 @@
             }
         }
 
-        // Enforce distribution deadlines
+        
         var currentWkDist = Math.floor(GameManager.company.currentWeek);
         for (var pdI = store.data.pendingDistribution.length - 1; pdI >= 0; pdI--) {
             var pdItem = store.data.pendingDistribution[pdI];
@@ -1987,7 +2093,7 @@
     }
 
     function csPromptMediaDraft(ms) {
-        if ($("#simplemodal-overlay").length > 0) return; // Wait if another modal is open
+        if ($("#simplemodal-overlay").length > 0) return; 
 
         var draft = {
             title: ms.name + " Production " + Math.floor(Math.random() * 1000),
@@ -2029,7 +2135,7 @@
 
         var rejectBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; text-align: center;">Decline</div>');
         rejectBtn.click(function () {
-            ms.draftCooldown = 12; // Wait a few months
+            ms.draftCooldown = 12; 
             Sound.click();
             $.modal.close();
         });
@@ -2050,22 +2156,25 @@
         if (!store.data.gridService || !store.data.gridService.isActive) return;
         if (!store.data.releaseHistory) return;
         var grid = store.data.gridService;
+        if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
+
         var transferred = 0;
 
         for (var i = store.data.releaseHistory.length - 1; i >= 0; i--) {
             var r = store.data.releaseHistory[i];
             if (r.studioName === ms.name && (r.platformIds && r.platformIds.indexOf("movie") !== -1)) {
-                grid.contentLibrary.push({
+                if (!r.title || typeof r.title !== "string") {
+                    csLog("csAutoRouteMediaCatalog: Skipping entry with invalid title from " + ms.name);
+                    continue;
+                }
+                grid.contentLibrary.push(csCreateGridEntry({
+                    mediaProjectId: null,
                     title: r.title,
                     type: "movie",
-                    isOriginal: true, // Acquired catalog becomes permanent exclusive
                     score: r.score,
-                    addedWeek: Math.floor(GameManager.company.currentWeek),
-                    viewsThisWeek: 0,
-                    totalViews: 0,
-                    licenseCostWeekly: 0,
-                    licenseWeeksRemaining: 999
-                });
+                    isOriginal: true,
+                    freshness: 0.5
+                }));
                 store.data.releaseHistory.splice(i, 1);
                 transferred++;
             }
@@ -2094,9 +2203,9 @@
                     var proj = ms.currentProject;
                     ms.currentProject = null;
                     csLog("csProcessMediaStudios: Tick release for " + ms.name + " - Title: " + proj.title + ", PlayerFunded: " + proj.isPlayerFunded);
-                    // Release it
+                    
                     if (proj.isPlayerFunded) {
-                        // Deliver to player pending distribution
+                        
                         var finalScore = Math.min(10, Math.floor(proj.score + (Math.random() * 2 - 0.5)));
                         finalScore = Math.max(1, finalScore);
                         var baseRev = Math.floor(proj.budget * (1.2 + (finalScore / 10)));
@@ -2116,20 +2225,19 @@
 
                         if (store.data.gridService && store.data.gridService.isActive && ms.sharesOwned >= 50) {
                             var grid = store.data.gridService;
-                            grid.contentLibrary.push({
-                                title: newProj.title,
-                                type: newProj.type,
-                                isOriginal: true,
+                            if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
+                            var gridTitle = newProj.title || (ms.name + " Production");
+                            grid.contentLibrary.push(csCreateGridEntry({
+                                mediaProjectId: newProj.id,
+                                title: gridTitle,
+                                type: newProj.type || "movie",
                                 score: finalScore,
-                                addedWeek: currentWk,
-                                viewsThisWeek: 0,
-                                totalViews: 0,
-                                licenseCostWeekly: 0,
-                                licenseWeeksRemaining: 999
-                            });
+                                isOriginal: true,
+                                freshness: 1.0
+                            }));
                             GameManager.company.notifications.push(new Notification({
                                 header: "Grid Original Release",
-                                text: ms.name + " has delivered " + newProj.title + " directly to your streaming platform!",
+                                text: ms.name + " has delivered " + gridTitle + " directly to your streaming platform!",
                                 image: ""
                             }));
                         } else {
@@ -2145,7 +2253,7 @@
                             }));
                         }
                     } else {
-                        // Autonomous release
+                        
                         var catDeal = (store.data.activeCatalogueDeals || []).filter(function (d) { return d.studioId === ms.id && currentWk < d.endWeek; })[0];
                         if (catDeal && store.data.gridService && store.data.gridService.isActive) {
                             var pseudoMovie = { title: proj.title, score: proj.score, studioName: ms.name };
@@ -2153,16 +2261,18 @@
                             csLicenseExternalToGrid(pseudoMovie, 0, 104);
                         } else {
                             if (!store.data.releaseHistory) store.data.releaseHistory = [];
+                            var releaseTitle = proj.title || (ms.name + " " + proj.type);
+                            var releaseScore = (typeof proj.score === "number" && !isNaN(proj.score)) ? proj.score : 5;
                             store.data.releaseHistory.push({
                                 id: "FR_" + Date.now() + "_" + i,
-                                title: proj.title,
+                                title: releaseTitle,
                                 platformIds: ["movie"],
-                                score: proj.score,
+                                score: releaseScore,
                                 studioName: ms.name
                             });
                         }
 
-                        // Royalty payment for licensed projects
+                        
                         if (proj.modLicenseId) {
                             var lic = store.data.activeAILicenses.filter(function (l) { return l.id === proj.modLicenseId; })[0];
                             if (lic) {
@@ -2199,7 +2309,7 @@
                         csPromptMediaDraft(ms);
                     }
                 } else {
-                    // Check for active AI licenses
+                    
                     var licToUse = store.data.activeAILicenses.filter(function (l) { return l.studioId === ms.id && l.filmsRemaining > 0; })[0];
                     if (licToUse && Math.random() < 0.6) {
                         var lFran = getFranchiseById(licToUse.franchiseId);
@@ -2359,56 +2469,87 @@
         if (!store.data.gridService || !store.data.gridService.isActive) return;
         var grid = store.data.gridService;
         var currentWeek = Math.floor(GameManager.company.currentWeek);
+        if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
+        if (!Array.isArray(grid.revenueHistory)) grid.revenueHistory = [];
 
+        
         var contentScore = 0;
         for (var i = 0; i < grid.contentLibrary.length; i++) {
             var entry = grid.contentLibrary[i];
-            var eScore = (entry.score || 5) * (entry.isOriginal ? 1.5 : 1.0);
-            if ((currentWeek - entry.addedWeek) > 104) {
-                eScore -= 2;
-            }
+            
+            if (typeof entry.score !== "number" || isNaN(entry.score)) entry.score = 5;
+            if (typeof entry.addedWeek !== "number" || isNaN(entry.addedWeek)) entry.addedWeek = currentWeek;
+            if (typeof entry.totalViews !== "number" || isNaN(entry.totalViews)) entry.totalViews = 0;
+            if (typeof entry.freshness !== "number" || isNaN(entry.freshness) || entry.freshness <= 0) entry.freshness = 0.5;
+
+            
+            entry.freshness = Math.max(0.2, entry.freshness * 0.995);
+
+            
+            var eScore = entry.score * entry.freshness * (entry.isOriginal ? 1.5 : 1.0);
             contentScore += eScore;
 
-            entry.viewsThisWeek = Math.floor(grid.subscribers * 0.03 * ((entry.score || 5) / 10));
+            
+            entry.viewsThisWeek = Math.floor((grid.subscribers || 0) * 0.03 * (entry.score / 10) * entry.freshness);
+            if (isNaN(entry.viewsThisWeek)) entry.viewsThisWeek = 0;
             entry.totalViews += entry.viewsThisWeek;
         }
-        contentScore = Math.max(0, contentScore);
+        contentScore = Math.max(0, isNaN(contentScore) ? 0 : contentScore);
 
-        var marketingBoost = 1.0 + (grid.marketingBudgetWeekly / 1000000) * 0.5;
-        grid.pendingMarketing = (grid.pendingMarketing || 0) + grid.marketingBudgetWeekly;
+        
+        var marketingBoost = 1.0 + ((grid.marketingBudgetWeekly || 0) / 1000000) * 0.5;
+        if (isNaN(marketingBoost) || !isFinite(marketingBoost)) marketingBoost = 1.0;
+        grid.pendingMarketing = (grid.pendingMarketing || 0) + (grid.marketingBudgetWeekly || 0);
 
+        
         var contentGrowthBonus = Math.min(0.05, contentScore / 10000);
-        var newSubs = Math.floor(grid.subscribers * (grid.subscriberGrowthRate + contentGrowthBonus) * marketingBoost);
+        var newSubs = Math.floor((grid.subscribers || 0) * ((grid.subscriberGrowthRate || 0.02) + contentGrowthBonus) * marketingBoost);
+        if (isNaN(newSubs)) newSubs = 100;
         newSubs = Math.max(100, newSubs);
 
+        
         var baseChurn = grid.churnRate || 0.01;
-        var churnedSubs = Math.floor(grid.subscribers * baseChurn);
-        if (grid.contentLibrary.length < 3) churnedSubs = Math.floor(churnedSubs * 2.0);
+        var churnMultiplier = 1.0;
         if (grid.contentLibrary.length === 0) {
+            churnMultiplier = 999; 
             newSubs = 0;
-            churnedSubs = grid.subscribers; // 100% loss
+        } else if (grid.contentLibrary.length < 3) {
+            churnMultiplier = 2.0;
+        } else if (grid.contentLibrary.length < 5) {
+            churnMultiplier = 1.5;
         }
+        var churnedSubs = Math.floor((grid.subscribers || 0) * baseChurn * churnMultiplier);
+        if (isNaN(churnedSubs)) churnedSubs = 0;
 
-        grid.lastWeekSubscribers = grid.subscribers;
-        grid.subscribers = Math.max(0, grid.subscribers + newSubs - churnedSubs);
+        
+        grid.lastWeekSubscribers = grid.subscribers || 0;
+        grid.subscribers = Math.max(0, (grid.subscribers || 0) + newSubs - churnedSubs);
+        if (isNaN(grid.subscribers) || !isFinite(grid.subscribers)) grid.subscribers = 0;
 
-        var weeklySubRevenue = Math.floor(grid.subscribers * (grid.monthlySubFee / 4));
+        
+        var weeklySubRevenue = Math.floor((grid.subscribers || 0) * ((grid.monthlySubFee || 14.99) / 4));
+        if (isNaN(weeklySubRevenue)) weeklySubRevenue = 0;
+        grid.weeklyRevenue = weeklySubRevenue;
         if (weeklySubRevenue > 0) {
             grid.pendingRevenue = (grid.pendingRevenue || 0) + weeklySubRevenue;
-            grid.weeklyRevenue = weeklySubRevenue;
-            grid.totalRevenue += weeklySubRevenue;
+            grid.totalRevenue = (grid.totalRevenue || 0) + weeklySubRevenue;
+            if (isNaN(grid.totalRevenue)) grid.totalRevenue = weeklySubRevenue;
         }
 
+        
         var baseUpkeep = 5000;
         var varUpkeep = 0;
-        if (grid.subscribers < 100000) varUpkeep = grid.subscribers * 0.10;
-        else if (grid.subscribers < 1000000) varUpkeep = (100000 * 0.10) + (grid.subscribers - 100000) * 0.05;
-        else if (grid.subscribers < 10000000) varUpkeep = (100000 * 0.10) + (900000 * 0.05) + (grid.subscribers - 1000000) * 0.02;
-        else varUpkeep = (100000 * 0.10) + (900000 * 0.05) + (9000000 * 0.02) + (grid.subscribers - 10000000) * 0.01;
+        var subs = grid.subscribers || 0;
+        if (subs < 100000) varUpkeep = subs * 0.50;
+        else if (subs < 1000000) varUpkeep = (100000 * 0.50) + (subs - 100000) * 0.35;
+        else if (subs < 10000000) varUpkeep = (100000 * 0.50) + (900000 * 0.35) + (subs - 1000000) * 0.20;
+        else varUpkeep = (100000 * 0.50) + (900000 * 0.35) + (9000000 * 0.20) + (subs - 10000000) * 0.10;
 
         grid.weeklyUpkeep = Math.floor(baseUpkeep + varUpkeep);
+        if (isNaN(grid.weeklyUpkeep)) grid.weeklyUpkeep = baseUpkeep;
         grid.pendingUpkeep = (grid.pendingUpkeep || 0) + grid.weeklyUpkeep;
 
+        
         for (var li = grid.contentLibrary.length - 1; li >= 0; li--) {
             var libEntry = grid.contentLibrary[li];
             if (!libEntry.isOriginal && libEntry.licenseCostWeekly > 0) {
@@ -2426,6 +2567,7 @@
             }
         }
 
+        
         if (currentWeek % 4 === 0) {
             if (grid.pendingRevenue > 0) {
                 GameManager.company.adjustCash(grid.pendingRevenue, "Grid Subscriptions (Monthly)");
@@ -2440,7 +2582,7 @@
                 grid.pendingUpkeep = 0;
             }
 
-            // Catalogue Deal Upkeep
+            
             var totalCatMaint = 0;
             if (!store.data.activeCatalogueDeals) store.data.activeCatalogueDeals = [];
             for (var cdi = store.data.activeCatalogueDeals.length - 1; cdi >= 0; cdi--) {
@@ -2461,19 +2603,46 @@
             }
         }
 
-        var milestones = [10000, 100000, 1000000, 10000000, 50000000, 100000000];
-        for (var mi = 0; mi < milestones.length; mi++) {
-            var m = milestones[mi];
-            if (!grid["milestone_" + m] && grid.subscribers >= m) {
-                grid["milestone_" + m] = true;
-                grid.prestige = Math.min(5, grid.prestige + 1);
-                GameManager.company.notifications.push(new Notification({
-                    header: "Grid Milestone!",
-                    text: "Grid has reached " + UI.getShortNumberString(m) + " subscribers! Prestige increased to " + grid.prestige + ".",
-                    image: ""
-                }));
+        
+        var milestoneMap = [
+            { threshold: 10000, prestige: 1 },
+            { threshold: 100000, prestige: 2 },
+            { threshold: 1000000, prestige: 3 },
+            { threshold: 10000000, prestige: 4 },
+            { threshold: 50000000, prestige: 5 },
+            { threshold: 100000000, prestige: 5 }
+        ];
+        for (var mi = 0; mi < milestoneMap.length; mi++) {
+            var ms = milestoneMap[mi];
+            if (!grid["milestone_" + ms.threshold] && grid.subscribers >= ms.threshold) {
+                grid["milestone_" + ms.threshold] = true;
+                var oldPrestige = grid.prestige;
+                grid.prestige = Math.max(grid.prestige, ms.prestige);
+                if (grid.prestige > oldPrestige) {
+                    GameManager.company.notifications.push(new Notification({
+                        header: "Grid Milestone!",
+                        text: "Grid has reached " + UI.getShortNumberString(ms.threshold) + " subscribers! Prestige increased to " + grid.prestige + ".",
+                        image: ""
+                    }));
+                } else {
+                    GameManager.company.notifications.push(new Notification({
+                        header: "Grid Milestone!",
+                        text: "Grid has reached " + UI.getShortNumberString(ms.threshold) + " subscribers!",
+                        image: ""
+                    }));
+                }
             }
         }
+
+        
+        grid.revenueHistory.push({
+            week: currentWeek,
+            revenue: weeklySubRevenue,
+            subscribers: grid.subscribers,
+            churn: churnedSubs,
+            growth: newSubs
+        });
+        if (grid.revenueHistory.length > 12) grid.revenueHistory.shift();
     }
 
     function processAIFranchises() {
@@ -3145,10 +3314,10 @@
         var totalQuality = 0;
         for (var t = 1; t <= 5; t++) totalQuality += (starTiers[t].score * (studio.staff[t] || 0));
 
-        // Scale quality factor: 15 members of 1-star (3.0 q) to 15 members of 5-star (37.5 q)
+        
         var qFactor = Math.max(0, Math.min(1.0, (totalQuality - 3.0) / (37.5 - 3.0)));
 
-        // RNG impact scales down as quality goes up (100% -> 5%)
+        
         var rngWeight = 1.0 - (qFactor * 0.95);
 
         var talentScore = (qFactor * 9) + 1;
@@ -3158,7 +3327,7 @@
 
         if (proj.size === "AAA") score += 1;
 
-        // Score Clamping for Remakes/Remasters
+        
         if (proj && (proj.type === "remake" || proj.type === "remaster")) {
             var f = getFranchiseById(proj.franchiseId);
             if (f && f.installments && f.installments.length > 0) {
@@ -3482,13 +3651,13 @@
         for (var i = 0; i < games.length; i++) {
             var g = games[i];
 
-            // Track weekly revenue for forecasting
+            
             var totalSales = g.totalSalesCash || 0;
             var prevTotal = g.modLastTotalSales || totalSales;
             var weeklyRev = totalSales - prevTotal;
             g.modLastTotalSales = totalSales;
 
-            // Store rolling 4-week history for accurate "Last Month" reporting
+            
             if (!g.modRevenueHistory) g.modRevenueHistory = [];
             g.modRevenueHistory.push(weeklyRev);
             if (g.modRevenueHistory.length > 4) g.modRevenueHistory.shift();
@@ -3496,7 +3665,7 @@
             var maxAge = 20 + (g.modMarketExtension || 0);
             var age = currentWk - g.releaseWeek;
 
-            // Trigger proactive maintenance popup on the "last month" (4 weeks left)
+            
             if (g.state === GameState.released && !g.isExtensionPack && (maxAge - age === 4)) {
                 var promptKey = "PROMPT_" + (g.modMarketExtension || 0);
                 if (g.modLastPromptKey !== promptKey) {
@@ -3504,9 +3673,9 @@
 
                     var lastMonthRev = 0;
                     g.modRevenueHistory.forEach(function (r) { lastMonthRev += r; });
-                    if (lastMonthRev === 0) lastMonthRev = weeklyRev * 4; // Fallback if history is short
+                    if (lastMonthRev === 0) lastMonthRev = weeklyRev * 4; 
 
-                    var forecastRev = Math.floor(lastMonthRev * 0.85); // Estimated next month with decay
+                    var forecastRev = Math.floor(lastMonthRev * 0.85); 
                     var mCost = Math.floor(totalSales * 0.05) + 20000;
 
                     showMaintainModal(g, lastMonthRev, forecastRev, mCost);
@@ -3594,16 +3763,16 @@
             return;
         }
 
-
-        var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; color: #2c3e50; padding: 0; display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; position: relative;"></div>');
+        var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; color: #2c3e50; padding: 0; display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; position: relative; overflow: hidden;"></div>');
         container.data('menuType', menuType);
-        var header = $('<div id="modUI_header" style="flex: 0 0 auto; display: flex; flex-wrap: nowrap; gap: 2px; border-bottom: 2px solid #bdc3c7; padding: 6px 40px 0 8px; background-color: #e0e6ed; overflow: hidden; cursor: move; position: relative; border-top-left-radius: 14px; border-top-right-radius: 14px;"></div>');
+        var header = $('<div id="modUI_header" style="flex: 0 0 auto; display: flex; flex-wrap: nowrap; gap: 2px; border-bottom: 2px solid #bdc3c7; padding: 12px 40px 0 12px; background-color: #e0e6ed; overflow: hidden; cursor: move; position: relative; border-top-left-radius: 14px; border-top-right-radius: 14px;"></div>');
         container.append(header);
 
-        var xBtn = $('<div style="position: absolute; right: 10px; top: 8px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>');
+        var xBtn = $('<div style="position: absolute; right: 12px; top: 12px; width: 26px; height: 26px; line-height: 24px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 16pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>');
         xBtn.click(function () { $.modal.close(); });
         xBtn.hover(function () { $(this).css('background', '#c0392b'); }, function () { $(this).css('background', '#e74c3c'); });
         container.append(xBtn);
+        
         var contentArea = $('<div id="modUI_content" style="flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px; background-color: #ecf0f1; box-sizing: border-box; min-height: 0;"></div>');
         container.append(contentArea);
 
@@ -3639,10 +3808,10 @@
     function renderDebugTab(container) {
         container.empty();
         container.append('<h2 style="color: #c0392b; font-size: 14pt; margin: 0 0 10px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px;">Mod Debug Logs</h2>');
-        
+
         var btnRow = $('<div style="margin-bottom: 15px;"></div>');
         var clearBtn = $('<div class="selectorButton redButton" style="display: inline-block; padding: 5px 15px; cursor: pointer;">Clear Logs</div>');
-        clearBtn.click(function() {
+        clearBtn.click(function () {
             store.data.debugLogs = [];
             csLog("Logs cleared.");
             renderDebugTab(container);
@@ -3655,7 +3824,7 @@
         if (logs.length === 0) {
             logList.append('<div style="color: #7f8c8d; font-style: italic;">No logs yet. Try performing actions like signing a deal.</div>');
         } else {
-            logs.forEach(function(l) {
+            logs.forEach(function (l) {
                 logList.append('<div style="margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px;">' + l + '</div>');
             });
         }
@@ -3712,12 +3881,20 @@
             header.append(tabDiv);
         });
 
+        csLog("[ROUTE-1] routeModMenu called: tab=" + activeTab + " type=" + menuType);
+
         if (activeTab === "market") {
             renderMarketTab(contentArea);
         } else if (activeTab === "subsidiaries") {
             renderSubsidiariesTab(contentArea);
         } else if (activeTab === "film_subs") {
-            csRenderFilmSubsTab(contentArea);
+            csLog("[ROUTE-2] About to call csRenderFilmSubsTab");
+            try {
+                csRenderFilmSubsTab(contentArea);
+                csLog("[ROUTE-3] csRenderFilmSubsTab completed OK.");
+            } catch (renderErr) {
+                csLog("[ROUTE-ERR] csRenderFilmSubsTab THREW: " + renderErr.message + " | Stack: " + (renderErr.stack || "N/A"));
+            }
         } else if (activeTab === "film_market") {
             csRenderFilmMarketTab(contentArea);
         } else if (activeTab === "publishing") {
@@ -3748,45 +3925,47 @@
             renderDebugTab(contentArea);
         }
 
+        csLog("[ROUTE-4] Tab rendered. Fast animation...");
 
-        if (contentArea.length > 0) {
-            contentArea.removeClass('cs-animate-in');
-            void contentArea[0].offsetWidth;
-            contentArea.addClass('cs-animate-in');
-        }
-
-
-        contentArea.find('.studioCard, .dlcItem, .cs-stagger-item').each(function (i) {
-            var el = $(this);
-            el.css({ opacity: 0 });
-            setTimeout(function () {
-                el.addClass('cs-card-enter');
-
-                setTimeout(function () { el.css({ opacity: 1 }); }, 400);
-            }, i * 40);
-        });
-
+        
+        setTimeout(function () {
+            try {
+                if (contentArea.length > 0) {
+                    contentArea.removeClass('cs-animate-in').addClass('cs-animate-in');
+                    var staggerItems = contentArea.find('.studioCard, .dlcItem, .cs-stagger-item');
+                    staggerItems.css({ opacity: 1 }); 
+                }
+            } catch (animErr) {
+                csLog("[ROUTE-5-ERR] CSS animation THREW: " + animErr.message);
+            }
+        }, 0);
 
         setTimeout(function () {
-            var logItems = $('.gameLogItem');
-            logItems.each(function () {
-                var title = $(this).find('h3').text().trim();
-                var f = null;
-                var frans = store.data.franchises || [];
-                for (var fIdx = 0; fIdx < frans.length; fIdx++) {
-                    var fr = frans[fIdx];
-                    var installments = fr.installments || [];
-                    var hasIt = false;
-                    for (var itIdx = 0; itIdx < installments.length; itIdx++) {
-                        if (installments[itIdx].title === title) { hasIt = true; break; }
+            try {
+                var logItems = $('.gameLogItem');
+                logItems.each(function () {
+                    var title = $(this).find('h3').text().trim();
+                    var f = null;
+                    var frans = store.data.franchises || [];
+                    for (var fIdx = 0; fIdx < frans.length; fIdx++) {
+                        var fr = frans[fIdx];
+                        var installments = fr.installments || [];
+                        var hasIt = false;
+                        for (var itIdx = 0; itIdx < installments.length; itIdx++) {
+                            if (installments[itIdx].title === title) { hasIt = true; break; }
+                        }
+                        if (hasIt) { f = fr; break; }
                     }
-                    if (hasIt) { f = fr; break; }
-                }
-                if (f && $(this).find('.mod-franchise-icon').length === 0) {
-                    $(this).find('h3').prepend('<span class="mod-franchise-icon" title="Part of the ' + f.name + ' franchise">[F]</span> ');
-                }
-            });
+                    if (f && $(this).find('.mod-franchise-icon').length === 0) {
+                        $(this).find('h3').prepend('<span class="mod-franchise-icon" title="Part of the ' + f.name + ' franchise">[F]</span> ');
+                    }
+                });
+            } catch (franErr) {
+                csLog("[ROUTE-8-ERR] Franchise icon inject THREW: " + franErr.message);
+            }
         }, 100);
+
+        csLog("[ROUTE-9] routeModMenu returning.");
     }
 
     function generateFranchiseTitle(originalTitle, type) {
@@ -4072,10 +4251,10 @@
             store.data.activePlayerFranchiseProject = entry;
             GameManager.company.adjustCash(-cost, "Franchise Project Cost: " + franchise.name);
 
-            // Close the mod UI
+            
             $.modal.close();
 
-            // Trigger native Game Dev Tycoon new game flow
+            
             setTimeout(function () {
                 if (typeof GameManager !== 'undefined' && typeof State !== 'undefined' && typeof State.CreateGame !== 'undefined') {
                     GameManager.flags.selectGameActive = false;
@@ -4102,7 +4281,7 @@
                     if (typeof UI !== 'undefined' && typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.currentGame) {
                         var cGame = GameManager.company.currentGame;
 
-                        // Prefill Title
+                        
                         var lastInst = (franchise.installments && franchise.installments.length > 0) ? franchise.installments[franchise.installments.length - 1] : null;
                         var baseTitle = lastInst ? lastInst.title : franchise.name;
                         var newTitle = generateFranchiseTitle(baseTitle, type);
@@ -4836,16 +5015,23 @@
                     container.append('<div style="text-align: center; padding: 40px; color: #7f8c8d;">No media projects currently active or releasing.</div>');
                 }
                 active.forEach(function (p) {
-                    var card = $('<div class="cs-stagger-item" style="background: #ffffff; border-radius: 12px; border: 1px solid #dee2e6; padding: 18px; margin-bottom: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; overflow: hidden;"></div>');
-                    var icons = { "movie": "[Movie]", "tvSeries": "[TV Show]", "animatedShow": "[Animation]", "soundtrack": "[Music]", "merchandise": "[Merch]", "comicBook": "[Comic]" };
+                    var card = $('<div class="studioCard" style="border: 1px solid #d1d9e6; background: #ffffff; padding: 12px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: flex-start; box-shadow: 0 2px 6px rgba(0,0,0,0.05); transition: all 0.2s ease;"></div>');
+                    var icons = { "movie": "FILM", "tvSeries": "TV", "animatedShow": "ANIM", "soundtrack": "MUS", "merchandise": "TOY", "comicBook": "BOOK" };
+                    var iconText = icons[p.type] || "MED";
 
-                    var header = $('<div style="display: flex; justify-content: space-between; align-items: start;"></div>');
-                    header.append('<div style="font-size: 15pt; color: #212529;"><b>' + (icons[p.type] || "[Media]") + ' ' + p.title + '</b></div>');
+                    var sideGraphic = $('<div style="width: 60px; min-width: 60px; height: 60px; border-radius: 4px; background: #e0e6ed; color: #7f8c8d; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11pt; margin-right: 12px;">' + iconText + '</div>');
+                    card.append(sideGraphic);
 
-                    var statusLabel = p.isReleasing ? "ON AIR" : (p.status === "inProduction" ? "IN PRODUCTION" : "PRODUCTION COMPLETED");
+                    var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1; min-width: 0;"></div>');
+                    var headerRow = $('<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"></div>');
+                    headerRow.append('<h3 style="margin: 0; font-size: 14pt; color: #2c3e50; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; font-weight: bold;">' + p.title + '</h3>');
+
+                    var statusLabel = p.isReleasing ? "ON AIR" : (p.status === "inProduction" ? "IN PRODUCTION" : "COMPLETED");
                     var statusColor = p.isReleasing ? "#27ae60" : "#d35400";
-                    header.append('<div style="background: ' + statusColor + '1a; color: ' + statusColor + '; padding: 4px 8px; border-radius: 4px; font-size: 8pt; font-weight: bold;">' + statusLabel + '</div>');
-                    card.append(header);
+                    headerRow.append('<div style="font-size: 10pt; color: ' + statusColor + '; white-space: nowrap; font-weight: bold;">' + statusLabel + '</div>');
+                    detailsContainer.append(headerRow);
+
+                    detailsContainer.append('<div style="font-size: 11pt; margin: 3px 0; color: #7f8c8d;">Budget: <strong style="color: #27ae60;">$' + UI.getShortNumberString(p.budget) + '</strong></div>');
 
                     if (p.status === "inProduction") {
                         var sProd = p.seasonsProduced || 0;
@@ -4853,27 +5039,43 @@
                         var wPerS = p.weeksPerSeason || p.totalWeeks || 8;
                         var progress = ((wPerS - p.weeksRemaining) / wPerS) * 100;
                         if (isNaN(progress)) progress = 0;
-                        card.append('<div style="margin-top: 15px; font-size: 10pt; color: #495057; display: flex; justify-content: space-between;"><span>' + seasonLabel + '</span><span>' + Math.floor(progress) + '%</span></div>');
-                        card.append('<div class="cs-progress-track" style="background: #e9ecef; height: 10px; border-radius: 5px; margin-top: 5px; overflow: hidden;"><div class="cs-progress-fill" style="width: ' + progress + '%; height: 100%; background: #f39c12; transition: width 0.5s ease;"></div></div>');
+                        detailsContainer.append('<div style="margin-top: 5px; font-size: 10pt; color: #495057; display: flex; justify-content: space-between;"><span>' + seasonLabel + '</span><span>' + Math.floor(progress) + '% (' + p.weeksRemaining + 'w left)</span></div>');
+                        detailsContainer.append('<div class="cs-progress-track" style="background: #e9ecef; height: 8px; border-radius: 4px; margin-top: 2px; overflow: hidden;"><div class="cs-progress-fill" style="width: ' + progress + '%; height: 100%; background: #f39c12; transition: width 0.5s ease;"></div></div>');
                     }
 
                     if (p.isReleasing || p.status === "releasing") {
                         var totalEps = p.totalEpisodes || 1;
                         var epProgress = (p.currentEpisode / totalEps) * 100;
                         if (isNaN(epProgress)) epProgress = 0;
-                        var label = "On Air: " + (p.type === "comicBook" ? "Issue " : "Episode ") + p.currentEpisode + " / " + totalEps;
-                        card.append('<div style="margin-top: 15px; font-size: 10pt; color: #495057; display: flex; justify-content: space-between;"><span>' + label + '</span><span>' + Math.floor(epProgress) + '%</span></div>');
-                        card.append('<div class="cs-progress-track" style="background: #e9ecef; height: 10px; border-radius: 5px; margin-top: 5px; overflow: hidden;"><div class="cs-progress-fill" style="width: ' + epProgress + '%; height: 100%; background: #27ae60; transition: width 0.5s ease;"></div></div>');
+                        var epLabel = "On Air: " + (p.type === "comicBook" ? "Issue " : "Episode ") + p.currentEpisode + " / " + totalEps;
+                        var nxtRelease = Math.max(0, p.nextReleaseWeek - Math.floor(GameManager.company.currentWeek));
+                        detailsContainer.append('<div style="margin-top: 5px; font-size: 10pt; color: #495057; display: flex; justify-content: space-between;"><span>' + epLabel + '</span><span>Next: ' + nxtRelease + 'w</span></div>');
+                        detailsContainer.append('<div class="cs-progress-track" style="background: #e9ecef; height: 8px; border-radius: 4px; margin-top: 2px; overflow: hidden;"><div class="cs-progress-fill" style="width: ' + epProgress + '%; height: 100%; background: #27ae60; transition: width 0.5s ease;"></div></div>');
                     }
 
-                    var stats = $('<div style="margin-top: 15px; display: flex; gap: 15px; font-size: 9pt; color: #6c757d;"></div>');
-                    stats.append('<div style="flex: 0 0 auto;">Budget: <b>$' + UI.getShortNumberString(p.budget) + '</b></div>');
-                    if (p.status === "inProduction") stats.append('<div style="flex: 0 0 auto;">Completion: <b>' + p.weeksRemaining + ' weeks</b></div>');
-                    else stats.append('<div style="flex: 0 0 auto;">Next Release: <b>' + Math.max(0, p.nextReleaseWeek - Math.floor(GameManager.company.currentWeek)) + ' weeks</b></div>');
-                    card.append(stats);
+                    var btnContainer = $('<div style="margin-top: 8px; display: flex; gap: 6px; align-items: center;"></div>');
 
-                    var cancelBtn = $('<div style="position: absolute; bottom: 12px; right: 15px;"><span style="color: #adb5bd; cursor: pointer; font-size: 8pt; text-decoration: underline; transition: color 0.2s;">Cancel ' + (p.status === "inProduction" ? "Project" : "Release") + '</span></div>');
-                    cancelBtn.hover(function () { $(this).css('color', '#e74c3c'); }, function () { $(this).css('color', '#adb5bd'); });
+                    
+                    if ((p.isReleasing || p.status === "releasing" || p.status === "productionCompleted") && p.currentEpisode < (p.totalEpisodes || 1)) {
+                        (function (proj) {
+                            var airBtn = $('<button class="selectorButton greenButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">\u25B6 Air Next ' + (p.type === "comicBook" ? "Issue" : "Episode") + '</button>');
+                            airBtn.click(function () {
+                                proj.nextReleaseWeek = Math.floor(GameManager.company.currentWeek) - 1;
+                                Sound.click();
+                                GameManager.company.notifications.push(new Notification({
+                                    header: "Episode Queued",
+                                    text: proj.title + " \u2014 next episode will air this week.",
+                                    image: ""
+                                }));
+                                refresh();
+                            });
+                            btnContainer.append(airBtn);
+                        })(p);
+                    } else {
+                        btnContainer.append($('<div style="flex: 1;"></div>'));
+                    }
+
+                    var cancelBtn = $('<button class="selectorButton deleteButton" style="width: 120px; font-size: 10pt; padding: 4px 6px;">Cancel ' + (p.status === "inProduction" ? "Project" : "Release") + '</button>');
                     cancelBtn.click(function () {
                         var msg = p.status === "inProduction" ? "Cancel this production? You will only be refunded 30% of the budget." : "Stop this release window? Future episodes/issues and revenue will be lost.";
                         if (confirm(msg)) {
@@ -4883,32 +5085,10 @@
                             refresh();
                         }
                     });
-                    card.append(cancelBtn);
+                    btnContainer.append(cancelBtn);
 
-                    // "Air Next Episode" button — only shown when episodes are queued
-                    if ((p.isReleasing || p.status === "releasing" || p.status === "productionCompleted") &&
-                        p.currentEpisode < (p.totalEpisodes || 1)) {
-                        (function (proj) {
-                            var airBtn = $('<div style="position: absolute; bottom: 12px; left: 15px;">' +
-                                '<span style="color: #27ae60; cursor: pointer; font-size: 8pt; font-weight: bold; text-decoration: underline; transition: color 0.2s;">' +
-                                '\u25B6 Air Next Episode Now</span></div>');
-                            airBtn.hover(
-                                function () { $(this).find('span').css('color', '#1a8a4a'); },
-                                function () { $(this).find('span').css('color', '#27ae60'); }
-                            );
-                            airBtn.click(function () {
-                                proj.nextReleaseWeek = Math.floor(GameManager.company.currentWeek) - 1;
-                                Sound.click();
-                                GameManager.company.notifications.push(new Notification({
-                                    header: "Episode Queued",
-                                    text: proj.title + " — next episode will air this week.",
-                                    image: ""
-                                }));
-                                refresh();
-                            });
-                            card.append(airBtn);
-                        })(p);
-                    }
+                    detailsContainer.append(btnContainer);
+                    card.append(detailsContainer);
                     container.append(card);
                 });
             } else if (subTab === "produce") {
@@ -5087,13 +5267,11 @@
                 if (GameManager.company.cash >= 50000000) {
                     if (confirm("Launch your own streaming platform 'Grid' for $50,000,000?")) {
                         GameManager.company.adjustCash(-50000000, "Grid Platform R&D");
-                        if (!store.data.gridService) store.data.gridService = {};
+                        store.data.gridService = csCreateDefaultGrid();
                         store.data.gridService.isActive = true;
+                        store.data.gridService.isResearched = true;
                         store.data.gridService.subscribers = 500000;
-                        store.data.gridService.contentLibrary = [];
-                        store.data.gridService.monthlySubFee = 15;
-                        store.data.gridService.marketingBudgetWeekly = 0;
-                        store.data.gridService.prestige = 1;
+                        store.data.gridService.launchWeek = Math.floor(GameManager.company.currentWeek);
                         Sound.click();
                         routeModMenu("settings");
                     }
@@ -5102,6 +5280,14 @@
                 }
             });
             container.append(gridRnD);
+        } else {
+            var grid = store.data.gridService;
+            var prestigeStr = "";
+            for (var gps = 0; gps < (grid.prestige || 1); gps++) prestigeStr += "\u2B50";
+            var gridStatus = $('<div class="cs-stagger-item" style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;"></div>');
+            gridStatus.append('<div><div style="font-weight: bold; font-size: 12pt;">Grid Streaming Platform</div><div style="font-size: 9pt; color: #95a5a6; margin-top: 3px;">Status: Active | Prestige: ' + prestigeStr + '</div></div>');
+            gridStatus.append('<div style="text-align: right;"><div style="font-size: 14pt; font-weight: bold; color: #3498db;">' + UI.getShortNumberString(grid.subscribers || 0) + '</div><div style="font-size: 9pt; color: #95a5a6;">subscribers</div></div>');
+            container.append(gridStatus);
         }
 
         var overloadDiv = $('<div class="cs-stagger-item" style="display: flex; align-items: center; margin-bottom: 20px; font-size: 12pt; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer;"></div>');
@@ -5934,15 +6120,6 @@
             topBtns.append(buyBtn);
         }
 
-        var isLicensed = (store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === studio.id && GameManager.company.currentWeek < d.endWeek; });
-        var dealBtn = $('<button class="selectorButton whiteBoardButton" style="width: 100%; margin-top: 5px; font-size: 10pt;">' + (isLicensed ? "Catalogue Active \u2705" : "Negotiate Catalogue Deal") + '</button>');
-        dealBtn.click(function () {
-            Sound.click();
-            store.data.activeCatalogueNegotiation = studio;
-            routeModMenu("catalogue_negotiation", "media");
-        });
-        detailsContainer.append(dealBtn);
-
         if (studio.sharesOwned >= 50) {
             middleBtns = $('<div style="display: flex; gap: 6px; align-items: center;"></div>');
             var staffSelect = $('<select id="staff_tier_' + studio.id + '" style="font-size: 10pt; padding: 3px; color: black; flex: 2; border-radius: 3px; border: 1px solid #bdc3c7; box-sizing: border-box;"></select>');
@@ -6392,7 +6569,7 @@
         }
     };
 
-    // Sidebar Integration for Market Management
+    
     $(document).on('click', '#gameSalesContainer .gameSalesCard, #gameSalesContainer > div', function (e) {
         var name = $(this).find('.gameNameLabel').text();
         if (!name) return;
@@ -6410,7 +6587,7 @@
 
         dropdown.append('<div style="font-size: 10pt; font-weight: bold; border-bottom: 1px solid #555; margin-bottom: 8px; padding-bottom: 4px; color: #ecf0f1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + game.title + '</div>');
 
-        // Withdraw
+        
         var withdrawAction = $('<div style="padding: 6px; cursor: pointer; font-size: 9pt; border-radius: 4px; transition: background 0.2s; color: #e74c3c;">\u26D4 Withdraw from Market</div>');
         withdrawAction.hover(function () { $(this).css('background', '#3d1c1c'); }, function () { $(this).css('background', 'transparent'); });
         withdrawAction.click(function () {
@@ -6422,7 +6599,7 @@
         });
         dropdown.append(withdrawAction);
 
-        // Maintain
+        
         var mCost = Math.floor((game.totalSalesCash || 100000) * 0.05) + 20000;
         var maintainAction = $('<div style="padding: 6px; cursor: pointer; font-size: 9pt; border-radius: 4px; transition: background 0.2s; color: #2ecc71;">\u267B Maintain (+$' + UI.getShortNumberString(mCost) + ')</div>');
         maintainAction.hover(function () { $(this).css('background', '#1b3d2c'); }, function () { $(this).css('background', 'transparent'); });
@@ -6453,7 +6630,7 @@
 
         var currentWeek = Math.floor(GameManager.company.currentWeek);
 
-        // --- PENDING DISTRIBUTION ---
+        
         var pendingObj = $('<div style="margin-bottom: 30px;"></div>');
         pendingObj.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Awaiting Distribution Decision</h4>');
 
@@ -6489,7 +6666,7 @@
         }
         container.append(pendingObj);
 
-        // --- ACTIVE STREAMING ---
+        
         var streamObj = $('<div style="margin-bottom: 30px;"></div>');
         streamObj.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Active Streaming Contracts</h4>');
 
@@ -6510,7 +6687,7 @@
             streamObj.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px;">No active streaming contracts.</div>');
         } else {
             var sTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></table>');
-            sTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th></tr>');
+            sTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th><th>Action</th></tr>');
 
             activeStreamDeals.forEach(function (item) {
                 var d = item.deal;
@@ -6520,13 +6697,39 @@
                 sRow.append('<td>' + p.name + '</td>');
                 sRow.append('<td style="color: #27ae60;">+$' + UI.getShortNumberString(d.weeklyRevenue) + '</td>');
                 sRow.append('<td>' + d.weeksActive + ' / ' + d.weeksTotal + ' wks</td>');
+                
+                var actionTd = $('<td></td>');
+                var breakBtn = $('<span style="color: #e74c3c; cursor: pointer; text-decoration: underline; font-weight: bold;">Break Deal</span>');
+                breakBtn.hover(function(){ $(this).css('color', '#c0392b'); }, function(){ $(this).css('color', '#e74c3c'); });
+                breakBtn.click(function() {
+                    Sound.click();
+                    var penalty = Math.floor((d.weeklyRevenue * (d.weeksTotal - d.weeksActive)) * 1.5) || 500000;
+                    if (confirm("Break the distribution contract for '" + d.title + "' with " + p.name + "?\n\nPenalty Fee: $" + UI.getShortNumberString(penalty) + "\nThe project will become available for distribution again.")) {
+                        if (GameManager.company.cash < penalty) { alert("You cannot afford the contract breach penalty."); return; }
+                        GameManager.company.adjustCash(-penalty, "Contract Breach Penalty: " + p.name);
+                        
+                        
+                        p.activeDeals = p.activeDeals.filter(function(x) { return x.mediaProjectId !== d.mediaProjectId; });
+                        
+                        
+                        var proj = csGetMediaProjectById(d.mediaProjectId);
+                        if (proj) {
+                            proj.distributionStatus = null;
+                            store.data.pendingDistribution = store.data.pendingDistribution || [];
+                            store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: Math.floor(GameManager.company.currentWeek) + 4 });
+                        }
+                        routeModMenu("media", "media"); 
+                    }
+                });
+                actionTd.append(breakBtn);
+                sRow.append(actionTd);
                 sTable.append(sRow);
             });
             streamObj.append(sTable);
         }
         container.append(streamObj);
 
-        // --- ACTIVE THEATER RUNS ---
+        
         var theaterObj = $('<div style="margin-bottom: 30px;"></div>');
         theaterObj.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Active Theater Runs</h4>');
 
@@ -6536,7 +6739,7 @@
             theaterObj.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px;">No active theater releases.</div>');
         } else {
             var tTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></table>');
-            tTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Movie</th><th>Chain</th><th>Your Share</th><th>Progress</th></tr>');
+            tTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Movie</th><th>Chain</th><th>Your Share</th><th>Progress</th><th>Action</th></tr>');
 
             activeTheater.forEach(function (tr) {
                 var chain = csGetTheaterChainById(tr.theaterChainId);
@@ -6547,6 +6750,31 @@
                 tRow.append('<td>' + chainName + '</td>');
                 tRow.append('<td style="color: #27ae60;">$' + UI.getShortNumberString(tr.playerShare) + '</td>');
                 tRow.append('<td>' + tr.weeksActive + ' / ' + tr.maxWeeks + ' wks</td>');
+                
+                var actionTd = $('<td></td>');
+                var cancelBtn = $('<span style="color: #e74c3c; cursor: pointer; text-decoration: underline; font-weight: bold;">Cancel Run</span>');
+                cancelBtn.hover(function(){ $(this).css('color', '#c0392b'); }, function(){ $(this).css('color', '#e74c3c'); });
+                cancelBtn.click(function() {
+                    Sound.click();
+                    var penalty = 2000000;
+                    if (confirm("Cancel the remaining theater run for '" + tr.title + "' at " + chainName + "?\n\nCancellation Fee: $" + UI.getShortNumberString(penalty) + "\nThe project will become available for distribution again.")) {
+                        if (GameManager.company.cash < penalty) { alert("You cannot afford the cancellation fee."); return; }
+                        GameManager.company.adjustCash(-penalty, "Theater Cancellation Fee: " + chainName);
+                        
+                        tr.status = "abandoned";
+                        
+                        var proj = csGetMediaProjectById(tr.mediaProjectId);
+                        if (proj) {
+                            proj.distributionStatus = null;
+                            store.data.pendingDistribution = store.data.pendingDistribution || [];
+                            store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: Math.floor(GameManager.company.currentWeek) + 4 });
+                        }
+                        routeModMenu("media", "media"); 
+                    }
+                });
+                actionTd.append(cancelBtn);
+                tRow.append(actionTd);
+                
                 tTable.append(tRow);
             });
             theaterObj.append(tTable);
@@ -6572,8 +6800,10 @@
         var offersArea = $('<div style="padding-top: 10px;"></div>');
 
         if (store.data.gridService && store.data.gridService.isActive) {
+            var gridScoreEst = (typeof project.score === "number" && !isNaN(project.score)) ? project.score : 5;
+            var estBoost = Math.floor(gridScoreEst * 500 * (gridScoreEst >= 8 ? 3 : (gridScoreEst >= 6 ? 1.5 : 1)));
             var gridObj = $('<div class="cs-stagger-item" style="background: #fdf6e3; border: 2px solid #f39c12; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
-            var gInfo = $('<div><h3 style="margin: 0; color: #d35400;">Your Grid Service (Exclusive)</h3><div style="font-size: 10pt; margin-top: 5px;">Add this directly to your Grid platform.</div></div>');
+            var gInfo = $('<div><h3 style="margin: 0; color: #d35400;">Your Grid Service</h3><div style="font-size: 10pt; margin-top: 5px;">Add directly to your Grid platform as exclusive content.</div><div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. +' + UI.getShortNumberString(estBoost) + ' subscribers</div></div>');
             gridObj.append(gInfo);
             var gridBtn = $('<div class="selectorButton orangeButton" style="padding: 10px 20px;">Publish to Grid</div>');
             gridBtn.click(function () {
@@ -6635,13 +6865,15 @@
 
         var offersContainer = $('<div style="flex: 1; overflow-y: auto; padding-right: 10px;"></div>');
 
-        // 1. Grid Service
+        
         if (store.data.gridService && store.data.gridService.isActive) {
+            var gridScoreEst2 = (typeof project.score === "number" && !isNaN(project.score)) ? project.score : 5;
+            var estBoost2 = Math.floor(gridScoreEst2 * 500 * (gridScoreEst2 >= 8 ? 3 : (gridScoreEst2 >= 6 ? 1.5 : 1)));
             var gridObj = $('<div class="cs-stagger-item" style="background: #fdf6e3; border: 2px solid #f39c12; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
             var gInfo = $('<div></div>');
-            gInfo.append('<h3 style="margin: 0; color: #d35400;">Your Grid Service (Exclusive content)</h3>');
-            gInfo.append('<div style="font-size: 10pt; margin-top: 5px;">Add this directly to your Grid platform. Boosts subscriber growth and library value.</div>');
-            gInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. Value: Synergy & Subscriber Growth</div>');
+            gInfo.append('<h3 style="margin: 0; color: #d35400;">Your Grid Service</h3>');
+            gInfo.append('<div style="font-size: 10pt; margin-top: 5px;">Add directly to your Grid platform as exclusive content.</div>');
+            gInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. +' + UI.getShortNumberString(estBoost2) + ' subscribers</div>');
             gridObj.append(gInfo);
 
             var gridBtn = $('<div class="selectorButton orangeButton" style="padding: 10px 20px;">Publish to Grid</div>');
@@ -6654,7 +6886,7 @@
             offersContainer.append(gridObj);
         }
 
-        // 2. Theater Chains (Movies Only)
+        
         if (project.type === "movie" && store.data.theaterChains) {
             offersContainer.append('<h3 style="margin-bottom: 10px; border-bottom: 1px solid #bdc3c7;">Theatrical Releases</h3>');
             store.data.theaterChains.forEach(function (chain) {
@@ -6691,7 +6923,7 @@
             });
         }
 
-        // 3. Streaming Platforms
+        
         if (store.data.streamingPlatforms) {
             offersContainer.append('<h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #bdc3c7;">Streaming Exclusive Deals</h3>');
             store.data.streamingPlatforms.forEach(function (platform) {
@@ -6738,7 +6970,7 @@
 
     function csRenderGridTab(container) {
         container.empty();
-        container.append('<h3 style="color: #d35400; margin-top: 0; margin-bottom: 20px;">Grid Content License Management</h3>');
+        container.append('<h3 style="color: #d35400; margin-top: 0; margin-bottom: 20px;">Grid Content Management</h3>');
 
         var grid = store.data.gridService;
         if (!grid || !grid.isActive) {
@@ -6746,33 +6978,78 @@
             return;
         }
 
-        var btnDash = $('<div class="selectorButton orangeButton" style="padding: 10px 20px; font-weight: bold; margin-bottom: 20px; display: inline-block;">Open Grid Dashboard</div>');
-        btnDash.click(function () {
-            Sound.click();
-            routeModMenu("grid_dashboard");
-        });
+        
+        var btnDash = $('<div class="selectorButton orangeButton" style="padding: 10px 20px; font-weight: bold; margin-bottom: 10px; display: inline-block;">Open Grid Dashboard</div>');
+        btnDash.click(function () { Sound.click(); routeModMenu("grid_dashboard"); });
         container.append(btnDash);
 
-        container.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Active Internal Projects on Grid</h4>');
+        
+        var eligibleMedia = (store.data.mediaProjects || []).filter(function (p) {
+            if (p.status !== "released" || p.distributionStatus !== "pending") return false;
+            var validTypes = ["movie", "tvSeries", "animatedShow", "comicBook", "soundtrack"];
+            if (validTypes.indexOf(p.type) === -1) return false;
+            for (var gi = 0; gi < grid.contentLibrary.length; gi++) {
+                if (grid.contentLibrary[gi].mediaProjectId === p.id) return false;
+            }
+            return true;
+        });
+        if (eligibleMedia.length > 0) {
+            var bulkBtn = $('<div class="selectorButton" style="padding: 10px 20px; font-weight: bold; margin-bottom: 20px; margin-left: 10px; display: inline-block; background: #27ae60; color: white; border-radius: 4px;">Add All Eligible Media (' + eligibleMedia.length + ')</div>');
+            bulkBtn.click(function () {
+                Sound.click();
+                eligibleMedia.forEach(function (mp) { csAddToGrid(mp); });
+                csRenderGridTab(container);
+            });
+            container.append(bulkBtn);
+        }
+
+        
+        container.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Internal Content on Grid</h4>');
         var internalContent = grid.contentLibrary.filter(function (c) { return c.isOriginal; });
 
         if (internalContent.length === 0) {
-            container.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px; margin-bottom: 20px;">No internal exclusive content on Grid.</div>');
+            container.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px; margin-bottom: 20px;">No internal content on Grid yet.</div>');
         } else {
             var iTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 30px;"></table>');
-            iTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Title</th><th>Score</th><th>Added Week</th><th>Weekly Views</th></tr>');
+            iTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Title</th><th>Score</th><th>Freshness</th><th>Added Wk</th><th>Views/Wk</th><th>Action</th></tr>');
 
             internalContent.forEach(function (c) {
+                var fresh = (typeof c.freshness === "number") ? c.freshness : 0.5;
+                var freshColor = fresh >= 0.7 ? "#27ae60" : (fresh >= 0.4 ? "#f39c12" : "#e74c3c");
+                var freshPct = Math.round(fresh * 100);
                 var iRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
                 iRow.append('<td style="padding: 10px; font-weight: bold;">' + c.title + '</td>');
                 iRow.append('<td>' + c.score + '/10</td>');
+                iRow.append('<td><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:' + freshColor + '; margin-right:4px; vertical-align:middle;"></span>' + freshPct + '%</td>');
                 iRow.append('<td>Wk ' + c.addedWeek + '</td>');
-                iRow.append('<td style="color: #2980b9;">' + UI.getShortNumberString(c.viewsThisWeek) + '</td>');
+                iRow.append('<td style="color: #2980b9;">' + UI.getShortNumberString(c.viewsThisWeek || 0) + '</td>');
+                var rmCell = $('<td></td>');
+                var rmBtn = $('<div class="selectorButton" style="padding: 4px 8px; font-size: 8pt; background: #e74c3c; color: white; border-radius: 3px; display: inline-block; cursor: pointer;">Remove</div>');
+                (function (entryId, projId) {
+                    rmBtn.click(function () {
+                        Sound.click();
+                        for (var ri = grid.contentLibrary.length - 1; ri >= 0; ri--) {
+                            if (grid.contentLibrary[ri].id === entryId) {
+                                grid.contentLibrary.splice(ri, 1);
+                                break;
+                            }
+                        }
+                        
+                        if (projId) {
+                            var mp = csGetMediaProjectById(projId);
+                            if (mp) mp.distributionStatus = "pending";
+                        }
+                        csRenderGridTab(container);
+                    });
+                })(c.id, c.mediaProjectId);
+                rmCell.append(rmBtn);
+                iRow.append(rmCell);
                 iTable.append(iRow);
             });
             container.append(iTable);
         }
 
+        
         container.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Available External Licenses</h4>');
         var licenseObj = $('<div class="cs-stagger-item" style="background: #fff; border: 1px solid #bdc3c7; padding: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
 
@@ -6785,12 +7062,11 @@
 
         var availableExt = extMovies.filter(function (m) {
             for (var i = 0; i < grid.contentLibrary.length; i++) {
-                if (grid.contentLibrary[i].id === m.id) return false;
+                if (grid.contentLibrary[i].title === m.title) return false;
             }
             return true;
         });
-
-        availableExt.sort(function (a, b) { return b.score - a.score; });
+        availableExt.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
 
         if (availableExt.length === 0) {
             licenseObj.append('<div style="color: #7f8c8d; font-style: italic;">No external movies available to license right now.</div>');
@@ -6801,15 +7077,15 @@
             var limit = Math.min(10, availableExt.length);
             for (var extI = 0; extI < limit; extI++) {
                 var em = availableExt[extI];
-                var cost = Math.floor(10000 + (em.score * em.score * 5000));
+                var cost = Math.floor(10000 + ((em.score || 5) * (em.score || 5) * 5000));
 
                 var lRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
-                lRow.append('<td style="padding: 8px;"><b>' + em.title + '</b><br><span style="font-size: 8pt; color: #7f8c8d;">' + em.studioName + '</span></td>');
-                lRow.append('<td>' + em.score + '</td>');
+                lRow.append('<td style="padding: 8px;"><b>' + em.title + '</b><br><span style="font-size: 8pt; color: #7f8c8d;">' + (em.studioName || "Unknown Studio") + '</span></td>');
+                lRow.append('<td>' + (em.score || "?") + '</td>');
                 lRow.append('<td style="color: #e74c3c;">-$' + UI.getShortNumberString(cost) + '</td>');
 
                 var acCell = $('<td></td>');
-                var acBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 5px 10px; font-size: 8pt;" data-id="' + em.id + '">License (52wks)</div>');
+                var acBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 5px 10px; font-size: 8pt;">License (52wks)</div>');
                 acBtn.click((function (extM, extCost) {
                     return function () {
                         csLicenseExternalToGrid(extM, extCost, 52);
@@ -6830,82 +7106,109 @@
         var grid = store.data.gridService;
         if (!grid || !grid.isActive) return;
 
+        
         var header = $('<h2 style="color: #d35400; font-size: 16pt; margin: 0 0 15px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-end;"></h2>');
         header.append('<span>Grid Platform Dashboard</span>');
-        header.append('<span style="font-size: 11pt; color: #7f8c8d; font-weight: normal;">Prestige Rank: ' + grid.prestige + ' \u2B50</span>');
+        var prestigeStars = "";
+        for (var ps = 0; ps < (grid.prestige || 1); ps++) prestigeStars += "\u2B50";
+        header.append('<span style="font-size: 11pt; color: #7f8c8d; font-weight: normal;">Prestige: ' + prestigeStars + '</span>');
         contentArea.append(header);
 
-        var topMetrics = $('<div style="display: flex; gap: 15px; margin-bottom: 20px;"></div>');
+        
+        var topMetrics = $('<div style="display: flex; gap: 12px; margin-bottom: 15px;"></div>');
 
-        var gSubs = $('<div class="cs-stagger-item" style="flex: 1; background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
-        gSubs.append('<div style="font-size: 11pt; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Active Subscribers</div>');
-        gSubs.append('<div style="font-size: 24pt; font-weight: bold; color: #3498db;">' + UI.getShortNumberString(grid.subscribers) + '</div>');
-        var subDiff = grid.subscribers - (grid.lastWeekSubscribers || 0);
+        
+        var gSubs = $('<div class="cs-stagger-item" style="flex: 1; background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 18px; border-radius: 8px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"></div>');
+        gSubs.append('<div style="font-size: 9pt; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Subscribers</div>');
+        gSubs.append('<div style="font-size: 22pt; font-weight: bold; color: #3498db;">' + UI.getShortNumberString(grid.subscribers || 0) + '</div>');
+        var subDiff = (grid.subscribers || 0) - (grid.lastWeekSubscribers || 0);
         var subCol = subDiff > 0 ? "#2ecc71" : (subDiff < 0 ? "#e74c3c" : "#95a5a6");
-        var subSign = subDiff > 0 ? "+" : "";
-        gSubs.append('<div style="font-size: 10pt; margin-top: 5px; color: ' + subCol + ';">' + subSign + UI.getShortNumberString(subDiff) + ' this week</div>');
+        var subArrow = subDiff > 0 ? "\u25B2" : (subDiff < 0 ? "\u25BC" : "\u25CF");
+        gSubs.append('<div style="font-size: 9pt; margin-top: 4px; color: ' + subCol + ';">' + subArrow + ' ' + UI.getShortNumberString(Math.abs(subDiff)) + '/wk</div>');
         topMetrics.append(gSubs);
 
-        var gRev = $('<div class="cs-stagger-item" style="flex: 1; background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
-        gRev.append('<div style="font-size: 11pt; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Monthly Revenue (Est.)</div>');
-        gRev.append('<div style="font-size: 24pt; font-weight: bold; color: #2ecc71;">$' + UI.getShortNumberString((grid.weeklyRevenue || 0) * 4) + '</div>');
-        gRev.append('<div style="font-size: 10pt; margin-top: 5px; color: #ecf0f1;">@ $' + grid.monthlySubFee.toFixed(2) + ' / mo</div>');
+        
+        var monthlyRev = (grid.weeklyRevenue || 0) * 4;
+        var gRev = $('<div class="cs-stagger-item" style="flex: 1; background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 18px; border-radius: 8px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"></div>');
+        gRev.append('<div style="font-size: 9pt; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Monthly Revenue</div>');
+        gRev.append('<div style="font-size: 22pt; font-weight: bold; color: #2ecc71;">$' + UI.getShortNumberString(monthlyRev) + '</div>');
+        gRev.append('<div style="font-size: 9pt; margin-top: 4px; color: #bdc3c7;">@ $' + (grid.monthlySubFee || 14.99).toFixed(2) + '/mo</div>');
         topMetrics.append(gRev);
 
-        var gExp = $('<div class="cs-stagger-item" style="flex: 1; background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
-        gExp.append('<div style="font-size: 11pt; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Monthly Expenses (Est.)</div>');
+        
         var totalMonthlyExp = ((grid.weeklyUpkeep || 0) + (grid.marketingBudgetWeekly || 0)) * 4;
-        grid.contentLibrary.forEach(function (l) { if (!l.isOriginal && l.licenseCostWeekly > 0) totalMonthlyExp += l.licenseCostWeekly * 4; });
-        var profitMargin = ((grid.weeklyRevenue || 0) * 4) - totalMonthlyExp;
-        gExp.append('<div style="font-size: 24pt; font-weight: bold; color: ' + (profitMargin >= 0 ? "#2ecc71" : "#e74c3c") + ';">$' + UI.getShortNumberString(totalMonthlyExp) + '</div>');
-        gExp.append('<div style="font-size: 10pt; margin-top: 5px; color: #ecf0f1;">Upkeep: $' + UI.getShortNumberString((grid.weeklyUpkeep || 0) * 4) + ' | Mkt: $' + UI.getShortNumberString(grid.marketingBudgetWeekly * 4) + '</div>');
+        var licenseCost = 0;
+        (grid.contentLibrary || []).forEach(function (l) { if (!l.isOriginal && l.licenseCostWeekly > 0) licenseCost += l.licenseCostWeekly * 4; });
+        totalMonthlyExp += licenseCost;
+        var gExp = $('<div class="cs-stagger-item" style="flex: 1; background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 18px; border-radius: 8px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"></div>');
+        gExp.append('<div style="font-size: 9pt; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Monthly Expenses</div>');
+        gExp.append('<div style="font-size: 22pt; font-weight: bold; color: #e74c3c;">$' + UI.getShortNumberString(totalMonthlyExp) + '</div>');
+        gExp.append('<div style="font-size: 9pt; margin-top: 4px; color: #bdc3c7;">Infra: $' + UI.getShortNumberString((grid.weeklyUpkeep || 0) * 4) + ' | Mkt: $' + UI.getShortNumberString((grid.marketingBudgetWeekly || 0) * 4) + (licenseCost > 0 ? ' | Lic: $' + UI.getShortNumberString(licenseCost) : '') + '</div>');
         topMetrics.append(gExp);
 
-        var gLib = $('<div class="cs-stagger-item" style="flex: 1; background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>');
-        gLib.append('<div style="font-size: 11pt; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Content Library</div>');
-        gLib.append('<div style="font-size: 24pt; font-weight: bold; color: #f39c12;">' + grid.contentLibrary.length + '</div>');
-        var origCount = grid.contentLibrary.filter(function (c) { return c.isOriginal; }).length;
-        gLib.append('<div style="font-size: 10pt; margin-top: 5px; color: #ecf0f1;">' + origCount + ' Originals | ' + (grid.contentLibrary.length - origCount) + ' Licensed</div>');
+        
+        var origCount = (grid.contentLibrary || []).filter(function (c) { return c.isOriginal; }).length;
+        var licCount = (grid.contentLibrary || []).length - origCount;
+        var gLib = $('<div class="cs-stagger-item" style="flex: 1; background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 18px; border-radius: 8px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.12);"></div>');
+        gLib.append('<div style="font-size: 9pt; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Content Library</div>');
+        gLib.append('<div style="font-size: 22pt; font-weight: bold; color: #f39c12;">' + (grid.contentLibrary || []).length + '</div>');
+        gLib.append('<div style="font-size: 9pt; margin-top: 4px; color: #bdc3c7;">' + origCount + ' Originals | ' + licCount + ' Licensed</div>');
         topMetrics.append(gLib);
 
         contentArea.append(topMetrics);
 
-        var mngSect = $('<div class="cs-stagger-item" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #bdc3c7; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; gap: 20px;"></div>');
+        
+        var profitMargin = monthlyRev - totalMonthlyExp;
+        var plCard = $('<div class="cs-stagger-item" style="background: ' + (profitMargin >= 0 ? '#eafaf1' : '#fdedec') + '; border: 2px solid ' + (profitMargin >= 0 ? '#27ae60' : '#e74c3c') + '; padding: 14px 20px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
+        plCard.append('<div style="font-size: 12pt; font-weight: bold; color: #2c3e50;">Monthly ' + (profitMargin >= 0 ? 'Profit' : 'Loss') + '</div>');
+        plCard.append('<div style="font-size: 18pt; font-weight: bold; color: ' + (profitMargin >= 0 ? '#27ae60' : '#e74c3c') + ';">' + (profitMargin >= 0 ? '+' : '-') + '$' + UI.getShortNumberString(Math.abs(profitMargin)) + '</div>');
+        contentArea.append(plCard);
 
+        
+        var mngSect = $('<div class="cs-stagger-item" style="background: #fff; padding: 18px; border-radius: 8px; border: 1px solid #bdc3c7; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; gap: 20px;"></div>');
+
+        
         var priceDiv = $('<div style="flex: 1;"></div>');
-        priceDiv.append('<h4 style="margin-top: 0; color: #2c3e50;">Subscription Price</h4>');
-        var priceSelect = $('<select style="width: 100%; padding: 10px; font-size: 11pt;"></select>');
+        priceDiv.append('<h4 style="margin-top: 0; margin-bottom: 8px; color: #2c3e50; font-size: 10pt;">Subscription Price</h4>');
+        var priceSelect = $('<select style="width: 100%; padding: 8px; font-size: 10pt; border: 1px solid #bdc3c7; border-radius: 4px;"></select>');
         var priceOpts = [
-            { v: 5, t: "$5.00 / mo (High Growth)" },
-            { v: 10, t: "$10.00 / mo (Balanced)" },
-            { v: 15, t: "$15.00 / mo (Premium)" },
-            { v: 25, t: "$25.00 / mo (Milking)" }
+            { v: 4.99,  t: "$4.99/mo  — Fast Growth",   gr: 0.035, ch: 0.005 },
+            { v: 9.99,  t: "$9.99/mo  — Balanced",       gr: 0.025, ch: 0.008 },
+            { v: 14.99, t: "$14.99/mo — Premium",        gr: 0.015, ch: 0.015 },
+            { v: 19.99, t: "$19.99/mo — Premium Plus",   gr: 0.008, ch: 0.025 },
+            { v: 24.99, t: "$24.99/mo — Max Revenue",    gr: 0.003, ch: 0.045 }
         ];
         priceOpts.forEach(function (po) {
-            priceSelect.append('<option value="' + po.v + '" ' + (grid.monthlySubFee === po.v ? 'selected' : '') + '>' + po.t + '</option>');
+            var sel = (Math.abs((grid.monthlySubFee || 14.99) - po.v) < 0.5) ? " selected" : "";
+            priceSelect.append('<option value="' + po.v + '"' + sel + '>' + po.t + '</option>');
         });
         priceSelect.change(function () {
-            var nv = parseInt($(this).val());
+            var nv = parseFloat($(this).val());
             grid.monthlySubFee = nv;
-            if (nv === 5) { grid.subscriberGrowthRate = 0.03; grid.churnRate = 0.005; }
-            else if (nv === 10) { grid.subscriberGrowthRate = 0.02; grid.churnRate = 0.01; }
-            else if (nv === 15) { grid.subscriberGrowthRate = 0.01; grid.churnRate = 0.02; }
-            else { grid.subscriberGrowthRate = 0.002; grid.churnRate = 0.05; }
+            for (var pi = 0; pi < priceOpts.length; pi++) {
+                if (Math.abs(priceOpts[pi].v - nv) < 0.5) {
+                    grid.subscriberGrowthRate = priceOpts[pi].gr;
+                    grid.churnRate = priceOpts[pi].ch;
+                    break;
+                }
+            }
         });
         priceDiv.append(priceSelect);
         mngSect.append(priceDiv);
 
+        
         var markDiv = $('<div style="flex: 1;"></div>');
-        markDiv.append('<h4 style="margin-top: 0; color: #2c3e50;">Monthly Marketing Budget</h4>');
-        var markSelect = $('<select style="width: 100%; padding: 10px; font-size: 11pt;"></select>');
+        markDiv.append('<h4 style="margin-top: 0; margin-bottom: 8px; color: #2c3e50; font-size: 10pt;">Weekly Marketing Budget</h4>');
+        var markSelect = $('<select style="width: 100%; padding: 8px; font-size: 10pt; border: 1px solid #bdc3c7; border-radius: 4px;"></select>');
         var markOpts = [
-            { v: 0, t: "$0 (Organic)" },
-            { v: 500000, t: "$2.0M / mo" },
-            { v: 2000000, t: "$8.0M / mo" },
-            { v: 5000000, t: "$20.0M / mo" }
+            { v: 0,       t: "$0/wk (Organic)" },
+            { v: 125000,  t: "$125K/wk ($500K/mo)" },
+            { v: 500000,  t: "$500K/wk ($2M/mo)" },
+            { v: 1250000, t: "$1.25M/wk ($5M/mo)" },
+            { v: 2500000, t: "$2.5M/wk ($10M/mo)" }
         ];
         markOpts.forEach(function (mo) {
-            markSelect.append('<option value="' + mo.v + '" ' + (grid.marketingBudgetWeekly === mo.v ? 'selected' : '') + '>' + mo.t + '</option>');
+            markSelect.append('<option value="' + mo.v + '" ' + ((grid.marketingBudgetWeekly || 0) === mo.v ? 'selected' : '') + '>' + mo.t + '</option>');
         });
         markSelect.change(function () {
             grid.marketingBudgetWeekly = parseInt($(this).val());
@@ -6915,28 +7218,33 @@
 
         contentArea.append(mngSect);
 
-        var ldrSect = $('<div class="cs-stagger-item" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #bdc3c7; display: flex; flex-direction: column; height: 300px;"></div>');
-        ldrSect.append('<h4 style="margin-top: 0; margin-bottom: 15px; color: #2c3e50; border-bottom: 1px solid #ecf0f1; padding-bottom: 10px;">Streaming Content Leaderboard (Top 5)</h4>');
+        
+        var ldrSect = $('<div class="cs-stagger-item" style="background: #fff; padding: 18px; border-radius: 8px; border: 1px solid #bdc3c7; display: flex; flex-direction: column; max-height: 300px;"></div>');
+        ldrSect.append('<h4 style="margin-top: 0; margin-bottom: 12px; color: #2c3e50; border-bottom: 1px solid #ecf0f1; padding-bottom: 8px; font-size: 11pt;">Content Leaderboard (Top 5)</h4>');
 
-        var sortedCats = grid.contentLibrary.slice().sort(function (a, b) { return b.totalViews - a.totalViews; });
+        var sortedCats = (grid.contentLibrary || []).slice().sort(function (a, b) { return (b.totalViews || 0) - (a.totalViews || 0); });
         var tl = Math.min(5, sortedCats.length);
 
         if (tl === 0) {
-            ldrSect.append('<div style="text-align: center; padding: 40px; color: #7f8c8d; font-style: italic;">No content available. Produce or license media to populate.</div>');
+            ldrSect.append('<div style="text-align: center; padding: 30px; color: #7f8c8d; font-style: italic;">No content yet. Produce or license media to populate.</div>');
         } else {
             var cList = $('<div style="flex: 1; overflow-y: auto;"></div>');
             for (var ci = 0; ci < tl; ci++) {
                 var cItem = sortedCats[ci];
-                var cRow = $('<div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #f9f9f9; ' + (ci === 0 ? 'background: #fff9e6; border-left: 3px solid #f1c40f;' : '') + '"></div>');
+                var itemFresh = (typeof cItem.freshness === "number") ? cItem.freshness : 0.5;
+                var dotColor = itemFresh >= 0.7 ? "#27ae60" : (itemFresh >= 0.4 ? "#f39c12" : "#e74c3c");
+                var isTopStyle = ci === 0 ? "background: #fff9e6; border-left: 3px solid #f1c40f;" : "";
+                var cRow = $('<div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f5f5f5; ' + isTopStyle + '"></div>');
 
                 var lft = $('<div></div>');
-                lft.append('<div style="font-weight: bold; font-size: 11pt;">' + (ci + 1) + '. ' + cItem.title + ' ' + (cItem.isOriginal ? '<span style="font-size: 8pt; background: #e67e22; color: white; padding: 2px 4px; border-radius: 3px;">Original</span>' : '<span style="font-size: 8pt; background: #95a5a6; color: white; padding: 2px 4px; border-radius: 3px;">Licensed</span>') + '</div>');
-                lft.append('<div style="font-size: 9pt; color: #7f8c8d; margin-top: 3px;">Score: ' + cItem.score + '/10</div>');
+                var badge = cItem.isOriginal ? '<span style="font-size: 7pt; background: #e67e22; color: white; padding: 1px 4px; border-radius: 3px; margin-left: 5px;">Original</span>' : '<span style="font-size: 7pt; background: #95a5a6; color: white; padding: 1px 4px; border-radius: 3px; margin-left: 5px;">Licensed</span>';
+                lft.append('<div style="font-weight: bold; font-size: 10pt;">' + (ci + 1) + '. ' + cItem.title + ' ' + badge + '</div>');
+                lft.append('<div style="font-size: 8pt; color: #7f8c8d; margin-top: 2px;">Score: ' + cItem.score + '/10 <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:' + dotColor + '; margin-left:4px; vertical-align:middle;" title="Freshness: ' + Math.round(itemFresh * 100) + '%"></span></div>');
                 cRow.append(lft);
 
                 var rgt = $('<div style="text-align: right;"></div>');
-                rgt.append('<div style="font-size: 11pt; font-weight: bold; color: #2980b9;">' + UI.getShortNumberString(cItem.totalViews) + ' views</div>');
-                rgt.append('<div style="font-size: 9pt; color: #2ecc71;">+' + UI.getShortNumberString(cItem.viewsThisWeek) + ' this wk</div>');
+                rgt.append('<div style="font-size: 10pt; font-weight: bold; color: #2980b9;">' + UI.getShortNumberString(cItem.totalViews || 0) + '</div>');
+                rgt.append('<div style="font-size: 8pt; color: #2ecc71;">+' + UI.getShortNumberString(cItem.viewsThisWeek || 0) + '/wk</div>');
                 cRow.append(rgt);
 
                 cList.append(cRow);
@@ -6995,9 +7303,9 @@
     }
 
     function buildMediaStudioCard(ms) {
-        var item = $('<div class="studioCard" style="border: 1px solid #bdc3c7; background: #ffffff; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; align-items: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"></div>');
+        var item = $('<div class="studioCard" style="border: 1px solid #d1d9e6; background: #ffffff; padding: 12px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: flex-start; box-shadow: 0 2px 6px rgba(0,0,0,0.05); transition: all 0.2s ease;"></div>');
 
-        var pieContainer = $('<div style="width: 60px; min-width: 60px; text-align: center; margin-right: 10px;"></div>');
+        var pieContainer = $('<div style="width: 60px; min-width: 60px; text-align: center; margin-right: 12px;"></div>');
         var canvasId = 'pie_m_' + ms.id;
         pieContainer.append('<canvas id="' + canvasId + '" width="50" height="50" data-shares="' + ms.sharesOwned + '" data-name="' + ms.name + '" class="pieChartCanvas"></canvas>');
         pieContainer.append('<div style="font-size: 10pt; margin-top: 5px; color: #2c3e50; font-weight: bold;">' + ms.sharesOwned + '%</div>');
@@ -7009,10 +7317,10 @@
         headerRow.append('<div style="font-size: 10pt; color: #7f8c8d; white-space: nowrap; font-weight: 500;">\u2B50 Reputation: ' + (ms.reputation || 1).toFixed(1) + '</div>');
         detailsContainer.append(headerRow);
 
-        detailsContainer.append('<div style="font-size: 11pt; margin: 3px 0; font-weight: bold; color: #27ae60;">Valuation: $' + UI.getShortNumberString(ms.valuation) + '</div>');
+        detailsContainer.append('<div style="font-size: 11pt; margin: 3px 0;">Val: <strong style="color: #27ae60;">$' + UI.getShortNumberString(ms.valuation) + '</strong></div>');
 
         if (ms.currentProject) {
-            var typelabel = ms.currentProject.isPlayerFunded ? "<span style='color:#e67e22'>[Player]</span> " : "<span style='color:#8e44ad'>[AI]</span> ";
+            var typelabel = ms.currentProject.isPlayerFunded ? "<span style='color:#e67e22'>[PUB]</span> " : "<span style='color:#8e44ad'>[AI]</span> ";
             detailsContainer.append('<div style="font-size: 10pt; margin: 3px 0; color: #7f8c8d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Dev: ' + typelabel + ms.currentProject.title + ' (' + Math.ceil(ms.currentProject.weeksRemaining) + 'w left)</div>');
         } else {
             detailsContainer.append('<div style="font-size: 10pt; margin: 3px 0; color: #95a5a6;">Currently idle.</div>');
@@ -7021,13 +7329,25 @@
         var btnContainer = $('<div style="margin-top: 8px; display: flex; flex-direction: column; gap: 5px;"></div>');
 
         var isLicensed = (store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === ms.id && GameManager.company.currentWeek < d.endWeek; });
-        var dealBtn = $('<button class="selectorButton whiteBoardButton" style="width: 100%; font-size: 10pt; padding: 6px 0;">' + (isLicensed ? "Catalog Active \u2705" : "Negotiate Catalogue Deal") + '</button>');
+        var hasInbound = (store.data.pendingInboundDeal && store.data.pendingInboundDeal.studioId === ms.id && GameManager.company.currentWeek <= store.data.pendingInboundDeal.expires);
+        var inCooldown = (ms.negotiationCooldown && GameManager.company.currentWeek < ms.negotiationCooldown);
+        
+        var btnText = "Negotiate Catalogue Deal";
+        if (isLicensed) btnText = "Catalogue Active [DEAL]";
+        else if (hasInbound) btnText = "Review Inbound Offer!";
+        else if (inCooldown) btnText = "Studio Refusing Offers";
+        
+        var dealBtn = $('<button class="selectorButton whiteBoardButton" style="width: 100%; font-size: 10pt;">' + btnText + '</button>');
+        if (hasInbound) dealBtn.css({"background": "#f39c12", "color": "white", "border-color": "#e67e22"});
+        else if (inCooldown) dealBtn.css({"background": "#ecf0f1", "color": "#bdc3c7", "cursor": "not-allowed"});
+        
         dealBtn.click(function () {
+            if (isLicensed || inCooldown) return;
             Sound.click();
-            store.data.activeCatalogueNegotiation = ms;
+            store.data.activeCatalogueNegotiation = ms.id;
             routeModMenu("catalogue_negotiation", "media");
         });
-        btnContainer.append(dealBtn);
+        detailsContainer.append(dealBtn);
 
         var actionRow = $('<div style="display: flex; gap: 6px; align-items: center;"></div>');
         var chunkCost = Math.floor((ms.valuation * 0.1) * 1.15);
@@ -7089,10 +7409,11 @@
     }
 
     function csRenderFilmSubsTab(container) {
+        csLog("[FILM-1] csRenderFilmSubsTab: entered");
         container.empty();
-        container.append('<h2 style="color: #d35400; font-size: 14pt; margin: 0 0 15px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px;">Film Studios</h2>');
 
         var mStudios = store.data.movieStudios || [];
+        csLog("[FILM-2] Studio count: " + mStudios.length);
         if (mStudios.length === 0) {
             container.append('<div style="color: #7f8c8d; font-style: italic; text-align: center; margin-top: 30px;">No film studios exist in the market.</div>');
             return;
@@ -7116,6 +7437,7 @@
             if (sortPref === "films") return getG(b) - getG(a);
             return b.sharesOwned - a.sharesOwned;
         });
+        csLog("[FILM-3] Studios sorted OK.");
 
         var sortContainer = $('<div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;"></div>');
         sortContainer.append('<div style="font-size: 11pt; color: #2c3e50; font-weight: bold;">Sort:</div>');
@@ -7131,14 +7453,20 @@
         });
         sortContainer.append(sortSelect);
         container.append(sortContainer);
+        csLog("[FILM-4] Sort UI built. Building " + mStudios.length + " cards...");
 
-        var listContainer = $('<div style="display: flex; flex-direction: column; gap: 10px;"></div>');
-        mStudios.forEach(function (ms) {
-            var item = buildMediaStudioCard(ms);
-            listContainer.append(item);
-        });
-
-        container.append(listContainer);
+        for (var msIdx = 0; msIdx < mStudios.length; msIdx++) {
+            var ms = mStudios[msIdx];
+            csLog("[FILM-5] Building card " + msIdx + " for: " + (ms.name || "UNNAMED") + " id=" + (ms.id || "NO_ID") + " shares=" + ms.sharesOwned + " val=" + ms.valuation);
+            try {
+                var item = buildMediaStudioCard(ms);
+                container.append(item);
+                csLog("[FILM-5b] Card " + msIdx + " built OK.");
+            } catch (cardErr) {
+                csLog("[FILM-5-ERR] Card " + msIdx + " THREW: " + cardErr.message + " | Stack: " + (cardErr.stack || "N/A"));
+            }
+        }
+        csLog("[FILM-6] All cards built. Appending to container.");
 
         setTimeout(function () {
             $('.pieChartCanvas').each(function () {
@@ -7176,6 +7504,7 @@
                 ctx.fillText(initials, centerX, centerY);
             });
         }, 10);
+        csLog("[FILM-7] csRenderFilmSubsTab returning.");
     }
 
     function csRenderLicensingReview(container) {
@@ -7215,66 +7544,115 @@
 
     function csRenderCatalogueNegotiation(container) {
         container.empty();
-        var ms = store.data.activeCatalogueNegotiation;
+
+        var msId = store.data.activeCatalogueNegotiation;
+        var ms = null;
+        if (msId && store.data.movieStudios) {
+            for (var si = 0; si < store.data.movieStudios.length; si++) {
+                if (store.data.movieStudios[si].id === msId) { ms = store.data.movieStudios[si]; break; }
+            }
+        }
         if (!ms) {
-            container.append('<div style="text-align: center; color: #7f8c8d; font-style: italic; margin-top: 50px;">Nothing to display yet! Access this tab by clicking "Negotiate Catalogue Deal" in the Film Studios menu.</div>');
+            container.append('<div style="text-align: center; color: #7f8c8d; font-style: italic; margin-top: 50px;">Nothing to display yet!</div>');
             return;
         }
 
-        container.append('<div class="selectorButton whiteBoardButton" style="margin-bottom: 15px; display: inline-block; cursor: pointer; padding: 5px 15px;">&lt; Back to Studios</div>').children().last().click(function () { routeModMenu("film_subs", "media"); });
+        container.append('<div class="selectorButton whiteBoardButton" style="margin-bottom: 15px; display: inline-block; cursor: pointer; padding: 5px 15px;">&lt; Back to Studios</div>').children().last().click(function () {
+            store.data.activeCatalogueNegotiation = null;
+            routeModMenu("film_subs", "media");
+        });
 
         container.append('<h2 style="color: #f39c12; margin-top: 0; font-size: 16pt; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px;">Catalogue Negotiation: ' + ms.name + '</h2>');
-        container.append('<p style="font-size: 10pt; color: #2c3e50; margin-bottom: 15px;">A Catalogue Deal grants you <b>automatic, zero-fee access</b> to all of this studio\'s new releases for your Grid platform for 104 weeks.</p>');
-
-        var upfront = Math.floor(ms.valuation * 0.15);
-        var weekly = Math.floor(ms.valuation * 0.001);
-
-        var termsBox = $('<div style="background: #ecf0f1; border: 1px solid #bdc3c7; border-radius: 5px; padding: 15px; margin-bottom: 20px;"></div>');
-        termsBox.append('<div style="margin-bottom: 10px; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; font-weight: bold; color: #2c3e50;">Proposed Terms:</div>');
-
-        var row = function (l, v, c) {
-            return '<div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11pt;"><span style="color: #7f8c8d;">' + l + '</span><span style="font-weight: bold; color: ' + (c || '#2c3e50') + ';">' + v + '</span></div>';
-        };
-
-        termsBox.append(row("Upfront Licensing Fee", "$" + UI.getShortNumberString(upfront), "#27ae60"));
-        termsBox.append(row("Weekly Maintenance Fee", "$" + UI.getShortNumberString(weekly), "#e74c3c"));
-        termsBox.append(row("Contract Duration", "104 Weeks (Approx 2 Years)", "#2980b9"));
-        termsBox.append(row("Negotiation Partner", ms.name, "#34495e"));
-        container.append(termsBox);
 
         if (!store.data.gridService || !store.data.gridService.isActive) {
-            container.append('<div style="text-align: center; color: #c0392b; font-weight: bold; margin-top: 10px; padding: 10px; border: 2px dashed #c0392b;">Grid Service Required to Sign Deal</div>');
-        } else {
-            var signBtn = $('<div class="selectorButton greenButton" style="width: 100%; padding: 12px; font-size: 12pt; font-weight: bold; text-align: center;">Sign Final Agreement</div>');
-            signBtn.click(function () {
-                csLog("Sign Button Clicked: Starting Catalogue Agreement flow for " + ms.name);
-                if (GameManager.company.cash < upfront) {
-                    Sound.click();
-                    // FIX 1: Added 'image: ""' here to prevent the game's notification engine from crashing
-                    GameManager.company.notifications.push(new Notification({ header: "Funding Denied", text: "Insufficient funds for " + ms.name, image: "" }));
-                    return;
-                }
+            container.append('<div style="text-align: center; color: #c0392b; font-weight: bold; margin-top: 10px; padding: 10px; border: 2px dashed #c0392b;">Grid Service Required to Negotiate</div>');
+            return;
+        }
+
+        var currentWeek = Math.floor(GameManager.company.currentWeek);
+        var hasInbound = (store.data.pendingInboundDeal && store.data.pendingInboundDeal.studioId === ms.id && currentWeek <= store.data.pendingInboundDeal.expires);
+
+        var termsBox = $('<div style="background: #ecf0f1; border: 1px solid #bdc3c7; border-radius: 5px; padding: 15px; margin-bottom: 20px;"></div>');
+        
+        var signStudioId = ms.id;
+        var signStudioName = ms.name;
+        
+        if (hasInbound) {
+            termsBox.css({"border": "2px solid #f39c12", "background": "#fdf6e3"});
+            termsBox.append('<h3 style="color: #d35400; margin-top: 0;">Inbound Licensing Offer</h3>');
+            termsBox.append('<p style="font-size: 11pt; color: #2c3e50;">This studio contacted us and wants to license their entire film catalogue to Grid for 2 years (104 weeks).</p>');
+            
+            var offerPrice = store.data.pendingInboundDeal.price;
+            termsBox.append('<div style="font-size: 14pt; font-weight: bold; color: #27ae60; margin: 15px 0;">Requested Upfront Flat Fee: $' + UI.getShortNumberString(offerPrice) + '</div>');
+            
+            var actionRow = $('<div style="display: flex; gap: 10px; margin-top: 15px;"></div>');
+            var acceptBtn = $('<div class="selectorButton greenButton" style="flex: 1; padding: 12px; font-size: 12pt; text-align: center;">Accept Offer</div>');
+            acceptBtn.click(function() {
+                if (GameManager.company.cash < offerPrice) { Sound.click(); alert("Insufficient funds!"); return; }
                 Sound.click();
-                GameManager.company.adjustCash(-upfront, "Catalogue Deal: " + ms.name);
-
-                // FIX 2: Ensure the array is initialized before pushing the new contract to it
-                if (!store.data.activeCatalogueDeals) {
-                    store.data.activeCatalogueDeals = [];
-                }
-
-                store.data.activeCatalogueDeals.push({
-                    studioId: ms.id,
-                    studioName: ms.name,
-                    startWeek: Math.floor(GameManager.company.currentWeek),
-                    endWeek: Math.floor(GameManager.company.currentWeek) + 104,
-                    weeklyMaintenance: weekly
-                });
-                csLog("Sign Button: Deal pushed to activeCatalogueDeals. Studio: " + ms.name + ", EndWeek: " + (Math.floor(GameManager.company.currentWeek) + 104));
-                csAutoRouteMediaCatalog(ms);
+                GameManager.company.adjustCash(-offerPrice, "Inbound Catalogue Deal: " + signStudioName);
+                store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
+                store.data.activeCatalogueDeals.push({ studioId: signStudioId, studioName: signStudioName, startWeek: Math.floor(GameManager.company.currentWeek), endWeek: Math.floor(GameManager.company.currentWeek) + 104 });
                 store.data.activeCatalogueNegotiation = null;
+                store.data.pendingInboundDeal = null;
+                try { csAutoRouteMediaCatalog(); } catch (e) { }
+                GameManager.company.notifications.push(new Notification({ header: "Deal Signed!", text: signStudioName + " movies are now available on Grid.", image: "" }));
                 routeModMenu("film_subs", "media");
             });
-            container.append(signBtn);
+            var declineBtn = $('<div class="selectorButton deleteButton" style="flex: 1; padding: 12px; font-size: 12pt; text-align: center;">Decline</div>');
+            declineBtn.click(function() {
+                Sound.click();
+                store.data.pendingInboundDeal = null;
+                routeModMenu("film_subs", "media");
+            });
+            actionRow.append(acceptBtn).append(declineBtn);
+            termsBox.append(actionRow);
+            container.append(termsBox);
+        } else {
+            termsBox.append('<h3 style="margin-top: 0;">Outbound Deal Bidding</h3>');
+            termsBox.append('<p style="font-size: 10pt; color: #2c3e50; margin-bottom: 15px;">You are approaching this studio to secure their catalogue for 2 years. They will evaluate your offer based on their reputation and Valuation ($' + UI.getShortNumberString(ms.valuation) + ') against your Grid platform\'s size and reach.</p>');
+            
+            var grid = store.data.gridService;
+            var subPower = Math.min(1.0, (grid.subscribers || 0) / 10000000); 
+            var baseValue = ms.valuation * 0.10;
+            var repMultiplier = 1.0 + ((ms.reputation || 1) * 0.1);
+            var discountMultiplier = 1.0 - (subPower * 0.5);
+            var minThreshold = Math.floor(baseValue * repMultiplier * discountMultiplier);
+
+            termsBox.append('<div style="margin-bottom: 15px;">');
+            termsBox.append('<label style="font-weight: bold; color: #2c3e50; display: block; margin-bottom: 5px;">Your Cash Offer ($):</label>');
+            termsBox.append('<input type="number" id="cs_catalogue_bid" value="' + Math.floor(minThreshold) + '" style="font-size: 14pt; padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; border-radius: 4px;">');
+            termsBox.append('</div>');
+
+            var bidBtn = $('<div class="selectorButton orangeButton" style="width: 100%; padding: 12px; font-size: 12pt; font-weight: bold; text-align: center;">Submit Offer</div>');
+            bidBtn.click(function() {
+                Sound.click();
+                var offer = parseInt($('#cs_catalogue_bid').val(), 10);
+                if (isNaN(offer) || offer <= 0) { alert("Enter a valid offer."); return; }
+                if (GameManager.company.cash < offer) { alert("You don't have enough cash."); return; }
+                
+                var ratio = offer / minThreshold;
+                var chance = 0;
+                if (ratio >= 1.5) chance = 1.0;
+                else if (ratio <= 0.5) chance = 0.0;
+                else chance = ratio - 0.5;
+
+                if (Math.random() <= chance) {
+                    GameManager.company.adjustCash(-offer, "Catalogue Deal Bidding: " + signStudioName);
+                    store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
+                    store.data.activeCatalogueDeals.push({ studioId: signStudioId, studioName: signStudioName, startWeek: Math.floor(GameManager.company.currentWeek), endWeek: Math.floor(GameManager.company.currentWeek) + 104 });
+                    store.data.activeCatalogueNegotiation = null;
+                    try { csAutoRouteMediaCatalog(); } catch (e) { }
+                    alert("Success! " + signStudioName + " accepted your offer of $" + UI.getShortNumberString(offer) + ".");
+                    routeModMenu("film_subs", "media");
+                } else {
+                    ms.negotiationCooldown = Math.floor(GameManager.company.currentWeek) + 4;
+                    alert("Refused! " + signStudioName + " found your offer insulting. They will refuse to negotiate for 4 weeks.");
+                    routeModMenu("film_subs", "media");
+                }
+            });
+            termsBox.append(bidBtn);
+            container.append(termsBox);
         }
     }
 
@@ -7296,7 +7674,6 @@
 
     function csRenderFilmMarketTab(container) {
         container.empty();
-        container.append('<h2 style="color: #d35400; font-size: 14pt; margin: 0 0 15px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px;">Film Licensing Market</h2>');
 
         if (!store.data.gridService || !store.data.gridService.isActive) {
             container.append('<div style="color: #c0392b; font-weight: bold; text-align: center; margin-top: 20px;">You must launch the Grid streaming platform before acquiring film licenses!</div>');
@@ -7311,18 +7688,16 @@
             return;
         }
 
-        var listContainer = $('<div style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 480px; padding-right: 5px;"></div>');
-
         films.forEach(function (f) {
-            var row = $('<div style="background: #fff; border: 1px solid #bdc3c7; border-radius: 4px; padding: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"></div>');
+            var row = $('<div style="background: #fff; border: 1px solid #bdc3c7; border-radius: 4px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"></div>');
 
             var info = $('<div></div>');
             info.append('<div style="font-weight: bold; font-size: 13pt; color: #2c3e50;">' + f.title + '</div>');
             info.append('<div style="font-size: 10pt; color: #7f8c8d;">Originated by: ' + f.studioName + ' | Metacritic: <span style="color: #e67e22; font-weight: bold;">' + f.score + '/10</span></div>');
             row.append(info);
 
-            var baseCost = 2000000 + (f.score * 500000); // Between $2.5M and $7M upfront
-            var wCost = 10000 + (f.score * 5000); // 15k - 60k weekly maintaining cost
+            var baseCost = 2000000 + (f.score * 500000); 
+            var wCost = 10000 + (f.score * 5000); 
 
             var btn = $('<div class="selectorButton greenButton" style="padding: 6px 15px; font-size: 10pt; text-align: center;">License<br><span style="font-size: 8pt; font-weight: normal;">$' + UI.getShortNumberString(baseCost) + ' (50 wks)</span></div>');
             btn.click(function () {
@@ -7339,10 +7714,8 @@
             });
 
             row.append(btn);
-            listContainer.append(row);
+            container.append(row);
         });
-
-        container.append(listContainer);
     }
 
 })();
