@@ -423,6 +423,18 @@
         }
     }
 
+    function csGetMediaTypeInfo(t) {
+        var m = {
+            movie: { l: 'Film', c: '#c0392b', i: 'M' },
+            tvSeries: { l: 'TV', c: '#2980b9', i: 'T' },
+            animatedShow: { l: 'Anim', c: '#8e44ad', i: 'A' },
+            soundtrack: { l: 'Music', c: '#f1c40f', i: '\u266B' },
+            merchandise: { l: 'Toy', c: '#d35400', i: '\u2605' },
+            comicBook: { l: 'Book', c: '#27ae60', i: 'B' }
+        };
+        return m[t] || { l: t, c: '#7f8c8d', i: '?' };
+    }
+
     function csEstimateStreamingRevenue(mediaProject, platform) {
         var baseViewership = platform.subscriberBase * (0.01 + ((mediaProject.score || 5) / 100));
         if (platform.subscriberBase <= 0) baseViewership = 1000000;
@@ -1061,7 +1073,7 @@
         var pg = (GameManager.company||{}).currentGame; if(pg && store.data.disableOverloadMalus) pg.featureOverload = pg.featureOverloadScore = pg.featureOverloadPoints = 0;
         if(pg && !pg.modProcessedCreation) { pg.modProcessedCreation=true; var m=store.data.activePlayerFranchiseProject, fId=null; 
             if(m){ fId=m.franchiseId; pg.modEntryType=m.entryType; pg.modRemakeTargetId=m.remakeTargetId; pg.modBundleBaseScore=m.bundleBaseScore; pg.modBundledIds=m.bundledIds; store.data.activePlayerFranchiseProject=null; }
-            else { var mid=(pg.title||'').match(/\(id(\d+)\)$/i); if(mid) fId=(store.data.franchises||[]).find(function(f){return f.numId===parseInt(mid[1])})?.id; }
+            else { var mid=(pg.title||'').match(/\(id(\d+)\)$/i); if(mid){ var frFound=(store.data.franchises||[]).find(function(f){return f.numId===parseInt(mid[1])}); if(frFound) fId=frFound.id; } }
             if(fId){ pg.modFranchiseId=fId; _d(store.data,'playerProjectMapping',{}); store.data.playerProjectMapping[pg.id]={franchiseId:fId, entryType:pg.modEntryType, remakeTargetId:pg.modRemakeTargetId, bundledIds:pg.modBundledIds}; 
                 var fr=getFranchiseById(fId); if(fr){ var bo=(fr.tier>=2?0.5:0)+(fr.tier>=4?0.5:0)+(fr.pendingSoundtrackBonus>0?0.5:0); if(fr.pendingSoundtrackBonus>0)fr.pendingSoundtrackBonus--; 
                     pg.modFranchiseScoreBonus=bo; var pt=~~(bo*50)+ (pg.modEntryType==='bundle'&&pg.modBundleBaseScore?~~(pg.modBundleBaseScore*60):0); pg.designPoints+=pt; pg.technologyPoints+=pt;
@@ -1071,16 +1083,17 @@
             if(pg.title) pg.title=pg.title.replace(/\s*\(id\d+\)$/i,'');
         }
         [processCompetitors, csProcessMediaStudios, processDLCs, processAISales, processPublishingProjects, processCampaigns, processFranchisePassiveIncome, processMediaProjects, csProcessStreamingContracts, csProcessTheaterReleases, csProcessGridService, csUpdateAILicensingSystem].forEach(function(fn){ try{fn()}catch(e){} });
-        (store.data.playerProjectMapping || {}).forEach?.(function(pm,id){ if(pm.processed) return; var g=GameManager.company.gameLog.find(function(x){return x.id===id&&x.score>0}); 
+        var mapping = store.data.playerProjectMapping || {}; 
+        Object.keys(mapping).forEach(function(id){ var pm = mapping[id]; if(pm.processed) return; var g=GameManager.company.gameLog.find(function(x){return x.id===id&&x.score>0}); 
             if(g){ pm.processed=true; var f=getFranchiseById(pm.franchiseId); if(f) onFranchiseEntryComplete(f, {id:'FE_'+Date.now(), gameId:g.id, title:g.title, score:g.score, type:pm.entryType, releaseWeek:w, revenue:g.totalSalesCash||0, remakeTargetId:pm.remakeTargetId}, g.score, g.totalSalesCash||0);
-                delete store.data.playerProjectMapping[id]; store.data.activePlayerFranchiseProject=null;
+                delete mapping[id]; store.data.activePlayerFranchiseProject=null;
             }
         });
         if(w%12===0 && Math.random()<0.3) { var pool=generateInitialStudios().filter(function(s){return !store.data.studios.some(function(e){return e.name===s.name})}); 
             if(pool.length){ var ns=pool[~~(Math.random()*pool.length)], sp={id:'S_'+Date.now(), name:ns.name, valuation:~~(Math.random()*5e6+1e6), sharesOwned:0, currentProject:null, isFounded:false}; store.data.studios.push(sp); _n('New Studio', sp.name+' entered the market!'); }
         }
         (GameManager.company.gameLog||[]).forEach(function(g){ 
-            if(g.flags?.isExtensionPack && g.sequelTo && !g.modDlcRevived){ g.modDlcRevived=true; var b=GameManager.company.getGameById(g.sequelTo); if(b&&!b.flags?.mmo){ var bo=~~((g.score||5)*2.5e5); GameManager.company.adjustCash(bo,'DLC Surge'); _n('Storefront Surge', b.title+' generated $'+UI.getShortNumberString(bo)); } }
+            if(g.flags && g.flags.isExtensionPack && g.sequelTo && !g.modDlcRevived){ g.modDlcRevived=true; var b=GameManager.company.getGameById(g.sequelTo); if(b && !(b.flags && b.flags.mmo)){ var bo=~~((g.score||5)*2.5e5); GameManager.company.adjustCash(bo,'DLC Surge'); _n('Storefront Surge', b.title+' generated $'+UI.getShortNumberString(bo)); } }
             if(g.state===GameState.released && g.modIsPublishingDeal) { _d(g,'modLastSalesCash', g.totalSalesCash); var de=g.totalSalesCash-g.modLastSalesCash; if(de>0){ GameManager.company.adjustCash(-de*0.7,'Publisher Cut'); g.modLastSalesCash=g.totalSalesCash; } }
             var sc=store.data.coDevScrubMap[g.title]; if(sc){ g.designPoints=Math.max(0,g.designPoints-(sc.design||0)); g.technologyPoints=Math.max(0,g.technologyPoints-(sc.tech||0)); delete store.data.coDevScrubMap[g.title]; }
         });
@@ -3582,19 +3595,43 @@
         var subTab='active'; function refresh(){
             container.empty(); var h=_ae(container, '<div style="display:flex; gap:10px; margin-bottom:20px;"></div>');
             ['active','produce','distribution','archive','grid'].forEach(function(t){ 
-                var b=_ae(h, '<div class="selectorButton '+(subTab===t?'orangeButton':'')+'" style="flex:1; text-align:center;">'+t.toUpperCase()+'</div>');
-                b.click(function(){ subTab=t; refresh() });
+                var bStyle="flex:1; text-align:center; padding:10px 0; font-size:10pt; font-weight:bold; cursor:pointer; border:1px solid #bdc3c7; border-radius:5px;";
+                if(subTab===t) bStyle += " background-color: #f39c12; color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400;";
+                else bStyle += " background-color: #fff; color: #7f8c8d;";
+                var b=_ae(h, '<div class="selectorButton" style="'+bStyle+'">'+t.toUpperCase()+'</div>');
+                b.click(function(){ subTab=t; Sound.click(); refresh() });
             });
             if(subTab==='active'){
                 var ac=(store.data.mediaProjects||[]).filter(function(p){return p.status==='inProduction'||p.status==='releasing'}), cur=Math.floor(GameManager.company.currentWeek);
-                if(!ac.length) return _ae(container, '<div style="text-align:center; padding:40px;">No active projects.</div>');
+                if(!ac.length) return _ae(container, '<div style="text-align:center; padding:40px; color: #7f8c8d; font-style: italic;">No active projects. Visit "PRODUCE" to start.</div>');
                 ac.forEach(function(p){
-                    var c=_ae(container, '<div style="background:white; padding:15px; border-radius:8px; border:1px solid #bdc3c7; margin-bottom:12px; display:flex; gap:15px; align-items:center;"></div>');
-                    _ae(c, '<div style="width:60px; height:60px; background:#eee; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#7f8c8d;">'+p.type[0].toUpperCase()+'</div>');
-                    var d=_ae(c, '<div style="flex:1;"></div>'); _ae(d, '<b>'+p.title+'</b><br><span style="font-size:8pt;">'+p.type.toUpperCase()+' | Week '+(p.status==='inProduction'?p.weeksRemaining:p.salesWeeksLeft)+'</span>');
-                    var bts=_ae(c, '<div style="display:flex; flex-direction:column; gap:5px;"></div>');
-                    if(p.status!=='cancelled' && (p.currentEpisode||0) < (p.totalEpisodes||1)) _ae(bts, '<div class="selectorButton greenButton" style="padding:4px 10px;">AIR</div>').click(function(){ p.nextReleaseWeek=cur-1; Sound.click(); refresh() });
-                    _ae(bts, '<div class="selectorButton deleteButton" style="padding:4px 10px;">X</div>').click(function(){ if(confirm('Cancel?')){ p.status='cancelled'; refresh() } });
+                    var tI = csGetMediaTypeInfo(p.type);
+                    var c=_ae(container, '<div class="cs-stagger-item" style="background:white; padding:18px; border-radius:10px; border:1px solid #bdc3c7; margin-bottom:15px; display:flex; gap:20px; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.04);"></div>');
+                    _ae(c, '<div style="width:65px; height:65px; background:'+tI.c+'; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; font-size:18pt; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">'+tI.i+'</div>');
+                    var d=_ae(c, '<div style="flex:1; min-width:0;"></div>'); 
+                    _ae(d, '<div style="font-size:13pt; font-weight:bold; color:#2c3e50; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">'+p.title+'</div>');
+                    _ae(d, '<div style="background:'+tI.c+'; color:white; display:inline-block; font-size:7pt; padding:2px 8px; border-radius:10px; font-weight:bold; text-transform:uppercase; margin:4px 0;">'+tI.l+'</div>');
+                    
+                    var pBar = _ae(d, '<div style="margin-top:8px;"></div>');
+                    var pct = 0, label = "";
+                    if(p.status === 'inProduction') {
+                        pct = Math.round(((p.totalWeeks - p.weeksRemaining) / p.totalWeeks) * 100) || 5; pct = Math.min(100, Math.max(0, pct));
+                        label = "Production: " + Math.ceil(p.weeksRemaining) + " weeks left";
+                    } else {
+                        pct = Math.round((p.currentEpisode / p.totalEpisodes) * 100) || 10; pct = Math.min(pct, 100);
+                        label = "Releasing: " + (p.type === 'comicBook' ? 'Issue' : 'Episode') + " " + p.currentEpisode + " / " + p.totalEpisodes;
+                    }
+                    _ae(pBar, '<div style="font-size:8pt; color:#7f8c8d; margin-bottom:3px; font-weight:bold;">'+label+'</div>');
+                    var track = _ae(pBar, '<div style="height:10px; background:#f0f3f5; border-radius:5px; border:1px solid #eee; overflow:hidden;"></div>');
+                    _ae(track, '<div style="height:100%; width:'+pct+'%; background:'+tI.c+'; border-radius:5px; transition: width 0.4s ease;"></div>');
+
+                    var bts=_ae(c, '<div style="display:flex; flex-direction:column; gap:8px;"></div>');
+                    if(p.status!=='cancelled' && (p.currentEpisode||0) < (p.totalEpisodes||1)) {
+                        var airBtn = _ae(bts, '<div class="selectorButton greenButton" style="padding:10px 18px; font-weight:bold; font-size:10pt;">AIR</div>');
+                        airBtn.click(function(){ p.nextReleaseWeek=cur-1; Sound.click(); refresh() });
+                    }
+                    var delBtn = _ae(bts, '<div class="selectorButton deleteButton" style="padding:6px 18px; font-size:9pt; text-align:center;">X</div>');
+                    delBtn.click(function(){ if(confirm('Cancel project "'+p.title+'"? All progress will be lost.')){ p.status='cancelled'; Sound.click(); refresh() } });
                 });
             } else if(subTab==='produce'){
                 var f=_ae(container, '<div style="background:white; padding:20px; border-radius:8px; border:1px solid #bdc3c7;"></div>'), 
