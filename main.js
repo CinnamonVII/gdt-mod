@@ -1,52 +1,41 @@
 (function () {
     console.log("Concurrent Studios mod loaded.");
 
-    
-    window.onerror = function(msg,url,line,col,err){
-        var e="[GLOBAL_ERROR] "+msg+" at "+url+":"+line+":"+col+(err&&err.stack?"\nStack: "+err.stack:"");
+
+    window.onerror = function (msg, url, line, col, err) {
+        var e = "[GLOBAL_ERROR] " + msg + " at " + url + ":" + line + ":" + col + (err && err.stack ? "\nStack: " + err.stack : "");
         console.error(e);
-        try{require('fs').appendFileSync("/home/deck/gdt-mod/cs_debug.log","["+new Date().toLocaleTimeString()+"] "+e+"\n");}catch(x){}
+        try { require('fs').appendFileSync("/home/deck/gdt-mod/cs_debug.log", "[" + new Date().toLocaleTimeString() + "] " + e + "\n"); } catch (x) { }
         return false;
     };
-    if(!window.onunhandledrejection){window.onunhandledrejection=function(ev){
-        var e="[UNHANDLED_PROMISE] "+(ev.reason||"unknown"); console.error(e);
-        try{require('fs').appendFileSync("/home/deck/gdt-mod/cs_debug.log","["+new Date().toLocaleTimeString()+"] "+e+"\n");}catch(x){}};}
+    if (!window.onunhandledrejection) {
+        window.onunhandledrejection = function (ev) {
+            var e = "[UNHANDLED_PROMISE] " + (ev.reason || "unknown"); console.error(e);
+            try { require('fs').appendFileSync("/home/deck/gdt-mod/cs_debug.log", "[" + new Date().toLocaleTimeString() + "] " + e + "\n"); } catch (x) { }
+        };
+    }
 
     (function injectModStyles() {
         if (document.getElementById('cs-mod-styles')) return;
         var css = document.createElement('style');
         css.id = 'cs-mod-styles';
         css.textContent =
-            '#modUI .selectorButton,#modUI button,.simplemodal-data .selectorButton,.simplemodal-data button{transition:transform .15s ease,box-shadow .15s ease,filter .15s ease !important;}'+
-            '.mod-franchise-icon{display:inline-block;color:#d35400;font-weight:bold;margin-right:5px;cursor:help;}'+
-            '#modUI .selectorButton:hover,#modUI button:hover,.simplemodal-data .selectorButton:hover,.simplemodal-data button:hover{transform:translateY(-1px) !important;box-shadow:0 3px 8px rgba(0,0,0,0.18) !important;filter:brightness(1.08) !important;}'+
-            '#modUI .selectorButton:active,#modUI button:active,.simplemodal-data .selectorButton:active,.simplemodal-data button:active{transform:translateY(0px) scale(0.97) !important;box-shadow:0 1px 2px rgba(0,0,0,0.15) !important;filter:brightness(0.95) !important;}'+
-            '.studioCard,.dlcItem,.cs-stagger-item{transition:transform .2s ease,box-shadow .2s ease !important;}'+
-            '.studioCard:hover,.dlcItem:hover,.cs-stagger-item:hover{transform:translateY(-2px) !important;box-shadow:0 4px 12px rgba(0,0,0,0.14) !important;}'+
-            '#modUI_header > div{transition:background-color .2s ease,color .2s ease,transform .15s ease !important;}'+
-            '#modUI_header > div:hover{filter:brightness(1.06);transform:translateY(-1px);}'+
-            '#modUI input:focus,#modUI select:focus,.simplemodal-data input:focus,.simplemodal-data select:focus{border-color:#d35400 !important;box-shadow:0 0 0 2px rgba(211,84,0,0.15) !important;outline:none !important;transition:border-color .2s ease,box-shadow .2s ease !important;}'+
-            '@keyframes csFadeSlideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}'+
-            '.cs-animate-in{animation:csFadeSlideIn .25s ease-out forwards !important;}'+
-            '@keyframes csCardEnter{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:translateX(0);}}'+
-            '.cs-card-enter{animation:csCardEnter .3s ease-out forwards !important;}'+
-            '.simplemodal-container{display:flex !important;flex-direction:column !important;}'+
-            '.simplemodal-data{flex:1 !important;display:flex !important;flex-direction:column !important;overflow:hidden !important;min-height:0 !important;}'+
-            '#modUI_content{scroll-behavior:smooth;}#modUI_content::-webkit-scrollbar{width:6px;}#modUI_content::-webkit-scrollbar-track{background:#ecf0f1;}'+
-            '#modUI_content::-webkit-scrollbar-thumb{background:#bdc3c7;border-radius:3px;}#modUI_content::-webkit-scrollbar-thumb:hover{background:#95a5a6;}'+
-            '.fran-tier-1,.fran-tier-2,.fran-tier-3,.fran-tier-4,.fran-tier-5{color:white;}'+
-            '.fran-tier-1{background:#95a5a6;}.fran-tier-2{background:#2980b9;}.fran-tier-3{background:#27ae60;}.fran-tier-4{background:#d35400;}.fran-tier-5{background:#f39c12;box-shadow:0 2px 8px rgba(243,156,18,0.5);}'+
-            '.fanbase-bar-track{background:#ddd;border-radius:6px;height:8px;overflow:hidden;}.fanbase-bar-fill{height:100%;border-radius:6px;transition:width 0.4s ease;}'+
-            '.entry-type-btn{display:inline-block;padding:10px 15px;margin:5px;background:#bdc3c7;color:#2c3e50;border-radius:4px;cursor:pointer;font-size:10pt;font-weight:bold;transition:background .2s,transform .1s;border:1px solid rgba(0,0,0,0.1);}'+
-            '.entry-type-btn:hover:not(.disabled){background:#d35400;color:white;transform:translateY(-2px);}'+
-            '.entry-type-btn.selected{background:#d35400;color:white;border:1px solid #a04000;box-shadow:inset 0 2px 4px rgba(0,0,0,0.2);}'+
-            '.entry-type-btn.disabled{opacity:0.5;cursor:not-allowed;background:#eee;color:#999;}'+
-            '.media-type-card{border:2px solid #bdc3c7;border-radius:8px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,transform .15s;}'+
-            '.media-type-card:hover{border-color:#d35400;transform:translateY(-1px);}.media-type-card.selected{border-color:#d35400;background:#fef9f7;}'+
-            '.cs-progress-track{background:#ecf0f1;border-radius:4px;height:10px;overflow:hidden;margin-top:6px;}'+
-            '.cs-progress-fill{height:100%;background:#d35400;border-radius:4px;transition:width .3s ease;}'+
-            '@keyframes goldPulse{0%,100%{box-shadow:0 0 0 0 rgba(243,156,18,0.5);}50%{box-shadow:0 0 10px 4px rgba(243,156,18,0.3);}}'+
-            '.fran-legendary{animation:goldPulse 2s infinite;}';
+            '.mod-franchise-icon{display:inline-block;color:#d35400;font-weight:bold;margin-right:5px;cursor:help;}' +
+            '#modUI input,#modUI select,.simplemodal-data input,.simplemodal-data select{border:2px solid #555 !important; border-radius:0 !important; color:black !important;}' +
+            '#modUI input:focus,#modUI select:focus,.simplemodal-data input:focus,.simplemodal-data select:focus{border-color:#d35400 !important; outline:none !important;}' +
+            '.simplemodal-container{display:flex !important;flex-direction:column !important;border: 4px solid #555 !important;}' +
+            '.simplemodal-data{flex:1 !important;display:flex !important;flex-direction:column !important;overflow:hidden !important;min-height:0 !important;}' +
+            '#modUI_content{scroll-behavior:auto !important;}' +
+            '.fran-tier-1{background:#95a5a6;}.fran-tier-2{background:#2980b9;}.fran-tier-3{background:#27ae60;}.fran-tier-4{background:#d35400;}.fran-tier-5{background:#f39c12;}' +
+            '.fanbase-bar-track{background:#aaa;border:1px solid #333;height:10px;overflow:hidden;}.fanbase-bar-fill{height:100%;transition:width 0.4s ease;}' +
+            '.entry-type-btn{display:inline-block;padding:8px 12px;margin:5px;background:#bdc3c7;color:#2c3e50;cursor:pointer;font-size:10pt;font-weight:bold;border:2px solid #555;}' +
+            '.entry-type-btn:hover:not(.disabled){background:#d35400;color:white;}' +
+            '.entry-type-btn.selected{background:#d35400;color:white;border:2px solid #000;}' +
+            '.entry-type-btn.disabled{opacity:0.5;cursor:not-allowed;background:#eee;color:#999;}' +
+            '.media-type-card{border:2px solid #555;padding:10px 14px;margin-bottom:8px;cursor:pointer;background:#ddd;}' +
+            '.media-type-card:hover{border-color:#000;background:#eee;}.media-type-card.selected{border-color:#d35400;background:#fff; border-width:3px;}' +
+            '.cs-progress-track{background:#aaa;border:1px solid #333;height:12px;overflow:hidden;margin-top:6px;}' +
+            '.cs-progress-fill{height:100%;background:#d35400;transition:width .3s ease;}';
         document.head.appendChild(css);
     })();
 
@@ -118,18 +107,18 @@
         }
     });
 
-    function _d(o,k,v)  { if(typeof o[k]==='undefined') o[k]=v; }
-    function _dn(o,k,v) { if(typeof o[k]==='undefined'||isNaN(o[k])||!isFinite(o[k])) o[k]=v; }
-    function _da(o,k)   { if(!Array.isArray(o[k])) o[k]=[]; }
-    function _ae(p,h)   { return $(h).appendTo(p); }
-    function _sm(t,h,b) {
-        var id='cs_m_'+Date.now(),o=_ae($('body'),'<div id="'+id+'" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9000;display:flex;justify-content:center;align-items:center;"></div>'),m=_ae(o,'<div class="windowBorder" style="background:#ecf0f1;border-radius:10px;padding:20px;width:450px;max-height:80%;display:flex;flex-direction:column;"></div>');
-        _ae(m,'<h3 style="margin-top:0;color:#d35400;">'+t+'</h3>'); if(h)_ae(m,'<div style="font-size:10pt;color:#7f8c8d;margin-bottom:10px;">'+h+'</div>');
-        var c=_ae(m,'<div style="flex:1;overflow-y:auto;border:1px solid #bdc3c7;background:#fff;margin-bottom:15px;border-radius:4px;"></div>');
-        b(c,function(){o.remove()}); _ae(m,'<div class="selectorButton" style="text-align:center;padding:10px 0;">Close</div>').click(function(){o.remove()});
+    function _d(o, k, v) { if (typeof o[k] === 'undefined') o[k] = v; }
+    function _dn(o, k, v) { if (typeof o[k] === 'undefined' || isNaN(o[k]) || !isFinite(o[k])) o[k] = v; }
+    function _da(o, k) { if (!Array.isArray(o[k])) o[k] = []; }
+    function _ae(p, h) { return $(h).appendTo(p); }
+    function _sm(t, h, b) {
+        var id = 'cs_m_' + Date.now(), o = _ae($('body'), '<div id="' + id + '" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9000;display:flex;justify-content:center;align-items:center;"></div>'), m = _ae(o, '<div class="windowBorder" style="background:#eee;border-radius:10px;padding:20px;width:450px;max-height:80%;display:flex;flex-direction:column;"></div>');
+        _ae(m, '<h3 style="margin-top:0;color:#d35400;">' + t + '</h3>'); if (h) _ae(m, '<div style="font-size:10pt;color:#7f8c8d;margin-bottom:10px;">' + h + '</div>');
+        var c = _ae(m, '<div style="flex:1;overflow-y:auto;border:1px solid #bdc3c7;background:#fff;margin-bottom:15px;border-radius:4px;"></div>');
+        b(c, function () { o.remove() }); _ae(m, '<div class="selectorButton" style="text-align:center;padding:10px 0;">Close</div>').click(function () { o.remove() });
     }
-    function _n(h,t){ GameManager.company.notifications.push(new Notification({header:h,text:t,image:""})); }
-    function _nb(h,t,b,f){ GameManager.company.notifications.push(new Notification({header:h,text:t,image:"",buttonText:b,onClick:f})); }
+    function _n(h, t) { GameManager.company.notifications.push(new Notification({ header: h, text: t, image: "" })); }
+    function _nb(h, t, b, f) { GameManager.company.notifications.push(new Notification({ header: h, text: t, image: "", buttonText: b, onClick: f })); }
 
     function initData() {
         [
@@ -229,34 +218,36 @@
     }
 
     function csShowAlert(m) {
-        var id='cs_a_'+Date.now(), o=_ae($('body'),'<div id="'+id+'" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;justify-content:center;align-items:center;"></div>'), d=_ae(o,'<div class="windowBorder" style="background:#ecf0f1;padding:25px;width:400px;text-align:center;border:4px solid #d35400;"></div>');
-        _ae(d,'<h2 style="color:#d35400;margin:0 0 15px;border-bottom:2px solid #e67e22;">Concurrent Studios</h2><div style="margin:20px 0;">'+m+'</div>'); _ae(d,'<div class="selectorButton orangeButton" style="width:120px;display:inline-block;">OK</div>').click(function(){o.remove()});
+        var id = 'cs_a_' + Date.now(), o = _ae($('body'), '<div id="' + id + '" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;justify-content:center;align-items:center;"></div>'), d = _ae(o, '<div class="windowBorder" style="background:#eee;padding:25px;width:400px;text-align:center;border:4px solid #d35400;"></div>');
+        _ae(d, '<h2 style="color:#d35400;margin:0 0 15px;border-bottom:2px solid #e67e22;">Concurrent Studios</h2><div style="margin:20px 0;">' + m + '</div>'); _ae(d, '<div class="selectorButton orangeButton" style="width:120px;display:inline-block;">OK</div>').click(function () { o.remove() });
     }
-    function csNotify(m){ csShowAlert(m); }
-    function csLog(m){ if(!store||!store.data)return; _da(store.data,'debugLogs'); var w=(typeof GameManager!=='undefined'&&GameManager.company)?Math.floor(GameManager.company.currentWeek):0, f='['+w+'] '+m; store.data.debugLogs.unshift(f); if(store.data.debugLogs.length>100)store.data.debugLogs.pop(); console.log(f); }
+    function csNotify(m) { csShowAlert(m); }
+    function csLog(m) { if (!store || !store.data) return; _da(store.data, 'debugLogs'); var w = (typeof GameManager !== 'undefined' && GameManager.company) ? Math.floor(GameManager.company.currentWeek) : 0, f = '[' + w + '] ' + m; store.data.debugLogs.unshift(f); if (store.data.debugLogs.length > 100) store.data.debugLogs.pop(); console.log(f); }
 
 
-    
+
     function csCreateDefaultGrid() {
-        return { isActive:false, isResearched:false, launchCost:25000000, name:"Grid", subscribers:0,
-            subscriberGrowthRate:0.02, monthlySubFee:14.99, contentLibrary:[], totalRevenue:0, marketingBudgetWeekly:0,
-            churnRate:0.01, prestige:1, originalContentBonus:0, weeklyRevenue:0, launchWeek:-1, pendingUpkeep:0,
-            weeklyUpkeep:0, pendingRevenue:0, pendingMarketing:0, pendingLicenses:0, lastWeekSubscribers:0, revenueHistory:[] };
+        return {
+            isActive: false, isResearched: false, launchCost: 25000000, name: "Grid", subscribers: 0,
+            subscriberGrowthRate: 0.02, monthlySubFee: 14.99, contentLibrary: [], totalRevenue: 0, marketingBudgetWeekly: 0,
+            churnRate: 0.01, prestige: 1, originalContentBonus: 0, weeklyRevenue: 0, launchWeek: -1, pendingUpkeep: 0,
+            weeklyUpkeep: 0, pendingRevenue: 0, pendingMarketing: 0, pendingLicenses: 0, lastWeekSubscribers: 0, revenueHistory: []
+        };
     }
 
     function csRepairGrid(grid) {
         if (!grid) return;
         var def = csCreateDefaultGrid();
-        for (var k in def) { if(!Array.isArray(def[k])) _d(grid,k,def[k]); }
-        _da(grid,'contentLibrary'); _da(grid,'revenueHistory');
+        for (var k in def) { if (!Array.isArray(def[k])) _d(grid, k, def[k]); }
+        _da(grid, 'contentLibrary'); _da(grid, 'revenueHistory');
 
-        grid.contentLibrary.forEach(function(e, ci){
-            _d(e,'id',"GC_MIG_"+Date.now()+"_"+ci); _d(e,'mediaProjectId',null);
-            if(typeof e.title!=="string"||!e.title) e.title="Unknown Media"; _d(e,'type',"movie");
-            _dn(e,'addedWeek',0); _dn(e,'score',5); _dn(e,'viewsThisWeek',0); _dn(e,'totalViews',0);
-            _dn(e,'subscriberContribution',0); _d(e,'isOriginal',true); _dn(e,'licenseCostWeekly',0);
-            _dn(e,'licenseWeeksRemaining',0); _d(e,'franchiseId',null);
-            if(typeof e.freshness!=="number"||isNaN(e.freshness)||e.freshness<=0) e.freshness=0.5;
+        grid.contentLibrary.forEach(function (e, ci) {
+            _d(e, 'id', "GC_MIG_" + Date.now() + "_" + ci); _d(e, 'mediaProjectId', null);
+            if (typeof e.title !== "string" || !e.title) e.title = "Unknown Media"; _d(e, 'type', "movie");
+            _dn(e, 'addedWeek', 0); _dn(e, 'score', 5); _dn(e, 'viewsThisWeek', 0); _dn(e, 'totalViews', 0);
+            _dn(e, 'subscriberContribution', 0); _d(e, 'isOriginal', true); _dn(e, 'licenseCostWeekly', 0);
+            _dn(e, 'licenseWeeksRemaining', 0); _d(e, 'franchiseId', null);
+            if (typeof e.freshness !== "number" || isNaN(e.freshness) || e.freshness <= 0) e.freshness = 0.5;
         });
     }
 
@@ -280,17 +271,17 @@
             freshness: (typeof opts.freshness === "number" && !isNaN(opts.freshness)) ? opts.freshness : 1.0
         };
     }
-    
+
 
     function generateGameName(topic, genre) {
-        var pre=["Super","Mega","Ultra","The","Call of","World of","Age of","Return to","Escape from","Chronicles of","Legend of","Project","Secret of","Rise of","Fall of","Dark","Light","Shadow","Blood","Iron"],
-            mid=["Duty","Craft","Star","Wars","Knight","Dragon","City","Quest","Fantasy","Space","Zombies","Ninja","Pirate","Cyber","Steam","Magic","Blade","Gun","Soul","Heart"],
-            post=["II","III","IV","V","X","Alpha","Omega","Origins","Awakening","Rebirth","Online","Plus","Ultra","HD","Remastered","Zero","Infinite","Evolved","Unleashed","Reckoning"];
-        var r=Math.random();
-        if(r<.3) return pre[~~(Math.random()*pre.length)]+" "+mid[~~(Math.random()*mid.length)];
-        if(r<.6) return mid[~~(Math.random()*mid.length)]+" "+post[~~(Math.random()*post.length)];
-        if(r<.9) return pre[~~(Math.random()*pre.length)]+" "+mid[~~(Math.random()*mid.length)]+" "+post[~~(Math.random()*post.length)];
-        return topic+" "+genre+" "+post[~~(Math.random()*post.length)];
+        var pre = ["Super", "Mega", "Ultra", "The", "Call of", "World of", "Age of", "Return to", "Escape from", "Chronicles of", "Legend of", "Project", "Secret of", "Rise of", "Fall of", "Dark", "Light", "Shadow", "Blood", "Iron"],
+            mid = ["Duty", "Craft", "Star", "Wars", "Knight", "Dragon", "City", "Quest", "Fantasy", "Space", "Zombies", "Ninja", "Pirate", "Cyber", "Steam", "Magic", "Blade", "Gun", "Soul", "Heart"],
+            post = ["II", "III", "IV", "V", "X", "Alpha", "Omega", "Origins", "Awakening", "Rebirth", "Online", "Plus", "Ultra", "HD", "Remastered", "Zero", "Infinite", "Evolved", "Unleashed", "Reckoning"];
+        var r = Math.random();
+        if (r < .3) return pre[~~(Math.random() * pre.length)] + " " + mid[~~(Math.random() * mid.length)];
+        if (r < .6) return mid[~~(Math.random() * mid.length)] + " " + post[~~(Math.random() * post.length)];
+        if (r < .9) return pre[~~(Math.random() * pre.length)] + " " + mid[~~(Math.random() * mid.length)] + " " + post[~~(Math.random() * post.length)];
+        return topic + " " + genre + " " + post[~~(Math.random() * post.length)];
     }
 
     function generateMovieStudios() {
@@ -363,9 +354,9 @@
         return null;
     }
 
-    function getFrans(filter) { var arr=store.data.franchises||[]; return filter?arr.filter(filter):arr; }
-    function getPlayerFranchises() { return getFrans(function(f){return f.ownerId==="player";}); }
-    function getAIFranchises()    { return getFrans(function(f){return f.ownerId!=="player";}); }
+    function getFrans(filter) { var arr = store.data.franchises || []; return filter ? arr.filter(filter) : arr; }
+    function getPlayerFranchises() { return getFrans(function (f) { return f.ownerId === "player"; }); }
+    function getAIFranchises() { return getFrans(function (f) { return f.ownerId !== "player"; }); }
 
     function getFranchiseForGame(gameId) {
         if (!store.data.franchises) return null;
@@ -425,12 +416,12 @@
 
     function csGetMediaTypeInfo(t) {
         var m = {
-            movie: { l: 'Film', c: '#c0392b', i: 'M' },
-            tvSeries: { l: 'TV', c: '#2980b9', i: 'T' },
-            animatedShow: { l: 'Anim', c: '#8e44ad', i: 'A' },
-            soundtrack: { l: 'Music', c: '#f1c40f', i: '\u266B' },
-            merchandise: { l: 'Toy', c: '#d35400', i: '\u2605' },
-            comicBook: { l: 'Book', c: '#27ae60', i: 'B' }
+            movie: { l: 'Film', c: '#e74c3c', i: 'F' },
+            tvSeries: { l: 'TV Series', c: '#3498db', i: 'T' },
+            animatedShow: { l: 'Anim. Show', c: '#9b59b6', i: 'A' },
+            soundtrack: { l: 'Music/OST', c: '#f1c40f', i: '\u266B' },
+            merchandise: { l: 'Merch', c: '#e67e22', i: '\u2605' },
+            comicBook: { l: 'Comic Book', c: '#2ecc71', i: 'C' }
         };
         return m[t] || { l: t, c: '#7f8c8d', i: '?' };
     }
@@ -552,7 +543,7 @@
             }
         }
 
-        _n("Streaming Deal Signed!", mediaProject.title+" will stream on "+platform.name+". Advance: $"+UI.getShortNumberString(advance)+". Weekly revenue starts next week.");
+        _n("Streaming Deal Signed!", mediaProject.title + " will stream on " + platform.name + ". Advance: $" + UI.getShortNumberString(advance) + ". Weekly revenue starts next week.");
     }
 
     function csConfirmTheaterRelease(mediaProject, theaterChain) {
@@ -596,7 +587,7 @@
             }
         }
 
-        _n("Opening Weekend!", mediaProject.title+" opens in "+theaterChain.screens+" screens at "+theaterChain.name+"! Projected opening gross: $"+UI.getShortNumberString(est.peakWeeklyRevenue));
+        _n("Opening Weekend!", mediaProject.title + " opens in " + theaterChain.screens + " screens at " + theaterChain.name + "! Projected opening gross: $" + UI.getShortNumberString(est.peakWeeklyRevenue));
     }
 
     function csAddToGrid(mediaProject) {
@@ -608,7 +599,7 @@
         var grid = store.data.gridService;
         if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
 
-        
+
         for (var i = 0; i < grid.contentLibrary.length; i++) {
             if (grid.contentLibrary[i].mediaProjectId === mediaProject.id) {
                 csNotify("Already in Grid Library."); return;
@@ -628,7 +619,7 @@
         grid.contentLibrary.push(entry);
         mediaProject.distributionStatus = "grid";
 
-        
+
         if (!store.data.pendingDistribution) store.data.pendingDistribution = [];
         for (var j = store.data.pendingDistribution.length - 1; j >= 0; j--) {
             if (store.data.pendingDistribution[j].mediaProjectId === mediaProject.id) {
@@ -636,7 +627,7 @@
             }
         }
 
-        
+
         var safeScore = entry.score;
         var franchiseBonus = 1.0;
         if (entry.franchiseId) {
@@ -648,7 +639,7 @@
         if (isNaN(instantSubBoost) || instantSubBoost < 0) instantSubBoost = 500;
         grid.subscribers = (grid.subscribers || 0) + instantSubBoost;
 
-        _n("Added to Grid", entry.title+" added to Grid's library! +"+UI.getShortNumberString(instantSubBoost)+" instant subscribers.");
+        _n("Added to Grid", entry.title + " added to Grid's library! +" + UI.getShortNumberString(instantSubBoost) + " instant subscribers.");
     }
 
     function csLicenseExternalToGrid(movieEntry, weeklyCost, weeks) {
@@ -673,7 +664,7 @@
             GameManager.company.adjustCash(-entry.licenseCostWeekly, "Grid License (Wk 1): " + entry.title);
         }
 
-        _n("Content Licensed for Grid", "Licensed "+entry.title+" from "+(movieEntry.studioName||"AI Studio")+" for "+entry.licenseWeeksRemaining+" weeks.");
+        _n("Content Licensed for Grid", "Licensed " + entry.title + " from " + (movieEntry.studioName || "AI Studio") + " for " + entry.licenseWeeksRemaining + " weeks.");
     }
 
 
@@ -764,36 +755,36 @@
         var playerProj = store.data.activePlayerFranchiseProject && store.data.activePlayerFranchiseProject.franchiseId === franchise.id;
 
 
-        
+
         if (playerProj && typeof GameManager !== 'undefined' && GameManager.company && !GameManager.company.currentGame) {
             store.data.activePlayerFranchiseProject = null;
             playerProj = false;
         }
 
-        
+
         studiosArr.forEach(function (s) {
             if (s.currentProject && s.currentProject.isFranchiseEntry && s.currentProject.franchiseId === franchise.id) {
-                if (s.currentProject.weeksRemaining <= -5) { 
+                if (s.currentProject.weeksRemaining <= -5) {
                     s.currentProject = null;
                 }
             }
         });
 
-        
+
         subsidiaryProj = studiosArr.filter(function (s) {
             return s.currentProject && s.currentProject.isFranchiseEntry && s.currentProject.franchiseId === franchise.id;
         })[0];
 
-        
-        
+
+
         var isNewEntry = (type === "sequel" || type === "spinoff" || type === "prequel" || type === "expansion" || type === "reboot");
 
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
 
         if (isNewEntry && (playerProj || subsidiaryProj)) {
             var activeType = playerProj ? store.data.activePlayerFranchiseProject.type : subsidiaryProj.currentProject.type;
@@ -873,7 +864,7 @@
             entry.type = entry.type || "sequel";
         }
 
-        
+
         if (entry && (entry.type === "remake" || entry.type === "remaster")) {
             if (franchise.installments && franchise.installments.length > 0) {
                 var originScore = franchise.installments[0].score;
@@ -914,7 +905,7 @@
             var reqFans = 20 * franchise.tier;
             if (recentAvg >= reqScore && franchise.fanbaseScore >= reqFans) {
                 franchise.tier++;
-                _n("Franchise Level Up!", franchise.name+" is now Tier "+franchise.tier+"!");
+                _n("Franchise Level Up!", franchise.name + " is now Tier " + franchise.tier + "!");
             }
         }
 
@@ -983,7 +974,7 @@
         var names = ["", "Cult Classic", "Recognized", "Mainstream", "Blockbuster", "Legendary"];
         var stars = "";
         if (tier === 5) stars = " [*****]";
-        return $('<span class="fran-tier-badge fran-tier-' + tier + '" style="padding: 2px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; margin-left: 8px;">' + names[tier] + stars + '</span>');
+        return $('<span class="fran-tier-badge fran-tier-' + tier + '" style="padding: 2px 8px; border-radius: 0px; font-size: 9pt; font-weight: bold; margin-left: 8px;">' + names[tier] + stars + '</span>');
     }
 
     function findActiveFranchiseEntryForCurrentGame(game) {
@@ -1062,40 +1053,47 @@
     }, 1000);
 
     function tickEconomy() {
-        var w = Math.floor(GameManager.company.currentWeek); if(store.data.lastWeekProcessed === w) return; store.data.lastWeekProcessed = w;
-        if(!store.data.modGridMigrationV3 && store.data.gridService && store.data.gridService.isActive){
-            store.data.modGridMigrationV3 = true; var gr = store.data.gridService; _da(gr,'contentLibrary');
-            (store.data.mediaProjects||[]).forEach(function(p){ if(p.distributionStatus!=='pending' && !gr.contentLibrary.some(function(e){return e.mediaProjectId===p.id})) gr.contentLibrary.push(csCreateGridEntry({mediaProjectId:p.id, title:p.title, type:p.type, score:p.score, isOriginal:true, addedWeek:w, freshness:0.5})) });
-            if(w%4===0) { var av = (store.data.movieStudios||[]).filter(function(s){return !(store.data.activeCatalogueDeals||[]).some(function(d){return d.studioId===s.id&&w<d.endWeek})});
-                if(av.length && Math.random()<Math.min(0.4, 0.05+gr.subscribers/5e7)) { var s=av[~~(Math.random()*av.length)], pr=~~(s.valuation*0.1*(0.8+Math.random()*0.4)); store.data.pendingInboundDeal={studioId:s.id, price:pr, expires:w+8}; _n('Inbound Deal', s.name+' offer: $'+UI.getShortNumberString(pr)); }
+        var w = Math.floor(GameManager.company.currentWeek); if (store.data.lastWeekProcessed === w) return; store.data.lastWeekProcessed = w;
+        if (!store.data.modGridMigrationV3 && store.data.gridService && store.data.gridService.isActive) {
+            store.data.modGridMigrationV3 = true; var gr = store.data.gridService; _da(gr, 'contentLibrary');
+            (store.data.mediaProjects || []).forEach(function (p) { if (p.distributionStatus !== 'pending' && !gr.contentLibrary.some(function (e) { return e.mediaProjectId === p.id })) gr.contentLibrary.push(csCreateGridEntry({ mediaProjectId: p.id, title: p.title, type: p.type, score: p.score, isOriginal: true, addedWeek: w, freshness: 0.5 })) });
+            if (w % 4 === 0) {
+                var av = (store.data.movieStudios || []).filter(function (s) { return !(store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === s.id && w < d.endWeek }) });
+                if (av.length && Math.random() < Math.min(0.4, 0.05 + gr.subscribers / 5e7)) { var s = av[~~(Math.random() * av.length)], pr = ~~(s.valuation * 0.1 * (0.8 + Math.random() * 0.4)); store.data.pendingInboundDeal = { studioId: s.id, price: pr, expires: w + 8 }; _n('Inbound Deal', s.name + ' offer: $' + UI.getShortNumberString(pr)); }
             }
         }
-        var pg = (GameManager.company||{}).currentGame; if(pg && store.data.disableOverloadMalus) pg.featureOverload = pg.featureOverloadScore = pg.featureOverloadPoints = 0;
-        if(pg && !pg.modProcessedCreation) { pg.modProcessedCreation=true; var m=store.data.activePlayerFranchiseProject, fId=null; 
-            if(m){ fId=m.franchiseId; pg.modEntryType=m.entryType; pg.modRemakeTargetId=m.remakeTargetId; pg.modBundleBaseScore=m.bundleBaseScore; pg.modBundledIds=m.bundledIds; store.data.activePlayerFranchiseProject=null; }
-            else { var mid=(pg.title||'').match(/\(id(\d+)\)$/i); if(mid){ var frFound=(store.data.franchises||[]).find(function(f){return f.numId===parseInt(mid[1])}); if(frFound) fId=frFound.id; } }
-            if(fId){ pg.modFranchiseId=fId; _d(store.data,'playerProjectMapping',{}); store.data.playerProjectMapping[pg.id]={franchiseId:fId, entryType:pg.modEntryType, remakeTargetId:pg.modRemakeTargetId, bundledIds:pg.modBundledIds}; 
-                var fr=getFranchiseById(fId); if(fr){ var bo=(fr.tier>=2?0.5:0)+(fr.tier>=4?0.5:0)+(fr.pendingSoundtrackBonus>0?0.5:0); if(fr.pendingSoundtrackBonus>0)fr.pendingSoundtrackBonus--; 
-                    pg.modFranchiseScoreBonus=bo; var pt=~~(bo*50)+ (pg.modEntryType==='bundle'&&pg.modBundleBaseScore?~~(pg.modBundleBaseScore*60):0); pg.designPoints+=pt; pg.technologyPoints+=pt;
+        var pg = (GameManager.company || {}).currentGame; if (pg && store.data.disableOverloadMalus) pg.featureOverload = pg.featureOverloadScore = pg.featureOverloadPoints = 0;
+        if (pg && !pg.modProcessedCreation) {
+            pg.modProcessedCreation = true; var m = store.data.activePlayerFranchiseProject, fId = null;
+            if (m) { fId = m.franchiseId; pg.modEntryType = m.entryType; pg.modRemakeTargetId = m.remakeTargetId; pg.modBundleBaseScore = m.bundleBaseScore; pg.modBundledIds = m.bundledIds; store.data.activePlayerFranchiseProject = null; }
+            else { var mid = (pg.title || '').match(/\(id(\d+)\)$/i); if (mid) { var frFound = (store.data.franchises || []).find(function (f) { return f.numId === parseInt(mid[1]) }); if (frFound) fId = frFound.id; } }
+            if (fId) {
+                pg.modFranchiseId = fId; _d(store.data, 'playerProjectMapping', {}); store.data.playerProjectMapping[pg.id] = { franchiseId: fId, entryType: pg.modEntryType, remakeTargetId: pg.modRemakeTargetId, bundledIds: pg.modBundledIds };
+                var fr = getFranchiseById(fId); if (fr) {
+                    var bo = (fr.tier >= 2 ? 0.5 : 0) + (fr.tier >= 4 ? 0.5 : 0) + (fr.pendingSoundtrackBonus > 0 ? 0.5 : 0); if (fr.pendingSoundtrackBonus > 0) fr.pendingSoundtrackBonus--;
+                    pg.modFranchiseScoreBonus = bo; var pt = ~~(bo * 50) + (pg.modEntryType === 'bundle' && pg.modBundleBaseScore ? ~~(pg.modBundleBaseScore * 60) : 0); pg.designPoints += pt; pg.technologyPoints += pt;
                 }
             }
-            if(pg.modEntryType==='expansion'){ _d(store.data,'dlcData',{}); _d(store.data.dlcData,pg.id,{count:0,activeDLCs:[]}); var rev=5000; if(pg.sequelTo){var b=GameManager.company.getGameById(pg.sequelTo); if(b&&b.totalSalesCash) rev=Math.max(5000,~~(b.totalSalesCash/80))} store.data.dlcData[pg.id].count++; store.data.dlcData[pg.id].activeDLCs.push({activeWeeksLeft:20, weeklyRevenue:rev}); }
-            if(pg.title) pg.title=pg.title.replace(/\s*\(id\d+\)$/i,'');
+            if (pg.modEntryType === 'expansion') { _d(store.data, 'dlcData', {}); _d(store.data.dlcData, pg.id, { count: 0, activeDLCs: [] }); var rev = 5000; if (pg.sequelTo) { var b = GameManager.company.getGameById(pg.sequelTo); if (b && b.totalSalesCash) rev = Math.max(5000, ~~(b.totalSalesCash / 80)) } store.data.dlcData[pg.id].count++; store.data.dlcData[pg.id].activeDLCs.push({ activeWeeksLeft: 20, weeklyRevenue: rev }); }
+            if (pg.title) pg.title = pg.title.replace(/\s*\(id\d+\)$/i, '');
         }
-        [processCompetitors, csProcessMediaStudios, processDLCs, processAISales, processPublishingProjects, processCampaigns, processFranchisePassiveIncome, processMediaProjects, csProcessStreamingContracts, csProcessTheaterReleases, csProcessGridService, csUpdateAILicensingSystem].forEach(function(fn){ try{fn()}catch(e){} });
-        var mapping = store.data.playerProjectMapping || {}; 
-        Object.keys(mapping).forEach(function(id){ var pm = mapping[id]; if(pm.processed) return; var g=GameManager.company.gameLog.find(function(x){return x.id===id&&x.score>0}); 
-            if(g){ pm.processed=true; var f=getFranchiseById(pm.franchiseId); if(f) onFranchiseEntryComplete(f, {id:'FE_'+Date.now(), gameId:g.id, title:g.title, score:g.score, type:pm.entryType, releaseWeek:w, revenue:g.totalSalesCash||0, remakeTargetId:pm.remakeTargetId}, g.score, g.totalSalesCash||0);
-                delete mapping[id]; store.data.activePlayerFranchiseProject=null;
+        [processCompetitors, csProcessMediaStudios, processDLCs, processAISales, processPublishingProjects, processCampaigns, processFranchisePassiveIncome, processMediaProjects, csProcessStreamingContracts, csProcessTheaterReleases, csProcessGridService, csUpdateAILicensingSystem].forEach(function (fn) { try { fn() } catch (e) { } });
+        var mapping = store.data.playerProjectMapping || {};
+        Object.keys(mapping).forEach(function (id) {
+            var pm = mapping[id]; if (pm.processed) return; var g = GameManager.company.gameLog.find(function (x) { return x.id === id && x.score > 0 });
+            if (g) {
+                pm.processed = true; var f = getFranchiseById(pm.franchiseId); if (f) onFranchiseEntryComplete(f, { id: 'FE_' + Date.now(), gameId: g.id, title: g.title, score: g.score, type: pm.entryType, releaseWeek: w, revenue: g.totalSalesCash || 0, remakeTargetId: pm.remakeTargetId }, g.score, g.totalSalesCash || 0);
+                delete mapping[id]; store.data.activePlayerFranchiseProject = null;
             }
         });
-        if(w%12===0 && Math.random()<0.3) { var pool=generateInitialStudios().filter(function(s){return !store.data.studios.some(function(e){return e.name===s.name})}); 
-            if(pool.length){ var ns=pool[~~(Math.random()*pool.length)], sp={id:'S_'+Date.now(), name:ns.name, valuation:~~(Math.random()*5e6+1e6), sharesOwned:0, currentProject:null, isFounded:false}; store.data.studios.push(sp); _n('New Studio', sp.name+' entered the market!'); }
+        if (w % 12 === 0 && Math.random() < 0.3) {
+            var pool = generateInitialStudios().filter(function (s) { return !store.data.studios.some(function (e) { return e.name === s.name }) });
+            if (pool.length) { var ns = pool[~~(Math.random() * pool.length)], sp = { id: 'S_' + Date.now(), name: ns.name, valuation: ~~(Math.random() * 5e6 + 1e6), sharesOwned: 0, currentProject: null, isFounded: false }; store.data.studios.push(sp); _n('New Studio', sp.name + ' entered the market!'); }
         }
-        (GameManager.company.gameLog||[]).forEach(function(g){ 
-            if(g.flags && g.flags.isExtensionPack && g.sequelTo && !g.modDlcRevived){ g.modDlcRevived=true; var b=GameManager.company.getGameById(g.sequelTo); if(b && !(b.flags && b.flags.mmo)){ var bo=~~((g.score||5)*2.5e5); GameManager.company.adjustCash(bo,'DLC Surge'); _n('Storefront Surge', b.title+' generated $'+UI.getShortNumberString(bo)); } }
-            if(g.state===GameState.released && g.modIsPublishingDeal) { _d(g,'modLastSalesCash', g.totalSalesCash); var de=g.totalSalesCash-g.modLastSalesCash; if(de>0){ GameManager.company.adjustCash(-de*0.7,'Publisher Cut'); g.modLastSalesCash=g.totalSalesCash; } }
-            var sc=store.data.coDevScrubMap[g.title]; if(sc){ g.designPoints=Math.max(0,g.designPoints-(sc.design||0)); g.technologyPoints=Math.max(0,g.technologyPoints-(sc.tech||0)); delete store.data.coDevScrubMap[g.title]; }
+        (GameManager.company.gameLog || []).forEach(function (g) {
+            if (g.flags && g.flags.isExtensionPack && g.sequelTo && !g.modDlcRevived) { g.modDlcRevived = true; var b = GameManager.company.getGameById(g.sequelTo); if (b && !(b.flags && b.flags.mmo)) { var bo = ~~((g.score || 5) * 2.5e5); GameManager.company.adjustCash(bo, 'DLC Surge'); _n('Storefront Surge', b.title + ' generated $' + UI.getShortNumberString(bo)); } }
+            if (g.state === GameState.released && g.modIsPublishingDeal) { _d(g, 'modLastSalesCash', g.totalSalesCash); var de = g.totalSalesCash - g.modLastSalesCash; if (de > 0) { GameManager.company.adjustCash(-de * 0.7, 'Publisher Cut'); g.modLastSalesCash = g.totalSalesCash; } }
+            var sc = store.data.coDevScrubMap[g.title]; if (sc) { g.designPoints = Math.max(0, g.designPoints - (sc.design || 0)); g.technologyPoints = Math.max(0, g.technologyPoints - (sc.tech || 0)); delete store.data.coDevScrubMap[g.title]; }
         });
     }
 
@@ -1252,24 +1250,36 @@
     }
 
     function csShowAILicensingModal(offer) {
-        var studio = getMovieStudioById(offer.studioId), fran = getFranchiseById(offer.franchiseId);
+        var studio = getMovieStudioById(offer.studioId);
+        var fran = getFranchiseById(offer.franchiseId);
         if (!studio || !fran) return;
 
-        var modalContent = $('<div style="padding: 10px; display: flex; flex-direction: column;"></div>');
-        _ae(modalContent, '<h2 style="margin-top: 0; color: #d35400;">Licensing Proposal: ' + offer.franchiseName + '</h2>');
-        _ae(modalContent, '<div style="background: #fdf6e3; padding: 15px; border-radius: 8px; border: 1px solid #f39c12; margin-bottom: 20px;"><p style="font-size: 11pt; color: #2c3e50;"><b>' + offer.studioName + '</b> has approached you with a licensing deal for <b>' + offer.franchiseName + '</b>.</p></div>');
+        var modalContent = $('<div style="padding: 15px; display: flex; flex-direction: column; background:#eee;"></div>');
+        _ae(modalContent, '<h2 style="margin-top: 0; color: #111; border-bottom: 2px solid #444; padding-bottom:5px;">LICENSING PROPOSAL</h2>');
+        _ae(modalContent, '<div style="background: #ddd; padding: 12px; border: 2px solid #555; margin-bottom: 15px;"><p style="font-size: 10pt; color: #111; margin:0;"><b>' + offer.studioName + '</b> wants to license <b>' + offer.franchiseName + '</b>.</p></div>');
 
-        var terms = _ae(modalContent, '<div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;"></div>');
-        _ae(terms, '<div><label style="display: block; color: #7f8c8d; font-size: 8pt; text-transform: uppercase;">Upfront Payment</label><h3 style="margin: 5px 0; color: #27ae60;">$' + UI.getShortNumberString(offer.upfront) + '</h3></div>');
-        _ae(terms, '<div><label style="display: block; color: #7f8c8d; font-size: 8pt; text-transform: uppercase;">Duration</label><h3 style="margin: 5px 0; color: #2980b9;">' + offer.filmsCount + ' Films</h3></div>');
-        _ae(terms, '<div><label style="display: block; color: #7f8c8d; font-size: 8pt; text-transform: uppercase;">Your Royalties</label><h3 style="margin: 5px 0; color: #8e44ad;">' + (offer.royaltyRate * 100).toFixed(0) + '%</h3></div>');
-        _ae(terms, '<div><label style="display: block; color: #7f8c8d; font-size: 8pt; text-transform: uppercase;">Studio Prestige</label><h3 style="margin: 5px 0; color: #d35400;">' + (studio.reputation || 1).toFixed(1) + '/5</h3></div>');
+        var terms = _ae(modalContent, '<div style="background: #ccc; padding: 12px; border: 2px solid #555; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>');
+        var _t = function(p, l, v, c) {
+            var d = _ae(p, '<div></div>');
+            _ae(d, '<label style="display: block; color: #444; font-size: 7pt; font-weight:bold; text-transform: uppercase;">' + l + '</label>');
+            _ae(d, '<div style="font-size: 14pt; font-weight:bold; color:' + (c || '#111') + ';">' + v + '</div>');
+        };
 
-        var actions = _ae(modalContent, '<div style="display: flex; gap: 15px; margin-top: 10px;"></div>');
-        _ae(actions, '<div class="selectorButton greenButton" style="flex: 1; padding: 12px; font-weight: bold; text-align: center;">Accept Deal</div>').click(function () { csHandleAILicensingResponse(offer, true); $.modal.close(); });
-        _ae(actions, '<div class="selectorButton redButton" style="flex: 1; padding: 12px; font-weight: bold; text-align: center;">Decline</div>').click(function () { csHandleAILicensingResponse(offer, false); $.modal.close(); });
+        _t(terms, 'Upfront', '$' + UI.getShortNumberString(offer.upfront), '#27ae60');
+        _t(terms, 'Duration', offer.filmsCount + ' Films', '#3498db');
+        _t(terms, 'Royalties', (offer.royaltyRate * 100).toFixed(0) + '%', '#9b59b6');
+        _t(terms, 'Studio Rep', (studio.reputation || 1).toFixed(1) + '/5', '#e67e22');
 
-        $.modal(modalContent, { overlayClose: true, opacity: 80, overlayCss: { backgroundColor: "#000" }, containerCss: { width: "600px", backgroundColor: "#ecf0f1", borderRadius: "8px", padding: "20px" } });
+        var actions = _ae(modalContent, '<div style="display: flex; gap: 10px; margin-top: 5px;"></div>');
+        _ae(actions, '<div class="selectorButton greenButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center;">ACCEPT DEAL</div>').click(function () { csHandleAILicensingResponse(offer, true); $.modal.close(); });
+        _ae(actions, '<div class="selectorButton redButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center;">DECLINE</div>').click(function () { csHandleAILicensingResponse(offer, false); $.modal.close(); });
+
+        $.modal(modalContent, { 
+            overlayClose: true, 
+            opacity: 80, 
+            overlayCss: { backgroundColor: "#000" }, 
+            containerCss: { width: "500px", backgroundColor: "#eee", border: "4px solid #333", padding: "0" } 
+        });
     }
 
     function csHandleAILicensingResponse(offer, accepted) {
@@ -1399,7 +1409,7 @@
             }
         }
 
-        
+
         var currentWkDist = Math.floor(GameManager.company.currentWeek);
         for (var pdI = store.data.pendingDistribution.length - 1; pdI >= 0; pdI--) {
             var pdItem = store.data.pendingDistribution[pdI];
@@ -1418,7 +1428,7 @@
     }
 
     function csPromptMediaDraft(ms) {
-        if ($("#simplemodal-overlay").length > 0) return; 
+        if ($("#simplemodal-overlay").length > 0) return;
 
         var draft = {
             title: ms.name + " Production " + Math.floor(Math.random() * 1000),
@@ -1430,7 +1440,7 @@
         var content = $('<div style="padding: 10px;"></div>');
         content.append('<h2 style="color: #d35400; margin-top: 0;">Media Production Pitch</h2>');
         content.append('<p>Your subsidiary <b>' + ms.name + '</b> has proposed a new project:</p>');
-        var info = $('<div class="cs-stagger-item" style="background: #fff; border: 1px solid #bdc3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>');
+        var info = $('<div class="cs-stagger-item" style="background: #fff; border: 2px solid #555; padding: 15px; border-radius: 0px; margin-bottom: 20px;"></div>');
         info.append('<div style="font-weight: bold; font-size: 14pt;">' + draft.title + '</div>');
         info.append('<div style="color: #7f8c8d; font-size: 11pt;">Format: ' + draft.type + '</div>');
         info.append('<div style="color: #e74c3c; font-weight: bold; margin-top: 5px;">Required Budget: $' + UI.getShortNumberString(draft.budget) + '</div>');
@@ -1460,7 +1470,7 @@
 
         var rejectBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; text-align: center;">Decline</div>');
         rejectBtn.click(function () {
-            ms.draftCooldown = 12; 
+            ms.draftCooldown = 12;
             Sound.click();
             $.modal.close();
         });
@@ -1473,7 +1483,7 @@
             overlayClose: false,
             opacity: 80,
             overlayCss: { backgroundColor: "#000" },
-            containerCss: { width: "500px", height: "auto", backgroundColor: "#ecf0f1", borderRadius: "8px", padding: "15px" }
+            containerCss: { width: "500px", height: "auto", backgroundColor: "#eee", border: "4px solid #333", padding: "15px" }
         });
     }
 
@@ -1524,9 +1534,9 @@
                     var proj = ms.currentProject;
                     ms.currentProject = null;
                     csLog("csProcessMediaStudios: Tick release for " + ms.name + " - Title: " + proj.title + ", PlayerFunded: " + proj.isPlayerFunded);
-                    
+
                     if (proj.isPlayerFunded) {
-                        
+
                         var finalScore = Math.min(10, Math.floor(proj.score + (Math.random() * 2 - 0.5)));
                         finalScore = Math.max(1, finalScore);
                         var baseRev = Math.floor(proj.budget * (1.2 + (finalScore / 10)));
@@ -1566,7 +1576,7 @@
                             _n("Subsidiary Media Finished", ms.name + " has delivered " + newProj.title + ". It awaits distribution.");
                         }
                     } else {
-                        
+
                         var catDeal = (store.data.activeCatalogueDeals || []).filter(function (d) { return d.studioId === ms.id && currentWk < d.endWeek; })[0];
                         if (catDeal && store.data.gridService && store.data.gridService.isActive) {
                             var pseudoMovie = { title: proj.title, score: proj.score, studioName: ms.name };
@@ -1585,7 +1595,7 @@
                             });
                         }
 
-                        
+
                         if (proj.modLicenseId) {
                             var lic = store.data.activeAILicenses.filter(function (l) { return l.id === proj.modLicenseId; })[0];
                             if (lic) {
@@ -1614,7 +1624,7 @@
                         csPromptMediaDraft(ms);
                     }
                 } else {
-                    
+
                     var licToUse = store.data.activeAILicenses.filter(function (l) { return l.studioId === ms.id && l.filmsRemaining > 0; })[0];
                     if (licToUse && Math.random() < 0.6) {
                         var lFran = getFranchiseById(licToUse.franchiseId);
@@ -1684,7 +1694,7 @@
 
                     platform.totalDealsCompleted++;
                     platform.playerRelationship = Math.min(100, platform.playerRelationship + 5);
-                    _n("Streaming Contract Complete", deal.title+" completed its run on "+platform.name);
+                    _n("Streaming Contract Complete", deal.title + " completed its run on " + platform.name);
                     platform.activeDeals.splice(j, 1);
                 }
             }
@@ -1745,7 +1755,7 @@
                 if (theaterChain) theaterChain.activeRelease = null;
                 if (mediaProj) mediaProj.distributionStatus = "theaterComplete";
 
-                _n("Theater Run Complete: "+release.title, "Total Box Office: $"+UI.getShortNumberString(release.totalBoxOffice)+" | Your Share: $"+UI.getShortNumberString(release.playerShare));
+                _n("Theater Run Complete: " + release.title, "Total Box Office: $" + UI.getShortNumberString(release.totalBoxOffice) + " | Your Share: $" + UI.getShortNumberString(release.playerShare));
 
                 if (mediaProj && mediaProj.type === "movie" && mediaProj.franchiseId) {
                     var maxBudget = mediaProj.budget || 5000000;
@@ -1769,46 +1779,46 @@
         if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
         if (!Array.isArray(grid.revenueHistory)) grid.revenueHistory = [];
 
-        
+
         var contentScore = 0;
         for (var i = 0; i < grid.contentLibrary.length; i++) {
             var entry = grid.contentLibrary[i];
-            
+
             if (typeof entry.score !== "number" || isNaN(entry.score)) entry.score = 5;
             if (typeof entry.addedWeek !== "number" || isNaN(entry.addedWeek)) entry.addedWeek = currentWeek;
             if (typeof entry.totalViews !== "number" || isNaN(entry.totalViews)) entry.totalViews = 0;
             if (typeof entry.freshness !== "number" || isNaN(entry.freshness) || entry.freshness <= 0) entry.freshness = 0.5;
 
-            
+
             entry.freshness = Math.max(0.2, entry.freshness * 0.995);
 
-            
+
             var eScore = entry.score * entry.freshness * (entry.isOriginal ? 1.5 : 1.0);
             contentScore += eScore;
 
-            
+
             entry.viewsThisWeek = Math.floor((grid.subscribers || 0) * 0.03 * (entry.score / 10) * entry.freshness);
             if (isNaN(entry.viewsThisWeek)) entry.viewsThisWeek = 0;
             entry.totalViews += entry.viewsThisWeek;
         }
         contentScore = Math.max(0, isNaN(contentScore) ? 0 : contentScore);
 
-        
+
         var marketingBoost = 1.0 + ((grid.marketingBudgetWeekly || 0) / 1000000) * 0.5;
         if (isNaN(marketingBoost) || !isFinite(marketingBoost)) marketingBoost = 1.0;
         grid.pendingMarketing = (grid.pendingMarketing || 0) + (grid.marketingBudgetWeekly || 0);
 
-        
+
         var contentGrowthBonus = Math.min(0.05, contentScore / 10000);
         var newSubs = Math.floor((grid.subscribers || 0) * ((grid.subscriberGrowthRate || 0.02) + contentGrowthBonus) * marketingBoost);
         if (isNaN(newSubs)) newSubs = 100;
         newSubs = Math.max(100, newSubs);
 
-        
+
         var baseChurn = grid.churnRate || 0.01;
         var churnMultiplier = 1.0;
         if (grid.contentLibrary.length === 0) {
-            churnMultiplier = 999; 
+            churnMultiplier = 999;
             newSubs = 0;
         } else if (grid.contentLibrary.length < 3) {
             churnMultiplier = 2.0;
@@ -1818,12 +1828,12 @@
         var churnedSubs = Math.floor((grid.subscribers || 0) * baseChurn * churnMultiplier);
         if (isNaN(churnedSubs)) churnedSubs = 0;
 
-        
+
         grid.lastWeekSubscribers = grid.subscribers || 0;
         grid.subscribers = Math.max(0, (grid.subscribers || 0) + newSubs - churnedSubs);
         if (isNaN(grid.subscribers) || !isFinite(grid.subscribers)) grid.subscribers = 0;
 
-        
+
         var weeklySubRevenue = Math.floor((grid.subscribers || 0) * ((grid.monthlySubFee || 14.99) / 4));
         if (isNaN(weeklySubRevenue)) weeklySubRevenue = 0;
         grid.weeklyRevenue = weeklySubRevenue;
@@ -1833,7 +1843,7 @@
             if (isNaN(grid.totalRevenue)) grid.totalRevenue = weeklySubRevenue;
         }
 
-        
+
         var baseUpkeep = 5000;
         var varUpkeep = 0;
         var subs = grid.subscribers || 0;
@@ -1846,7 +1856,7 @@
         if (isNaN(grid.weeklyUpkeep)) grid.weeklyUpkeep = baseUpkeep;
         grid.pendingUpkeep = (grid.pendingUpkeep || 0) + grid.weeklyUpkeep;
 
-        
+
         for (var li = grid.contentLibrary.length - 1; li >= 0; li--) {
             var libEntry = grid.contentLibrary[li];
             if (!libEntry.isOriginal && libEntry.licenseCostWeekly > 0) {
@@ -1855,12 +1865,12 @@
                     libEntry.licenseWeeksRemaining--;
                 } else {
                     grid.contentLibrary.splice(li, 1);
-                    _n("Grid License Expired", libEntry.title+" has been removed from Grid as its license expired.");
+                    _n("Grid License Expired", libEntry.title + " has been removed from Grid as its license expired.");
                 }
             }
         }
 
-        
+
         if (currentWeek % 4 === 0) {
             if (grid.pendingRevenue > 0) {
                 GameManager.company.adjustCash(grid.pendingRevenue, "Grid Subscriptions (Monthly)");
@@ -1875,7 +1885,7 @@
                 grid.pendingUpkeep = 0;
             }
 
-            
+
             var totalCatMaint = 0;
             if (!store.data.activeCatalogueDeals) store.data.activeCatalogueDeals = [];
             for (var cdi = store.data.activeCatalogueDeals.length - 1; cdi >= 0; cdi--) {
@@ -1896,7 +1906,7 @@
             }
         }
 
-        
+
         var milestoneMap = [
             { threshold: 10000, prestige: 1 },
             { threshold: 100000, prestige: 2 },
@@ -1912,14 +1922,14 @@
                 var oldPrestige = grid.prestige;
                 grid.prestige = Math.max(grid.prestige, ms.prestige);
                 if (grid.prestige > oldPrestige) {
-                    _n("Grid Milestone!", "Grid has reached "+UI.getShortNumberString(ms.threshold)+" subscribers! Prestige increased to "+grid.prestige+".");
+                    _n("Grid Milestone!", "Grid has reached " + UI.getShortNumberString(ms.threshold) + " subscribers! Prestige increased to " + grid.prestige + ".");
                 } else {
-                    _n("Grid Milestone!", "Grid has reached "+UI.getShortNumberString(ms.threshold)+" subscribers!");
+                    _n("Grid Milestone!", "Grid has reached " + UI.getShortNumberString(ms.threshold) + " subscribers!");
                 }
             }
         }
 
-        
+
         grid.revenueHistory.push({
             week: currentWeek,
             revenue: weeklySubRevenue,
@@ -1950,10 +1960,10 @@
                         f.isListedByPlayer = false;
                         if (!f.acquisitionHistory) f.acquisitionHistory = [];
                         f.acquisitionHistory.push({ week: currentWeek, newOwner: buyer.name, price: f.playerSalePrice });
-                        _n("Franchise Sold!", buyer.name+" has purchased your '"+f.name+"' franchise for $"+UI.getShortNumberString(f.playerSalePrice));
+                        _n("Franchise Sold!", buyer.name + " has purchased your '" + f.name + "' franchise for $" + UI.getShortNumberString(f.playerSalePrice));
                     } else {
                         f.isListedByPlayer = false;
-                        _n("Franchise Sale Failed", "We couldn't find an eligible buyer for '"+f.name+"'. (No independent studios available)");
+                        _n("Franchise Sale Failed", "We couldn't find an eligible buyer for '" + f.name + "'. (No independent studios available)");
                     }
                 }
             }
@@ -2046,19 +2056,19 @@
     };
 
     function ensureStaffObj(studio) {
-        if(!studio.staff||typeof studio.staff!=='object') studio.staff={1:0,2:0,3:0,4:0,5:0};
-        for(var t=1;t<=5;t++) if(typeof studio.staff[t]!=='number') studio.staff[t]=0;
-        if(typeof studio.employees==="number"){ studio.staff[2]=(studio.staff[2]||0)+studio.employees; delete studio.employees; }
-        var total=studio.staff[1]+studio.staff[2]+studio.staff[3]+studio.staff[4]+studio.staff[5];
-        if(total===0){
-            var vf=Math.min(2,studio.valuation/20000000);
-            var n=studio.isFounded?5:Math.floor(Math.random()*(5+Math.floor(vf*10)))+5;
-            for(var i=0;i<n;i++){
-                var r=Math.random();
-                if(r<Math.max(.05,.2-vf*.15))studio.staff[1]++;
-                else if(r<Math.max(.1,.6-vf*.25))studio.staff[2]++;
-                else if(r<Math.max(.2,.85-vf*.2))studio.staff[3]++;
-                else if(r<Math.min(.99,.95+vf*.05))studio.staff[4]++;
+        if (!studio.staff || typeof studio.staff !== 'object') studio.staff = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        for (var t = 1; t <= 5; t++) if (typeof studio.staff[t] !== 'number') studio.staff[t] = 0;
+        if (typeof studio.employees === "number") { studio.staff[2] = (studio.staff[2] || 0) + studio.employees; delete studio.employees; }
+        var total = studio.staff[1] + studio.staff[2] + studio.staff[3] + studio.staff[4] + studio.staff[5];
+        if (total === 0) {
+            var vf = Math.min(2, studio.valuation / 20000000);
+            var n = studio.isFounded ? 5 : Math.floor(Math.random() * (5 + Math.floor(vf * 10))) + 5;
+            for (var i = 0; i < n; i++) {
+                var r = Math.random();
+                if (r < Math.max(.05, .2 - vf * .15)) studio.staff[1]++;
+                else if (r < Math.max(.1, .6 - vf * .25)) studio.staff[2]++;
+                else if (r < Math.max(.2, .85 - vf * .2)) studio.staff[3]++;
+                else if (r < Math.min(.99, .95 + vf * .05)) studio.staff[4]++;
                 else studio.staff[5]++;
             }
         }
@@ -2224,7 +2234,7 @@
                                     entryType: offer.entryType || null
                                 });
                                 var gName = offer.title || (offer.size + " " + offer.genre);
-                                _n("Publishing Deal Accepted", studio.name+" accepted your deal for '"+gName+"' ($"+UI.getShortNumberString(offer.advance)+" advance) and started development!");
+                                _n("Publishing Deal Accepted", studio.name + " accepted your deal for '" + gName + "' ($" + UI.getShortNumberString(offer.advance) + " advance) and started development!");
                                 acceptedOffer = true;
                                 break;
                             }
@@ -2339,8 +2349,8 @@
             isShowingDraft = true; Sound.click();
             var genreIndexMap = { "Action": 0, "Adventure": 1, "RPG": 2, "Simulation": 3, "Strategy": 4, "Casual": 5 };
 
-            var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; color: #2c3e50; padding: 0; display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; position: relative;"></div>');
-            _ae(container, '<div style="position: absolute; right: 10px; top: 10px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>')
+            var container = $('<div class="windowBorder tallWindow" style="background-color: #eee; border-radius: 0px; color: #2c3e50; padding: 0; display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; position: relative;"></div>');
+            _ae(container, '<div style="position: absolute; right: 10px; top: 10px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: none;">×</div>')
                 .click(function () { isShowingDraft = false; $.modal.close(); })
                 .hover(function () { $(this).css('background', '#c0392b'); }, function () { $(this).css('background', '#e74c3c'); });
 
@@ -2388,7 +2398,7 @@
 
             var matchBar = _ae(body, '<div style="display: flex; align-items: center; margin-top: 5px; margin-bottom: 10px;"></div>');
             _ae(matchBar, '<div style="width: 85px; font-size: 11pt; font-weight: bold; color: #7f8c8d; text-transform: uppercase;">Match</div>');
-            var matchLabel = _ae(matchBar, '<span id="draft_match" style="font-size: 10.5pt; font-weight: bold; padding: 4px 12px; border-radius: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></span>');
+            var matchLabel = _ae(matchBar, '<span id="draft_match" style="font-size: 10.5pt; font-weight: bold; padding: 4px 12px; border-radius: 0px; box-shadow: none;"></span>');
 
             function updateDraftMatch() {
                 var selTopic = $('#draft_topic').val(), selGenre = $('#draft_genre').val();
@@ -2403,10 +2413,10 @@
                 }
             }
 
-            _ae(body, '<div style="text-align: center; margin-top: 15px; padding: 12px; background: #f4f6f7; border: 2px dashed #bdc3c7; border-radius: 8px; font-size: 13pt; color: #2c3e50;">Required Funding: <strong id="draft_cost_val" style="color: #c0392b; font-size: 15pt;">$' + UI.getShortNumberString(draft.cost) + '</strong></div>');
-            
-            var btnArea = _ae(container, '<div style="flex: 0 0 auto; display: flex; gap: 10px; padding: 15px 20px; background: #ecf0f1; border-top: 2px solid #bdc3c7;"></div>');
-            var btnAccept = $('<div class=\"selectorButton greenButton\" style=\"flex: 1.5; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 6px;\">Accept \u0026 Fund</div>');
+            _ae(body, '<div style="text-align: center; margin-top: 15px; padding: 12px; background: #f4f6f7; border: 2px dashed #bdc3c7; border-radius: 0px; font-size: 13pt; color: #2c3e50;">Required Funding: <strong id="draft_cost_val" style="color: #c0392b; font-size: 15pt;">$' + UI.getShortNumberString(draft.cost) + '</strong></div>');
+
+            var btnArea = _ae(container, '<div style="flex: 0 0 auto; display: flex; gap: 10px; padding: 15px 20px; background: #eee; border-top: 2px solid #bdc3c7;"></div>');
+            var btnAccept = $('<div class=\"selectorButton greenButton\" style=\"flex: 1.5; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 0px;\">Accept \u0026 Fund</div>');
             btnAccept.click(function () {
                 var selTopic = $('#draft_topic').val();
                 var selGenre = $('#draft_genre').val();
@@ -2429,7 +2439,7 @@
                 } else { csNotify("You need $" + UI.getShortNumberString(cost) + " to fund this draft!"); }
             });
 
-            var btnDecline = $('<div class=\"selectorButton deleteButton\" style=\"flex: 1; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 6px;\">Decline</div>');
+            var btnDecline = $('<div class=\"selectorButton deleteButton\" style=\"flex: 1; text-align: center; padding: 12px 0; font-size: 13pt; font-weight: bold; cursor: pointer; border-radius: 0px;\">Decline</div>');
             btnDecline.click(function () { isShowingDraft = false; studio.draftCooldown = 8; $.modal.close(); });
 
             btnArea.append(btnAccept).append(btnDecline);
@@ -2474,7 +2484,7 @@
 
 
             if (!studio.currentProject) {
-                studio.currentProject = { id:project.id, name:project.title||generateGameName(project.topic,project.genre), title:project.title||null, topic:project.topic, genre:project.genre, genre2:project.genre2||null, size:project.size, platforms:project.platforms, weeksRemaining:project.weeksRemaining, isPublishedByPlayer:project.isPublishedByPlayer, publishedGameAdvance:project.publishedGameAdvance, isFranchiseEntry:project.isFranchiseEntry, franchiseId:project.franchiseId, entryType:project.entryType };
+                studio.currentProject = { id: project.id, name: project.title || generateGameName(project.topic, project.genre), title: project.title || null, topic: project.topic, genre: project.genre, genre2: project.genre2 || null, size: project.size, platforms: project.platforms, weeksRemaining: project.weeksRemaining, isPublishedByPlayer: project.isPublishedByPlayer, publishedGameAdvance: project.publishedGameAdvance, isFranchiseEntry: project.isFranchiseEntry, franchiseId: project.franchiseId, entryType: project.entryType };
             }
 
 
@@ -2533,10 +2543,10 @@
         var totalQuality = 0;
         for (var t = 1; t <= 5; t++) totalQuality += (starTiers[t].score * (studio.staff[t] || 0));
 
-        
+
         var qFactor = Math.max(0, Math.min(1.0, (totalQuality - 3.0) / (37.5 - 3.0)));
 
-        
+
         var rngWeight = 1.0 - (qFactor * 0.95);
 
         var talentScore = (qFactor * 9) + 1;
@@ -2546,7 +2556,7 @@
 
         if (proj.size === "AAA") score += 1;
 
-        
+
         if (proj && (proj.type === "remake" || proj.type === "remaster")) {
             var f = getFranchiseById(proj.franchiseId);
             if (f && f.installments && f.installments.length > 0) {
@@ -2585,7 +2595,7 @@
                 weeklyRevenue: proj.weeklyRevenue
             });
 
-            _n("Subsidiary DLC Released", studio.name+" finished developing "+proj.name+" (#"+store.data.dlcData[proj.gameId].count+")! It is now generating revenue.");
+            _n("Subsidiary DLC Released", studio.name + " finished developing " + proj.name + " (#" + store.data.dlcData[proj.gameId].count + ")! It is now generating revenue.");
             return;
         }
 
@@ -2813,7 +2823,7 @@
                     dlc.pendingPlayerDev--;
                     if (dlc.pendingPlayerDev <= 0) {
                         dlc.activeWeeksLeft = 20;
-                        _n("DLC Finished", "Your DLC for "+(GameManager.company.getGameById(gameId)?GameManager.company.getGameById(gameId).title:"your game")+" is finished and generating revenue!");
+                        _n("DLC Finished", "Your DLC for " + (GameManager.company.getGameById(gameId) ? GameManager.company.getGameById(gameId).title : "your game") + " is finished and generating revenue!");
                     }
                 } else if (dlc.activeWeeksLeft > 0) {
                     var mult = dlc.modRevenueMultiplier || 1.0;
@@ -2842,7 +2852,7 @@
             c.weeksLeft--;
 
             if (c.weeksLeft <= 0) {
-                _n("Campaign Finished", "Your marketing campaign for '"+c.targetName+"' has concluded.");
+                _n("Campaign Finished", "Your marketing campaign for '" + c.targetName + "' has concluded.");
                 store.data.activeCampaigns.splice(i, 1);
             }
         }
@@ -2854,13 +2864,13 @@
         for (var i = 0; i < games.length; i++) {
             var g = games[i];
 
-            
+
             var totalSales = g.totalSalesCash || 0;
             var prevTotal = g.modLastTotalSales || totalSales;
             var weeklyRev = totalSales - prevTotal;
             g.modLastTotalSales = totalSales;
 
-            
+
             if (!g.modRevenueHistory) g.modRevenueHistory = [];
             g.modRevenueHistory.push(weeklyRev);
             if (g.modRevenueHistory.length > 4) g.modRevenueHistory.shift();
@@ -2868,7 +2878,7 @@
             var maxAge = 20 + (g.modMarketExtension || 0);
             var age = currentWk - g.releaseWeek;
 
-            
+
             if (g.state === GameState.released && !g.isExtensionPack && (maxAge - age === 4)) {
                 var promptKey = "PROMPT_" + (g.modMarketExtension || 0);
                 if (g.modLastPromptKey !== promptKey) {
@@ -2876,9 +2886,9 @@
 
                     var lastMonthRev = 0;
                     g.modRevenueHistory.forEach(function (r) { lastMonthRev += r; });
-                    if (lastMonthRev === 0) lastMonthRev = weeklyRev * 4; 
+                    if (lastMonthRev === 0) lastMonthRev = weeklyRev * 4;
 
-                    var forecastRev = Math.floor(lastMonthRev * 0.85); 
+                    var forecastRev = Math.floor(lastMonthRev * 0.85);
                     var mCost = Math.floor(totalSales * 0.05) + 20000;
 
                     showMaintainModal(g, lastMonthRev, forecastRev, mCost);
@@ -2909,7 +2919,7 @@
         modal.append('<h2 style="color: #d35400; margin-bottom: 15px;">Market Extension: ' + game.title + '</h2>');
         modal.append('<p style="font-size: 11pt; line-height: 1.4;">' + game.title + ' is scheduled to be pulled from the market in <b>4 weeks</b>.</p>');
 
-        var stats = $('<div style="background: #fdf6e3; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #bdc3c7; display: flex; justify-content: space-around;"></div>');
+        var stats = $('<div style="background: #ddd; padding: 15px; border-radius: 0px; margin: 15px 0; border: 2px solid #555; display: flex; justify-content: space-around;"></div>');
         stats.append('<div><span style="font-size: 8pt; color: #7f8c8d; text-transform: uppercase;">Last Month</span><br><b style="color: #27ae60; font-size: 12pt;">$' + UI.getShortNumberString(lastMonth) + '</b></div>');
         stats.append('<div><span style="font-size: 8pt; color: #7f8c8d; text-transform: uppercase;">Forecasted</span><br><b style="color: #2980b9; font-size: 12pt;">~$' + UI.getShortNumberString(forecast) + '</b></div>');
         stats.append('<div><span style="font-size: 8pt; color: #7f8c8d; text-transform: uppercase;">Extension Fee</span><br><b style="color: #c0392b; font-size: 12pt;">$' + UI.getShortNumberString(cost) + '</b></div>');
@@ -2966,17 +2976,17 @@
             return;
         }
 
-        var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; color: #2c3e50; padding: 0; display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; position: relative; overflow: hidden;"></div>');
+        var container = $('<div id="modUI" class="windowBorder tallWindow" style="background-color: #eee; border-radius: 0px; color: #2c3e50; padding: 0; display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; position: relative; overflow: hidden;"></div>');
         container.data('menuType', menuType);
         var header = $('<div id="modUI_header" style="flex: 0 0 auto; display: flex; flex-wrap: nowrap; gap: 2px; border-bottom: 2px solid #bdc3c7; padding: 12px 40px 0 12px; background-color: #e0e6ed; overflow: hidden; cursor: move; position: relative; border-top-left-radius: 14px; border-top-right-radius: 14px;"></div>');
         container.append(header);
 
-        var xBtn = $('<div style="position: absolute; right: 12px; top: 12px; width: 26px; height: 26px; line-height: 24px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 16pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>');
+        var xBtn = $('<div style="position: absolute; right: 12px; top: 12px; width: 26px; height: 26px; line-height: 24px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 16pt; z-index: 1000; box-shadow: none;">×</div>');
         xBtn.click(function () { $.modal.close(); });
         xBtn.hover(function () { $(this).css('background', '#c0392b'); }, function () { $(this).css('background', '#e74c3c'); });
         container.append(xBtn);
-        
-        var contentArea = $('<div id="modUI_content" style="flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px; background-color: #ecf0f1; box-sizing: border-box; min-height: 0;"></div>');
+
+        var contentArea = $('<div id="modUI_content" style="flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px; background-color: #eee; box-sizing: border-box; min-height: 0;"></div>');
         container.append(contentArea);
 
         var closeWrapper = $('<div class="centeredButtonWrapper" style="flex: 0 0 auto; padding: 8px; border-top: 2px solid #bdc3c7; text-align: center;"></div>');
@@ -3022,7 +3032,7 @@
         btnRow.append(clearBtn);
         container.append(btnRow);
 
-        var logList = $('<div style="background: #1a1a1a; color: #2ecc71; font-family: monospace; font-size: 9pt; padding: 10px; border-radius: 4px; border: 1px solid #333; overflow-y: auto; max-height: 450px;"></div>');
+        var logList = $('<div style="background: #1a1a1a; color: #2ecc71; font-family: monospace; font-size: 9pt; padding: 10px; border-radius: 0px; border: 1px solid #333; overflow-y: auto; max-height: 450px;"></div>');
         var logs = store.data.debugLogs || [];
         if (logs.length === 0) {
             logList.append('<div style="color: #7f8c8d; font-style: italic;">No logs yet. Try performing actions like signing a deal.</div>');
@@ -3032,7 +3042,7 @@
             });
         }
         container.append(logList);
-    }    function routeModMenu(activeTab, menuType) {
+    } function routeModMenu(activeTab, menuType) {
         menuType = menuType || $('#modUI').data('menuType') || "studios";
         var header = $('#modUI_header'), contentArea = $('#modUI_content');
         if (header.length === 0 || contentArea.length === 0) return;
@@ -3054,7 +3064,7 @@
             media: { label: "Media", type: "media", render: renderMediaTab },
             marketing: { label: "Marketing", type: "studios", render: renderMarketingTab },
             settings: { label: "Settings", type: "studios", render: renderSettingsTab },
-            grid_dashboard: { label: "Grid", type: "media", render: csRenderGridDashboard, condition: function() { return store.data.gridService && store.data.gridService.isActive; } },
+            grid_dashboard: { label: "Grid", type: "media", render: csRenderGridDashboard, condition: function () { return store.data.gridService && store.data.gridService.isActive; } },
             distribution_offers: { label: "Offers", type: "media", render: csRenderDistributionOffers, hidden: true },
             debug: { label: "Debug", type: "studios", render: renderDebugTab, hidden: true }
         };
@@ -3064,8 +3074,8 @@
             if (t.hidden || (t.type !== menuType && t.type !== "any")) return;
             if (t.condition && !t.condition()) return;
 
-            var tabStyle = "flex: 1; text-align: center; padding: 6px 2px; cursor: pointer; font-size: 10pt; font-weight: bold; border-top-left-radius: 5px; border-top-right-radius: 5px; border: 1px solid #bdc3c7; border-bottom: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;";
-            if (id === activeTab) tabStyle += " background-color: #ecf0f1; color: #d35400; margin-bottom: -2px; border-bottom: 2px solid #ecf0f1;";
+            var tabStyle = "flex: 1; text-align: center; padding: 6px 2px; cursor: pointer; font-size: 10pt; font-weight: bold; border-top-left-radius: 5px; border-top-right-radius: 5px; border: 2px solid #555; border-bottom: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;";
+            if (id === activeTab) tabStyle += " background-color: #eee; color: #d35400; margin-bottom: -2px; border-bottom: 2px solid #eee;";
             else tabStyle += " background-color: #bdc3c7; color: #7f8c8d;";
 
             _ae(header, '<div style="' + tabStyle + '">' + t.label + '</div>').click(function () {
@@ -3225,78 +3235,81 @@
             remakeTargetId: remakeTargetId
         };
 
-        _n("Project Assigned", studio.name+" has started work on the new "+franchise.name+" installment.");
+        _n("Project Assigned", studio.name + " has started work on the new " + franchise.name + " installment.");
     }
 
     function showNewEntryModal(f, c, b) {
-        c.empty(); var ty='sequel', sz='Small', bs=[], rem=null, m=_ae(c, '<div style="background:#fdf6e3; padding:0; min-height:400px;"></div>'), 
-            h=_ae(m, '<div style="background:#d35400; padding:15px; color:white; font-size:14pt; font-weight:bold; display:flex; justify-content:space-between;"><span>New: '+f.name+'</span><div class="selectorButton" style="font-size:10pt;">BACK</div></div>');
-        h.find('.selectorButton').click(b); var bod=_ae(m, '<div style="padding:20px;"></div>'), r1=_ae(bod, '<div><b>Type:</b><br></div>'), r2=_ae(bod, '<div style="margin:15px 0;"><b>Size:</b><br></div>'), 
-            es=_ae(bod, '<div style="background:#eee; padding:10px; border-radius:5px; margin-bottom:15px;">Cost: $<b>0</b> | Score: <b>0-0</b></div>');
-        var upE = function(){ var n=(ty==='bundle'?bs.length:1), cs=getEntryTypeCost(ty,sz,f,n); es.find('b:first').text('$'+UI.getShortNumberString(cs));
-            var r=(ty==='bundle'&&bs.length>0)?(bs.reduce(function(a,v){var i=f.installments.find(function(x){return x.id===v}); return a+(i?i.score:5)},0)/bs.length):estimateFranchiseEntryScore(f,ty,sz,rem).min;
-            es.find('b:last').text((r-1).toFixed(1)+' - '+(r+1).toFixed(1)); };
-        ['sequel','remaster','remake','reboot','spinoff','prequel','expansion','bundle'].forEach(function(t){ 
-            var ok=canAddFranchiseEntry(f,t).ok, x=_ae(r1, '<div class="entry-type-btn" style="background:'+(ok?'#bdc3c7':'#eee')+'; color:'+(ok?'#2c3e50':'#999')+';">'+t+'</div>');
-            x.click(function(){ if(ok){ ty=t; bod.find('.entry-type-btn').css('background','#bdc3c7'); x.css('background','#d35400'); upE() } });
+        c.empty(); var ty = 'sequel', sz = 'Small', bs = [], rem = null, m = _ae(c, '<div style="background:#ddd; padding:0; min-height:400px;"></div>'),
+            h = _ae(m, '<div style="background:#d35400; padding:15px; color:white; font-size:14pt; font-weight:bold; display:flex; justify-content:space-between;"><span>New: ' + f.name + '</span><div class="selectorButton" style="font-size:10pt;">BACK</div></div>');
+        h.find('.selectorButton').click(b); var bod = _ae(m, '<div style="padding:20px;"></div>'), r1 = _ae(bod, '<div><b>Type:</b><br></div>'), r2 = _ae(bod, '<div style="margin:15px 0;"><b>Size:</b><br></div>'),
+            es = _ae(bod, '<div style="background:#eee; padding:10px; border-radius:5px; margin-bottom:15px;">Cost: $<b>0</b> | Score: <b>0-0</b></div>');
+        var upE = function () {
+            var n = (ty === 'bundle' ? bs.length : 1), cs = getEntryTypeCost(ty, sz, f, n); es.find('b:first').text('$' + UI.getShortNumberString(cs));
+            var r = (ty === 'bundle' && bs.length > 0) ? (bs.reduce(function (a, v) { var i = f.installments.find(function (x) { return x.id === v }); return a + (i ? i.score : 5) }, 0) / bs.length) : estimateFranchiseEntryScore(f, ty, sz, rem).min;
+            es.find('b:last').text((r - 1).toFixed(1) + ' - ' + (r + 1).toFixed(1));
+        };
+        ['sequel', 'remaster', 'remake', 'reboot', 'spinoff', 'prequel', 'expansion', 'bundle'].forEach(function (t) {
+            var ok = canAddFranchiseEntry(f, t).ok, x = _ae(r1, '<div class="entry-type-btn" style="background:' + (ok ? '#bdc3c7' : '#eee') + '; color:' + (ok ? '#2c3e50' : '#999') + ';">' + t + '</div>');
+            x.click(function () { if (ok) { ty = t; bod.find('.entry-type-btn').css('background', '#bdc3c7'); x.css('background', '#d35400'); upE() } });
         });
-        ['Small','Medium','Large','AAA'].forEach(function(s){ 
-            var x=_ae(r2, '<div class="entry-type-btn" style="background:#bdc3c7;">'+s+'</div>');
-            x.click(function(){ sz=s; bod.find('.entry-type').css('background','#bdc3c7'); x.css('background','#d35400'); upE() });
+        ['Small', 'Medium', 'Large', 'AAA'].forEach(function (s) {
+            var x = _ae(r2, '<div class="entry-type-btn" style="background:#bdc3c7;">' + s + '</div>');
+            x.click(function () { sz = s; bod.find('.entry-type').css('background', '#bdc3c7'); x.css('background', '#d35400'); upE() });
         });
-        _ae(bod, '<div class="selectorButton orangeButton" style="width:100%; text-align:center; padding:10px 0;">Develop Internally</div>').click(function(){
-            var cs=getEntryTypeCost(ty,sz,f,(ty==='bundle'?bs.length:1)); if(GameManager.company.cash<cs) return csNotify('No cash!');
-            store.data.activePlayerFranchiseProject = { franchiseId:f.id, entryType:ty, size:sz, bundledIds:bs, remakeTargetId:rem };
-            GameManager.company.adjustCash(-cs, 'Franchise: '+f.name); $.modal.close();
-            setTimeout(function(){ 
-                UI.showGameDefinition(GameManager.company); setTimeout(function(){
-                    var w=$('#gameDefinition'); if(!w.length) return; w.find('#gameTitle').val(generateFranchiseTitle(f.name, ty));
-                    var cG=GameManager.company.currentGame; if(cG){ cG.title=w.find('#gameTitle').val(); cG.gameSize=sz; cG.topic=f.topic; cG.genre=f.genre; }
-                    if(UI._updateGameDefinitionCost) UI._updateGameDefinitionCost();
-                },400);
-            },300);
+        _ae(bod, '<div class="selectorButton orangeButton" style="width:100%; text-align:center; padding:10px 0;">Develop Internally</div>').click(function () {
+            var cs = getEntryTypeCost(ty, sz, f, (ty === 'bundle' ? bs.length : 1)); if (GameManager.company.cash < cs) return csNotify('No cash!');
+            store.data.activePlayerFranchiseProject = { franchiseId: f.id, entryType: ty, size: sz, bundledIds: bs, remakeTargetId: rem };
+            GameManager.company.adjustCash(-cs, 'Franchise: ' + f.name); $.modal.close();
+            setTimeout(function () {
+                UI.showGameDefinition(GameManager.company); setTimeout(function () {
+                    var w = $('#gameDefinition'); if (!w.length) return; w.find('#gameTitle').val(generateFranchiseTitle(f.name, ty));
+                    var cG = GameManager.company.currentGame; if (cG) { cG.title = w.find('#gameTitle').val(); cG.gameSize = sz; cG.topic = f.topic; cG.genre = f.genre; }
+                    if (UI._updateGameDefinitionCost) UI._updateGameDefinitionCost();
+                }, 400);
+            }, 300);
         });
-        var su=_ae(bod, '<div style="border:1px solid #bdc3c7; padding:10px; margin-top:15px; border-radius:5px;"><b>Subsidiary:</b></div>'), 
-            ava=(store.data.studios||[]).filter(function(s){return s.sharesOwned>=50&&!s.currentProject});
-        if(!ava.length) _ae(su, '<div style="font-size:8pt; color:#7f8c8d;">No units idle.</div>');
-        else { var sl=_ae(su, '<select style="width:100%;"></select>'); ava.forEach(function(s){sl.append('<option value="'+s.id+'">'+s.name+'</option>')});
-            _ae(su, '<div class="selectorButton greenButton" style="text-align:center; padding:5px 0; margin-top:5px;">Assign</div>').click(function(){
-                startSubsidiaryFranchiseProject(ava.find(function(x){return x.id===sl.val()}), f, ty, sz, bs, 0); b(); 
+        var su = _ae(bod, '<div style="border:1px solid #bdc3c7; padding:10px; margin-top:15px; border-radius:5px;"><b>Subsidiary:</b></div>'),
+            ava = (store.data.studios || []).filter(function (s) { return s.sharesOwned >= 50 && !s.currentProject });
+        if (!ava.length) _ae(su, '<div style="font-size:8pt; color:#7f8c8d;">No units idle.</div>');
+        else {
+            var sl = _ae(su, '<select style="width:100%;"></select>'); ava.forEach(function (s) { sl.append('<option value="' + s.id + '">' + s.name + '</option>') });
+            _ae(su, '<div class="selectorButton greenButton" style="text-align:center; padding:5px 0; margin-top:5px;">Assign</div>').click(function () {
+                startSubsidiaryFranchiseProject(ava.find(function (x) { return x.id === sl.val() }), f, ty, sz, bs, 0); b();
             });
         }
-        _ae(bod, '<div class="selectorButton blueButton" style="width:100%; text-align:center; padding:10px 0; margin-top:10px;">Publishing Offer</div>').click(function(){ routeModMenu('publishing') });
+        _ae(bod, '<div class="selectorButton blueButton" style="width:100%; text-align:center; padding:10px 0; margin-top:10px;">Publishing Offer</div>').click(function () { routeModMenu('publishing') });
         upE();
     }
 
     function showLicenseModal(f, c, b) {
-        c.empty(); var ty='sequel', sz='Small', bs=[], rem=null, m=_ae(c, '<div style="background:#fdf6e3; padding:20px; min-height:400px;"></div>');
-        var h = _ae(m, '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h3 style="color:#d35400; margin:0;">License '+f.name+'</h3><div class="selectorButton" style="font-size:10pt;">BACK</div></div>');
+        c.empty(); var ty = 'sequel', sz = 'Small', bs = [], rem = null, m = _ae(c, '<div style="background:#ddd; padding:20px; min-height:400px;"></div>');
+        var h = _ae(m, '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h3 style="color:#d35400; margin:0;">License ' + f.name + '</h3><div class="selectorButton" style="font-size:10pt;">BACK</div></div>');
         h.find('.selectorButton').click(b); _ae(m, '<p style="font-size:10pt;">Assign a subsidiary to develop.</p>');
-        var subs=(store.data.studios||[]).filter(function(s){return s.sharesOwned>=50}); if(!subs.length) return _ae(m, '<p>No units.</p>');
-        var sSl=_ae(m, '<select style="width:100%; padding:10px; margin-bottom:10px;"></select>'); subs.forEach(function(s){ sSl.append('<option value="'+s.id+'">'+s.name+(s.currentProject?' (Busy)':' (Idle)')+'</option>') });
-        var tSl=_ae(m, '<select style="width:100%; padding:10px; margin-bottom:10px;"></select>'); ['sequel','remaster','remake','spinoff','prequel','bundle'].forEach(function(t){ if(canAddFranchiseEntry(f,t,true).ok) tSl.append('<option value="'+t+'">'+t.toUpperCase()+'</option>') });
-        var zSl=_ae(m, '<select style="width:100%; padding:10px; margin-bottom:20px;"></select>'); ['Small','Medium','Large','AAA'].forEach(function(s){ zSl.append('<option value="'+s+'">'+s+'</option>') });
-        _ae(m, '<div class="selectorButton greenButton" style="text-align:center; padding:10px 0;">Assign to Studio</div>').click(function(){
-            var s=subs.find(function(x){return x.id===sSl.val()}), ty=tSl.val(), sz=zSl.val(), fee=[5000,12500,25000,50000,125000][f.tier-1]||125000;
-            if(GameManager.company.cash<fee) return csNotify('No cash!'); if(s.currentProject && !confirm('Studio busy. Reset?')) return;
-            GameManager.company.adjustCash(-fee, 'License Fee: '+f.name); startSubsidiaryFranchiseProject(s, f, ty, sz, bs, 0, rem); b();
+        var subs = (store.data.studios || []).filter(function (s) { return s.sharesOwned >= 50 }); if (!subs.length) return _ae(m, '<p>No units.</p>');
+        var sSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:10px;"></select>'); subs.forEach(function (s) { sSl.append('<option value="' + s.id + '">' + s.name + (s.currentProject ? ' (Busy)' : ' (Idle)') + '</option>') });
+        var tSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:10px;"></select>');['sequel', 'remaster', 'remake', 'spinoff', 'prequel', 'bundle'].forEach(function (t) { if (canAddFranchiseEntry(f, t, true).ok) tSl.append('<option value="' + t + '">' + t.toUpperCase() + '</option>') });
+        var zSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:20px;"></select>');['Small', 'Medium', 'Large', 'AAA'].forEach(function (s) { zSl.append('<option value="' + s + '">' + s + '</option>') });
+        _ae(m, '<div class="selectorButton greenButton" style="text-align:center; padding:10px 0;">Assign to Studio</div>').click(function () {
+            var s = subs.find(function (x) { return x.id === sSl.val() }), ty = tSl.val(), sz = zSl.val(), fee = [5000, 12500, 25000, 50000, 125000][f.tier - 1] || 125000;
+            if (GameManager.company.cash < fee) return csNotify('No cash!'); if (s.currentProject && !confirm('Studio busy. Reset?')) return;
+            GameManager.company.adjustCash(-fee, 'License Fee: ' + f.name); startSubsidiaryFranchiseProject(s, f, ty, sz, bs, 0, rem); b();
         });
     }
 
     function showPitchModal(studio, container, onBack) {
-        var fans = getPlayerFranchises().filter(function(f){ return f.tier>=3 });
+        var fans = getPlayerFranchises().filter(function (f) { return f.tier >= 3 });
         if (fans.length === 0) return csNotify("No Tier 3 franchises found!");
-        _sm('Pitch: ' + studio.name, 'Studio covers ' + (studio.totalDealsCompleted>=3 ? "50" : "60") + '% of costs.', function(body, close){
+        _sm('Pitch: ' + studio.name, 'Studio covers ' + (studio.totalDealsCompleted >= 3 ? "50" : "60") + '% of costs.', function (body, close) {
             var fSl = _ae(body, '<select style="width:100%; padding:10px; margin-bottom:15px;"></select>');
-            fans.forEach(function(f){ fSl.append('<option value="'+f.id+'">'+f.name+' (Tier '+f.tier+')</option>') });
+            fans.forEach(function (f) { fSl.append('<option value="' + f.id + '">' + f.name + ' (Tier ' + f.tier + ')</option>') });
             _ae(body, '<div style="font-weight:bold; margin-bottom:5px;">Budget ($):</div>');
             var bIn = _ae(body, '<input type="number" value="2000000" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #bdc3c7;">');
-            _ae(body, '<div class="selectorButton orangeButton" style="text-align:center; padding:12px 0;">Send Pitch</div>').click(function(){
-                var f = getFranchiseById(fSl.val()), b = parseInt(bIn.val()), shr = studio.totalDealsCompleted>=3 ? 0.5 : 0.4, cost = b * shr;
+            _ae(body, '<div class="selectorButton orangeButton" style="text-align:center; padding:12px 0;">Send Pitch</div>').click(function () {
+                var f = getFranchiseById(fSl.val()), b = parseInt(bIn.val()), shr = studio.totalDealsCompleted >= 3 ? 0.5 : 0.4, cost = b * shr;
                 if (GameManager.company.cash < cost) return csNotify("Not enough cash!");
-                var w = Math.min(300, Math.floor(Math.pow(b/1e5, 0.75)) + 8), p = { id:"MEDIA_"+Date.now(), type:"movie", franchiseId:f.id, title:f.name+" Blockbuster", producedBy:studio.id, budget:b, playerCost:cost, weeksRemaining:w, totalWeeks:w, status:"inProduction", score:0, totalRevenue:0, weeklyRevenue:0, currentEpisode:0, totalEpisodes:1, decayRate:0.9, studioRepBonus:studio.reputation*0.3, studioShare:1.0-shr };
-                studio.currentDeal = p; _da(store.data,'mediaProjects'); store.data.mediaProjects.push(p); _da(f,'mediaProperties');
-                GameManager.company.adjustCash(-cost, "Co-Production: "+p.title); Sound.click(); close(); onBack();
+                var w = Math.min(300, Math.floor(Math.pow(b / 1e5, 0.75)) + 8), p = { id: "MEDIA_" + Date.now(), type: "movie", franchiseId: f.id, title: f.name + " Blockbuster", producedBy: studio.id, budget: b, playerCost: cost, weeksRemaining: w, totalWeeks: w, status: "inProduction", score: 0, totalRevenue: 0, weeklyRevenue: 0, currentEpisode: 0, totalEpisodes: 1, decayRate: 0.9, studioRepBonus: studio.reputation * 0.3, studioShare: 1.0 - shr };
+                studio.currentDeal = p; _da(store.data, 'mediaProjects'); store.data.mediaProjects.push(p); _da(f, 'mediaProperties');
+                GameManager.company.adjustCash(-cost, "Co-Production: " + p.title); Sound.click(); close(); onBack();
             });
         });
     }
@@ -3305,16 +3318,16 @@
         var w = Math.floor(GameManager.company.currentWeek);
         if (w - store.data.lastCrossoverWeek < 20) return csNotify("Cooldown: " + (20 - (w - store.data.lastCrossoverWeek)) + "w.");
         _sm('Legendary Crossover', 'Combine two Tier 5s for $3M!', function (body, close) {
-            var f5s = getPlayerFranchises().filter(function(f){ return f.tier===5 }), s1 = _ae(body, '<select style="width:45%; padding:10px;"></select>'), s2 = _ae(body, '<select style="width:45%; padding:10px; margin-left:5%;"></select>');
-            f5s.forEach(function(f, i){ s1.append('<option value="'+f.id+'">'+f.name+'</option>'); s2.append('<option value="'+f.id+'" '+(i===1?"selected":"")+'>'+f.name+'</option>') });
-            _ae(body, '<div class="selectorButton orangeButton" style="text-align:center; padding:12px 0; margin-top:20px;">Launch Event</div>').click(function(){
+            var f5s = getPlayerFranchises().filter(function (f) { return f.tier === 5 }), s1 = _ae(body, '<select style="width:45%; padding:10px;"></select>'), s2 = _ae(body, '<select style="width:45%; padding:10px; margin-left:5%;"></select>');
+            f5s.forEach(function (f, i) { s1.append('<option value="' + f.id + '">' + f.name + '</option>'); s2.append('<option value="' + f.id + '" ' + (i === 1 ? "selected" : "") + '>' + f.name + '</option>') });
+            _ae(body, '<div class="selectorButton orangeButton" style="text-align:center; padding:12px 0; margin-top:20px;">Launch Event</div>').click(function () {
                 var f1 = getFranchiseById(s1.val()), f2 = getFranchiseById(s2.val());
                 if (f1.id === f2.id) return csNotify("Select 2 different franchises.");
                 if (GameManager.company.cash < 3e6) return csNotify("Needs $3M!");
-                GameManager.company.adjustCash(-3e6, "Crossover: "+f1.name+" x "+f2.name); store.data.lastCrossoverWeek = w;
-                var s = Math.min(10, Math.floor((f1.fanbaseScore+f2.fanbaseScore)/20)), r = s*s*5e6;
-                GameManager.company.adjustCash(r, "Crossover Revenue"); f1.fanbaseScore = Math.min(100, f1.fanbaseScore+10); f2.fanbaseScore = Math.min(100, f2.fanbaseScore+10);
-                _n("Phenomenon!", f1.name+" & "+f2.name+" merging sent shockwaves!"); close(); onBack();
+                GameManager.company.adjustCash(-3e6, "Crossover: " + f1.name + " x " + f2.name); store.data.lastCrossoverWeek = w;
+                var s = Math.min(10, Math.floor((f1.fanbaseScore + f2.fanbaseScore) / 20)), r = s * s * 5e6;
+                GameManager.company.adjustCash(r, "Crossover Revenue"); f1.fanbaseScore = Math.min(100, f1.fanbaseScore + 10); f2.fanbaseScore = Math.min(100, f2.fanbaseScore + 10);
+                _n("Phenomenon!", f1.name + " & " + f2.name + " merging sent shockwaves!"); close(); onBack();
             });
         });
     }
@@ -3322,16 +3335,16 @@
 
     function showConfirmSellModal(f, onBack, onConfirm) {
         _sm('Sell Franchise?', 'Listing ' + f.name + ' will take 8-16 weeks. Sure?', function (body, close) {
-            _ae(body, '<div style="padding:20px; text-align:center;"><div class="selectorButton orangeButton" style="margin-bottom:10px; padding:10px 0;">Yes, List it</div></div>').click(function(){ onConfirm(); close(); onBack(); });
+            _ae(body, '<div style="padding:20px; text-align:center;"><div class="selectorButton orangeButton" style="margin-bottom:10px; padding:10px 0;">Yes, List it</div></div>').click(function () { onConfirm(); close(); onBack(); });
         });
     }
 
     function makeTabBar(tabs, currentId, onClick) {
-        var bar=$('<div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:2px solid #bdc3c7;padding-bottom:10px;"></div>');
-        tabs.forEach(function(t){
-            var active=(t.id===currentId);
-            var btn=$('<div class="entry-type-btn '+(active?'selected ':'')+'" style="background:'+(active?'#d35400':'#bdc3c7')+';color:white;flex:1;text-align:center;">'+t.label+'</div>');
-            btn.click(function(){ Sound.click(); onClick(t.id); });
+        var bar = $('<div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:2px solid #bdc3c7;padding-bottom:10px;"></div>');
+        tabs.forEach(function (t) {
+            var active = (t.id === currentId);
+            var btn = $('<div class="entry-type-btn ' + (active ? 'selected ' : '') + '" style="background:' + (active ? '#d35400' : '#bdc3c7') + ';color:white;flex:1;text-align:center;">' + t.label + '</div>');
+            btn.click(function () { Sound.click(); onClick(t.id); });
             bar.append(btn);
         });
         return bar;
@@ -3349,7 +3362,7 @@
                 { id: "register", label: "Create / Register" },
                 { id: "acquisitions", label: "Acquisitions" },
                 { id: "proposals", label: "Proposals" }
-            ], subTab, function(id){ subTab=id; refresh(); });
+            ], subTab, function (id) { subTab = id; refresh(); });
 
             var tier5s = getPlayerFranchises().filter(function (f) { return f.tier === 5; });
             if (tier5s.length >= 2) {
@@ -3366,22 +3379,22 @@
                 fans.forEach(function (f) {
                     var card = _ae(container, '<div class="cs-stagger-item" style="background:white; border-radius:8px; border:1px solid #bdc3c7; padding:15px; margin-bottom:15px; box-shadow:0 2px 4px rgba(0,0,0,0.05);"></div>');
                     var header = _ae(card, '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;"></div>');
-                    _ae(header, '<input type="text" value="' + f.name + '" style="font-size:14pt; font-weight:bold; border:none; background:transparent; color:#2c3e50; border-bottom:1px dashed #bdc3c7; width:60%;">').change(function(){ f.name=$(this).val(); });
+                    _ae(header, '<input type="text" value="' + f.name + '" style="font-size:14pt; font-weight:bold; border:none; background:transparent; color:#2c3e50; border-bottom:1px dashed #bdc3c7; width:60%;">').change(function () { f.name = $(this).val(); });
                     header.append(renderTierBadge(f.tier));
-                    _ae(card, '<div style="display:flex; gap:20px; font-size:10pt; color:#7f8c8d; margin-bottom:10px;"><div><b>Total Revenue:</b> $'+UI.getShortNumberString(f.totalRevenue)+'</div><div><b>Installments:</b> '+f.installments.length+'</div></div>');
-                    card.append('<div style="font-size:9pt; font-weight:bold; color:#34495e; margin-bottom:4px;">Fanbase Score: '+Math.floor(f.fanbaseScore)+'/100</div>').append(renderFanbaseBar(f.fanbaseScore));
+                    _ae(card, '<div style="display:flex; gap:20px; font-size:10pt; color:#7f8c8d; margin-bottom:10px;"><div><b>Total Revenue:</b> $' + UI.getShortNumberString(f.totalRevenue) + '</div><div><b>Installments:</b> ' + f.installments.length + '</div></div>');
+                    card.append('<div style="font-size:9pt; font-weight:bold; color:#34495e; margin-bottom:4px;">Fanbase Score: ' + Math.floor(f.fanbaseScore) + '/100</div>').append(renderFanbaseBar(f.fanbaseScore));
                     var actions = _ae(card, '<div style="display:flex; gap:10px; margin-top:15px;"></div>');
-                    _ae(actions, '<div class="selectorButton orangeButton" style="flex:1; text-align:center; font-size:10pt; padding:6px 0;">+ New Entry</div>').click(function(){ showNewEntryModal(f, container, refresh); });
-                    _ae(actions, '<div class="selectorButton greenButton" style="flex:1; text-align:center; font-size:10pt; padding:6px 0;">License to Subsidiary</div>').click(function(){ showLicenseModal(f, container, refresh); });
+                    _ae(actions, '<div class="selectorButton orangeButton" style="flex:1; text-align:center; font-size:10pt; padding:6px 0;">+ New Entry</div>').click(function () { showNewEntryModal(f, container, refresh); });
+                    _ae(actions, '<div class="selectorButton greenButton" style="flex:1; text-align:center; font-size:10pt; padding:6px 0;">License to Subsidiary</div>').click(function () { showLicenseModal(f, container, refresh); });
                     if (f.fanbaseScore <= 0) {
-                        _ae(actions, '<div class="selectorButton" style="flex:1; text-align:center; font-size:10pt; padding:6px 0; background:#95a5a6; color:white;">Revive ($1M)</div>').click(function(){
+                        _ae(actions, '<div class="selectorButton" style="flex:1; text-align:center; font-size:10pt; padding:6px 0; background:#95a5a6; color:white;">Revive ($1M)</div>').click(function () {
                             if (GameManager.company.cash < 1e6) { csNotify("Not enough cash!"); return; }
                             GameManager.company.adjustCash(-1e6, "Franchise Revival: " + f.name);
                             f.fanbaseScore = 15; f.isDead = false; Sound.click(); refresh();
                         });
                     }
                     var sellPrice = Math.floor(f.totalRevenue * 0.6 + 1e6);
-                    var sellBtn = _ae(actions, '<div class="selectorButton deleteButton" style="flex:1; text-align:center; font-size:10pt; padding:6px 0;">'+(f.isListedByPlayer ? "Listed ("+f.saleWeekRemaining+"w)" : "Sell")+'</div>');
+                    var sellBtn = _ae(actions, '<div class="selectorButton deleteButton" style="flex:1; text-align:center; font-size:10pt; padding:6px 0;">' + (f.isListedByPlayer ? "Listed (" + f.saleWeekRemaining + "w)" : "Sell") + '</div>');
                     if (f.isListedByPlayer) sellBtn.addClass('disabled');
                     sellBtn.click(function () {
                         if (f.isListedByPlayer) return;
@@ -3392,10 +3405,10 @@
                     });
                     var histBtn = _ae(card, '<div style="text-align:center; font-size:9pt; color:#3498db; cursor:pointer; margin-top:10px; text-decoration:underline;">View History</div>');
                     var histList = _ae(card, '<div style="display:none; margin-top:10px; border-top:1px solid #eee; padding-top:10px;"></div>');
-                    f.installments.slice().reverse().forEach(function(inst){
-                        _ae(histList, '<div style="font-size:9pt; display:flex; justify-content:space-between; margin-bottom:4px;"><span>'+inst.title+' ('+inst.type+')</span><span>'+inst.score+'/10</span></div>');
+                    f.installments.slice().reverse().forEach(function (inst) {
+                        _ae(histList, '<div style="font-size:9pt; display:flex; justify-content:space-between; margin-bottom:4px;"><span>' + inst.title + ' (' + inst.type + ')</span><span>' + inst.score + '/10</span></div>');
                     });
-                    histBtn.click(function(){ histList.toggle(); });
+                    histBtn.click(function () { histList.toggle(); });
                 });
             } else if (subTab === "register") {
                 container.append('<h3 style="color: #d35400; margin-top: 0;">Register New Franchise</h3>');
@@ -3407,12 +3420,12 @@
                 if (games.length === 0) {
                     container.append('<div style="padding: 20px; text-align: center; color: #7f8c8d;">No eligible games found.</div>');
                 } else {
-                    var select = $('<select style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #bdc3c7; font-size: 11pt; margin-bottom: 15px; color: black;"></select>');
+                    var select = $('<select style="width: 100%; padding: 10px; border-radius: 0px; border: 2px solid #555; font-size: 11pt; margin-bottom: 15px; color: black;"></select>');
                     games.forEach(function (g) { select.append('<option value="' + g.id + '">' + g.title + ' (Score: ' + g.score + ')</option>'); });
                     container.append(select);
 
                     container.append('<div style="font-weight: bold; margin-bottom: 5px;">Franchise Name:</div>');
-                    var nameInput = $('<input type="text" placeholder="Enter Name" style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #bdc3c7; font-size: 11pt; margin-bottom: 15px; color: black;">');
+                    var nameInput = $('<input type="text" placeholder="Enter Name" style="width: 100%; padding: 10px; border-radius: 0px; border: 2px solid #555; font-size: 11pt; margin-bottom: 15px; color: black;">');
                     container.append(nameInput);
 
                     var regBtn = $('<div class="selectorButton orangeButton" style="text-align: center; padding: 12px 0; font-size: 12pt; font-weight: bold;">Register for $' + UI.getShortNumberString(cost) + '</div>');
@@ -3471,7 +3484,7 @@
                     container.append('<div style="text-align: center; padding: 40px; color: #7f8c8d;">No franchises currently listed for sale by competitors.</div>');
                 }
                 forSale.forEach(function (f) {
-                    var card = $('<div class="cs-stagger-item" style="background: white; border-radius: 8px; border: 1px solid #bdc3c7; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
+                    var card = $('<div class="cs-stagger-item" style="background: white; border-radius: 0px; border: 2px solid #555; padding: 15px; margin-bottom: 15px; box-shadow: none;"></div>');
                     card.append('<div style="display: flex; justify-content: space-between;"><b>' + f.name + '</b>' + renderTierBadge(f.tier).prop('outerHTML') + '</div>');
                     var sArrAcq = store.data.studios || [];
                     var owner = sArrAcq.filter(function (s) { return s.id === f.ownerId; })[0];
@@ -3499,7 +3512,7 @@
                     container.append('<h3 style="color: #d35400; margin-top: 0;">Active AI Sale Offers</h3>');
                     aiOffers.forEach(function (f) {
                         var salePrice = f.salePrice || (f.totalRevenue * 0.8 + 2000000);
-                        var offerCard = $('<div class="cs-stagger-item" style="background: white; border-radius: 8px; border: 1px solid #bdc3c7; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;"></div>');
+                        var offerCard = $('<div class="cs-stagger-item" style="background: white; border-radius: 0px; border: 2px solid #555; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;"></div>');
                         var owner = (store.data.studios || []).filter(function (s) { return s.id === f.ownerId; })[0];
                         var info = $('<div><b style="font-size: 13pt;">' + f.name + '</b><br><span style="font-size: 9pt; color: #7f8c8d;">Owner: ' + (owner ? owner.name : "AI") + ' | Tier: ' + f.tier + '</span></div>');
                         offerCard.append(info);
@@ -3512,7 +3525,7 @@
                             f.isForSale = false;
                             if (!f.acquisitionHistory) f.acquisitionHistory = [];
                             f.acquisitionHistory.push({ week: Math.floor(GameManager.company.currentWeek), newOwner: "player", price: salePrice });
-                            _n("Acquisition Complete!", "You are now the proud owner of the "+f.name+" franchise.");
+                            _n("Acquisition Complete!", "You are now the proud owner of the " + f.name + " franchise.");
                             refresh();
                         });
                         offerCard.append(buyBtn);
@@ -3526,8 +3539,8 @@
                 if (unlisted.length === 0) {
                     container.append('<div style="text-align: center; color: #7f8c8d; padding: 20px;">No other AI franchises available for offer.</div>');
                 } else {
-                    var offerDiv = $('<div style="background: white; border-radius: 8px; border: 1px solid #bdc3c7; padding: 15px;"></div>');
-                    var fSelect = $('<select style="width: 100%; padding: 10px; margin-bottom: 15px; color: black; border: 1px solid #bdc3c7;"></select>');
+                    var offerDiv = $('<div style="background: white; border-radius: 0px; border: 2px solid #555; padding: 15px;"></div>');
+                    var fSelect = $('<select style="width: 100%; padding: 10px; margin-bottom: 15px; color: black; border: 2px solid #555;"></select>');
                     unlisted.forEach(function (f) {
                         var sArrUnl = store.data.studios || [];
                         var owner = sArrUnl.filter(function (s) { return s.id === f.ownerId; })[0];
@@ -3535,7 +3548,7 @@
                     });
                     offerDiv.append('<div style="font-size: 9pt; font-weight: bold; margin-bottom: 5px;">Select Target:</div>').append(fSelect);
 
-                    var priceInput = $('<input type="number" placeholder="Offer Amount ($)" style="width: 100%; padding: 10px; margin-bottom: 15px; color: black; border: 1px solid #bdc3c7;">');
+                    var priceInput = $('<input type="number" placeholder="Offer Amount ($)" style="width: 100%; padding: 10px; margin-bottom: 15px; color: black; border: 2px solid #555;">');
                     offerDiv.append('<div style="font-size: 9pt; font-weight: bold; margin-bottom: 5px;">Your Offer (Weight based on revenue):</div>').append(priceInput);
 
                     var offerBtn = $('<div class="selectorButton orangeButton" style="width: 100%; text-align: center; padding: 12px 0; font-weight: bold;">Submit Proactive Offer</div>');
@@ -3551,7 +3564,7 @@
                             GameManager.company.adjustCash(-price, "Acquisition: " + f.name);
                             f.ownerId = "player";
                             f.isForSale = false;
-                            _n("Offer Accepted!", "The studio accepted your proactive offer for '"+f.name+"'.");
+                            _n("Offer Accepted!", "The studio accepted your proactive offer for '" + f.name + "'.");
                             refresh();
                         } else {
                             csNotify("The studio has rejected your offer.");
@@ -3569,7 +3582,7 @@
                     container.append('<div style="text-align: center; padding: 40px; color: #7f8c8d; font-style: italic;">No active licensing proposals. Keep building Tier 2+ franchises to attract studio interest!</div>');
                 } else {
                     offers.forEach(function (o) {
-                        var card = $('<div style="background: white; border-radius: 8px; border: 1px solid #bdc3c7; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
+                        var card = $('<div style="background: white; border-radius: 0px; border: 2px solid #555; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: none;"></div>');
                         var info = $('<div></div>');
                         info.append('<div style="font-weight: bold; font-size: 11pt; color: #d35400;">' + o.franchiseName + '</div>');
                         info.append('<div style="font-size: 9pt; color: #2c3e50;">From: <b>' + o.studioName + '</b></div>');
@@ -3592,68 +3605,124 @@
     }
 
     function renderMediaTab(container) {
-        var subTab='active'; function refresh(){
-            container.empty(); var h=_ae(container, '<div style="display:flex; gap:10px; margin-bottom:20px;"></div>');
-            ['active','produce','distribution','archive','grid'].forEach(function(t){ 
-                var bStyle="flex:1; text-align:center; padding:10px 0; font-size:10pt; font-weight:bold; cursor:pointer; border:1px solid #bdc3c7; border-radius:5px;";
-                if(subTab===t) bStyle += " background-color: #f39c12; color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400;";
-                else bStyle += " background-color: #fff; color: #7f8c8d;";
-                var b=_ae(h, '<div class="selectorButton" style="'+bStyle+'">'+t.toUpperCase()+'</div>');
-                b.click(function(){ subTab=t; Sound.click(); refresh() });
+        var subTab = 'active'; function refresh() {
+            container.empty(); 
+            var h = _ae(container, '<div style="display:flex; gap:5px; margin-bottom:15px; border-bottom: 2px solid #333; padding-bottom: 5px;"></div>');
+            ['active', 'produce', 'distribution', 'archive', 'grid'].forEach(function (t) {
+                var btnClass = (subTab === t) ? "selectorButton orangeButton" : "selectorButton";
+                var b = _ae(h, '<div class="' + btnClass + '" style="flex:1; text-align:center; padding:8px 0; font-size:10pt; font-weight:bold;">' + t.toUpperCase() + '</div>');
+                b.click(function () { subTab = t; Sound.click(); refresh() });
             });
-            if(subTab==='active'){
-                var ac=(store.data.mediaProjects||[]).filter(function(p){return p.status==='inProduction'||p.status==='releasing'}), cur=Math.floor(GameManager.company.currentWeek);
-                if(!ac.length) return _ae(container, '<div style="text-align:center; padding:40px; color: #7f8c8d; font-style: italic;">No active projects. Visit "PRODUCE" to start.</div>');
-                ac.forEach(function(p){
-                    var tI = csGetMediaTypeInfo(p.type);
-                    var c=_ae(container, '<div class="cs-stagger-item" style="background:white; padding:18px; border-radius:10px; border:1px solid #bdc3c7; margin-bottom:15px; display:flex; gap:20px; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.04);"></div>');
-                    _ae(c, '<div style="width:65px; height:65px; background:'+tI.c+'; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; font-size:18pt; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">'+tI.i+'</div>');
-                    var d=_ae(c, '<div style="flex:1; min-width:0;"></div>'); 
-                    _ae(d, '<div style="font-size:13pt; font-weight:bold; color:#2c3e50; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">'+p.title+'</div>');
-                    _ae(d, '<div style="background:'+tI.c+'; color:white; display:inline-block; font-size:7pt; padding:2px 8px; border-radius:10px; font-weight:bold; text-transform:uppercase; margin:4px 0;">'+tI.l+'</div>');
-                    
-                    var pBar = _ae(d, '<div style="margin-top:8px;"></div>');
-                    var pct = 0, label = "";
-                    if(p.status === 'inProduction') {
-                        pct = Math.round(((p.totalWeeks - p.weeksRemaining) / p.totalWeeks) * 100) || 5; pct = Math.min(100, Math.max(0, pct));
-                        label = "Production: " + Math.ceil(p.weeksRemaining) + " weeks left";
-                    } else {
-                        pct = Math.round((p.currentEpisode / p.totalEpisodes) * 100) || 10; pct = Math.min(pct, 100);
-                        label = "Releasing: " + (p.type === 'comicBook' ? 'Issue' : 'Episode') + " " + p.currentEpisode + " / " + p.totalEpisodes;
-                    }
-                    _ae(pBar, '<div style="font-size:8pt; color:#7f8c8d; margin-bottom:3px; font-weight:bold;">'+label+'</div>');
-                    var track = _ae(pBar, '<div style="height:10px; background:#f0f3f5; border-radius:5px; border:1px solid #eee; overflow:hidden;"></div>');
-                    _ae(track, '<div style="height:100%; width:'+pct+'%; background:'+tI.c+'; border-radius:5px; transition: width 0.4s ease;"></div>');
 
-                    var bts=_ae(c, '<div style="display:flex; flex-direction:column; gap:8px;"></div>');
-                    if(p.status!=='cancelled' && (p.currentEpisode||0) < (p.totalEpisodes||1)) {
-                        var airBtn = _ae(bts, '<div class="selectorButton greenButton" style="padding:10px 18px; font-weight:bold; font-size:10pt;">AIR</div>');
-                        airBtn.click(function(){ p.nextReleaseWeek=cur-1; Sound.click(); refresh() });
+            if (subTab === 'active') {
+                var ac = (store.data.mediaProjects || []).filter(function (p) { return p.status === 'inProduction' || p.status === 'releasing' });
+                var cur = Math.floor(GameManager.company.currentWeek);
+                
+                if (!ac.length) {
+                    return _ae(container, '<div style="text-align:center; padding:40px; color: #555; font-style: italic; background: rgba(0,0,0,0.05); border-radius: 0px;">No active projects. Go to "PRODUCE" to start a new production.</div>');
+                }
+
+                ac.forEach(function (p) {
+                    var tI = csGetMediaTypeInfo(p.type);
+                    var card = _ae(container, '<div style="background:#ddd; padding:12px; border: 2px solid #555; margin-bottom:10px; display:flex; gap:15px; align-items:center;"></div>');
+                    
+                    // Type Icon (GDT Native Style square)
+                    _ae(card, '<div style="width:50px; height:50px; background:' + tI.c + '; border: 2px solid #333; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; font-size:20pt; text-shadow: 1px 1px 0 #000;">' + tI.i + '</div>');
+                    
+                    var mainInfo = _ae(card, '<div style="flex:1; min-width:0;"></div>');
+                    _ae(mainInfo, '<div style="font-size:12pt; font-weight:bold; color:#111; margin-bottom: 2px;">' + p.title + '</div>');
+                    _ae(mainInfo, '<div style="font-size:8pt; font-weight:bold; color:' + tI.c + '; text-transform:uppercase;">' + tI.l + '</div>');
+
+                    var progressSection = _ae(card, '<div style="flex:1.5;"></div>');
+                    var pct = 0, label = "";
+                    if (p.status === 'inProduction') {
+                        pct = Math.round(((p.totalWeeks - p.weeksRemaining) / p.totalWeeks) * 100) || 5;
+                        pct = Math.min(100, Math.max(0, pct));
+                        label = "PRODUCTION: " + Math.ceil(p.weeksRemaining) + " WEEKS LEFT";
+                    } else {
+                        pct = Math.round((p.currentEpisode / p.totalEpisodes) * 100) || 10;
+                        pct = Math.min(pct, 100);
+                        var unitName = (p.type === 'comicBook' ? 'ISSUE' : 'EPISODE');
+                        label = "RELEASING: " + unitName + " " + p.currentEpisode + " / " + p.totalEpisodes;
                     }
-                    var delBtn = _ae(bts, '<div class="selectorButton deleteButton" style="padding:6px 18px; font-size:9pt; text-align:center;">X</div>');
-                    delBtn.click(function(){ if(confirm('Cancel project "'+p.title+'"? All progress will be lost.')){ p.status='cancelled'; Sound.click(); refresh() } });
+
+                    _ae(progressSection, '<div style="font-size:7pt; color:#333; margin-bottom:2px; font-weight:bold;">' + label + '</div>');
+                    var track = _ae(progressSection, '<div style="height:12px; background:#aaa; border: 1px solid #333; overflow:hidden;"></div>');
+                    _ae(track, '<div style="height:100%; width:' + pct + '%; background:' + tI.c + '; box-shadow: none;"></div>');
+
+                    var actionGroup = _ae(card, '<div style="display:flex; gap:5px;"></div>');
+                    
+                    if (p.status !== 'cancelled' && (p.currentEpisode || 0) < (p.totalEpisodes || 1)) {
+                        var airLabel = (p.type === 'comicBook') ? "PUBLISH NEXT" : "RELEASE NEXT";
+                        var airBtn = _ae(actionGroup, '<div class="selectorButton greenButton" style="padding:8px 12px; font-weight:bold; font-size:9pt; min-width: 100px; text-align:center;">' + airLabel + '</div>');
+                        airBtn.click(function () { 
+                            p.nextReleaseWeek = cur - 1; 
+                            csNotify(p.title + ": Next release forced!");
+                            Sound.click(); 
+                            refresh(); 
+                        });
+                    }
+
+                    var cancelBtn = _ae(actionGroup, '<div class="selectorButton deleteButton" style="padding:8px 10px; font-size:9pt; font-weight:bold;">CANCEL</div>');
+                    cancelBtn.click(function () { 
+                        if (confirm('Cancel project "' + p.title + '"? All investment will be lost.')) { 
+                            p.status = 'cancelled'; 
+                            Sound.click(); 
+                            refresh(); 
+                        } 
+                    });
                 });
-            } else if(subTab==='produce'){
-                var f=_ae(container, '<div style="background:white; padding:20px; border-radius:8px; border:1px solid #bdc3c7;"></div>'), 
-                    ts=[{id:'movie',l:'Film',m:1e6},{id:'tvSeries',l:'TV',m:5e5},{id:'animatedShow',l:'Anim',m:3e5},{id:'soundtrack',l:'Music',m:5e4},{id:'merchandise',l:'Toy',m:2.5e5},{id:'comicBook',l:'Book',m:2.5e4}];
-                _ae(f, '<b>Type:</b>'); var tS=_ae(f, '<select style="width:100%; margin:5px 0 15px;"></select>'); ts.forEach(function(t){ tS.append('<option value="'+t.id+'">'+t.l+'</option>') });
-                _ae(f, '<b>Franchise:</b>'); var fS=_ae(f, '<select style="width:100%; margin:5px 0 15px;"><option value="">Original IP</option></select>'); getPlayerFranchises().forEach(function(x){ fS.append('<option value="'+x.id+'">'+x.name+'</option>') });
-                _ae(f, '<b>Budget ($):</b>'); var bI=_ae(f, '<input type="number" value="1000000" style="width:100%; margin:5px 0 15px;">'); 
-                _ae(f, '<div class="selectorButton orangeButton" style="width:100%; text-align:center; padding:12px 0;">Greenlight</div>').click(function(){ 
-                    var b=parseInt(bI.val()), t=tS.val(), m=(ts.filter(function(x){return x.id===t})[0]||{}).m||0; if(GameManager.company.cash<b||b<m) return csNotify('Invalid Budget');
-                    var w=Math.min(300, Math.floor(Math.pow(b/1e5, 0.75))+8), fr=getFranchiseById(fS.val());
-                    var p = { id:'MEDIA_'+Date.now(), type:t, franchiseId:fS.val()||null, title:(fr?fr.name:'New')+' '+t.toUpperCase(), budget:b, weeksRemaining:w, totalWeeks:w, status:'inProduction', totalEpisodes:1 };
-                    store.data.mediaProjects.push(p); GameManager.company.adjustCash(-b, 'Media: '+p.title); subTab='active'; refresh();
+            } else if (subTab === 'produce') {
+                var f = _ae(container, '<div style="background:#eee; padding:15px; border: 2px solid #555;"></div>'),
+                    ts = [{ id: 'movie', l: 'Film', m: 1e6 }, { id: 'tvSeries', l: 'TV Series', m: 5e5 }, { id: 'animatedShow', l: 'Anim. Show', m: 3e5 }, { id: 'soundtrack', l: 'Music/OST', m: 5e4 }, { id: 'merchandise', l: 'Merch', m: 2.5e5 }, { id: 'comicBook', l: 'Comic Book', m: 2.5e4 }];
+                
+                _ae(f, '<div style="font-weight:bold; font-size:10pt; margin-bottom:5px;">Media Type:</div>');
+                var tS = _ae(f, '<select style="width:100%; height:30px; margin-bottom:15px;"></select>'); 
+                ts.forEach(function (t) { tS.append('<option value="' + t.id + '">' + t.l + ' (Min: $' + UI.getShortNumberString(t.m) + ')</option>') });
+                
+                _ae(f, '<div style="font-weight:bold; font-size:10pt; margin-bottom:5px;">Target Franchise:</div>');
+                var fS = _ae(f, '<select style="width:100%; height:30px; margin-bottom:15px;"><option value="">Original IP</option></select>'); 
+                getPlayerFranchises().forEach(function (x) { fS.append('<option value="' + x.id + '">' + x.name + '</option>') });
+                
+                _ae(f, '<div style="font-weight:bold; font-size:10pt; margin-bottom:5px;">Project Budget ($):</div>');
+                var bI = _ae(f, '<input type="number" value="1000000" style="width:100%; height:30px; margin-bottom:15px;">');
+                
+                var gBtn = _ae(f, '<div class="selectorButton orangeButton" style="width:100%; text-align:center; padding:10px 0; font-weight:bold; font-size:11pt;">Greenlight Project</div>');
+                gBtn.click(function () {
+                    var b = parseInt(bI.val()), t = tS.val(), m = (ts.filter(function (x) { return x.id === t })[0] || {}).m || 0; 
+                    if (GameManager.company.cash < b || b < m) {
+                        return csNotify('Insufficient funds or budget below minimum for this type.');
+                    }
+                    var w = Math.min(300, Math.floor(Math.pow(b / 1e5, 0.75)) + 8), fr = getFranchiseById(fS.val());
+                    var p = { 
+                        id: 'MEDIA_' + Date.now(), 
+                        type: t, 
+                        franchiseId: fS.val() || null, 
+                        title: (fr ? fr.name : 'New') + ' ' + t.toUpperCase(), 
+                        budget: b, 
+                        weeksRemaining: w, 
+                        totalWeeks: w, 
+                        status: 'inProduction', 
+                        totalEpisodes: 1 
+                    };
+                    store.data.mediaProjects.push(p); 
+                    GameManager.company.adjustCash(-b, 'Media: ' + p.title); 
+                    subTab = 'active'; 
+                    Sound.click();
+                    refresh();
                 });
-            } else if(subTab==='archive'){
-                _ae(container, '<h3 style="color:#d35400;">Archive</h3>'); var rel=(store.data.mediaProjects||[]).filter(function(p){ return p.status==='released'||p.status==='cancelled' });
-                if(!rel.length) return _ae(container, '<p>No records.</p>');
-                var t=_ae(container, '<table style="width:100%; font-size:9pt;"><tr style="background:#ecf0f1;"><th>Title</th><th>Type</th><th>Score</th><th>ROI</th></tr></table>');
-                rel.forEach(function(p){ var roi=p.budget>0?Math.floor(((p.totalRevenue-p.budget)/p.budget)*100):0;
-                    _ae(t, '<tr style="border-bottom:1px solid #eee;"><td>'+p.title+'</td><td>'+p.type+'</td><td>'+(p.score||'-')+'</td><td style="color:'+(roi>=0?'green':'red')+'">'+roi+'%</td></tr>');
+            } else if (subTab === 'archive') {
+                _ae(container, '<h3 style="color:#333; border-bottom: 2px solid #777;">Production Archive</h3>'); 
+                var rel = (store.data.mediaProjects || []).filter(function (p) { return p.status === 'released' || p.status === 'cancelled' });
+                if (!rel.length) return _ae(container, '<div style="padding:20px; text-align:center; color:#555;">No records found.</div>');
+                
+                var t = _ae(container, '<table style="width:100%; font-size:9pt; border-collapse: collapse;"><tr style="background:#555; color:white;"><th>Title</th><th>Type</th><th>Score</th><th>ROI</th></tr></table>');
+                rel.forEach(function (p) {
+                    var roi = p.budget > 0 ? Math.floor(((p.totalRevenue - p.budget) / p.budget) * 100) : 0;
+                    _ae(t, '<tr style="border-bottom:1px solid #999;"><td>' + p.title + '</td><td>' + p.type + '</td><td>' + (p.score || '-') + '</td><td style="color:' + (roi >= 0 ? '#27ae60' : '#e74c3c') + '; font-weight:bold;">' + roi + '%</td></tr>');
                 });
-            } else if(subTab==='distribution') csRenderDistributionTab(container);
-            else if(subTab==='grid') csRenderGridTab(container);
+            } else if (subTab === 'distribution') csRenderDistributionTab(container);
+            else if (subTab === 'grid') csRenderGridTab(container);
         } refresh();
     }
 
@@ -3661,7 +3730,7 @@
         container.append('<h2 style="color: #d35400; font-size: 14pt; margin: 0 0 15px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px;">Mod Settings</h2>');
 
         if (!store.data.gridService || !store.data.gridService.isActive) {
-            var gridRnD = $('<div class="selectorButton orangeButton" style="width: 100%; text-align: center; font-size: 11pt; padding: 12px 0; border-radius: 5px; font-weight: bold; margin-bottom: 20px;">Research "Grid" Streaming Service ($50M)</div>');
+            var gridRnD = $('<div class="selectorButton orangeButton" style="width: 100%; text-align: center; font-size: 11pt; padding: 12px 0; border-radius: 0px; font-weight: bold; margin-bottom: 20px;">Research "Grid" Streaming Service ($50M)</div>');
             gridRnD.click(function () {
                 if (GameManager.company.cash >= 50000000) {
                     if (confirm("Launch your own streaming platform 'Grid' for $50,000,000?")) {
@@ -3683,13 +3752,13 @@
             var grid = store.data.gridService;
             var prestigeStr = "";
             for (var gps = 0; gps < (grid.prestige || 1); gps++) prestigeStr += "\u2B50";
-            var gridStatus = $('<div class="cs-stagger-item" style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;"></div>');
+            var gridStatus = $('<div class="cs-stagger-item" style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 15px 20px; border-radius: 0px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;"></div>');
             gridStatus.append('<div><div style="font-weight: bold; font-size: 12pt;">Grid Streaming Platform</div><div style="font-size: 9pt; color: #95a5a6; margin-top: 3px;">Status: Active | Prestige: ' + prestigeStr + '</div></div>');
             gridStatus.append('<div style="text-align: right;"><div style="font-size: 14pt; font-weight: bold; color: #3498db;">' + UI.getShortNumberString(grid.subscribers || 0) + '</div><div style="font-size: 9pt; color: #95a5a6;">subscribers</div></div>');
             container.append(gridStatus);
         }
 
-        var overloadDiv = $('<div class="cs-stagger-item" style="display: flex; align-items: center; margin-bottom: 20px; font-size: 12pt; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer;"></div>');
+        var overloadDiv = $('<div class="cs-stagger-item" style="display: flex; align-items: center; margin-bottom: 20px; font-size: 12pt; background: #fff; padding: 15px; border-radius: 0px; border: 2px solid #555; box-shadow: none; cursor: pointer;"></div>');
         var overloadCheck = $('<input type="checkbox" style="margin-right: 15px; width: 22px; height: 22px; pointer-events: none;">');
         overloadCheck.prop('checked', !!store.data.disableOverloadMalus);
 
@@ -3707,17 +3776,17 @@
         container.append(overloadDiv);
 
 
-        var healerDiv = $('<div class="cs-stagger-item" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
+        var healerDiv = $('<div class="cs-stagger-item" style="background: #fff; padding: 15px; border-radius: 0px; border: 2px solid #555; box-shadow: none;"></div>');
         healerDiv.append('<h3 style="margin: 0 0 10px 0; font-size: 12pt; color: #d35400;">Baseline Recovery</h3>');
         healerDiv.append('<p style="font-size: 10pt; color: #7f8c8d; margin-bottom: 12px;">Reset Design and Tech baselines based on your entire company history.</p>');
 
         var healGrid = $('<div style="display: flex; gap: 10px; margin-bottom: 15px;"></div>');
-        var dInput = $('<input type="number" placeholder="Design" value="500" style="flex: 1; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; color: black; box-sizing: border-box;">');
-        var tInput = $('<input type="number" placeholder="Tech" value="500" style="flex: 1; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; color: black; box-sizing: border-box;">');
+        var dInput = $('<input type="number" placeholder="Design" value="500" style="flex: 1; padding: 8px; border: 2px solid #555; border-radius: 0px; color: black; box-sizing: border-box;">');
+        var tInput = $('<input type="number" placeholder="Tech" value="500" style="flex: 1; padding: 8px; border: 2px solid #555; border-radius: 0px; color: black; box-sizing: border-box;">');
         healGrid.append(dInput).append(tInput);
         healerDiv.append(healGrid);
 
-        var healBtn = $('<div class="selectorButton orangeButton" style="width: 100%; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 5px; font-weight: bold;">Heal Baselines Now</div>');
+        var healBtn = $('<div class="selectorButton orangeButton" style="width: 100%; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 0px; font-weight: bold;">Heal Baselines Now</div>');
         healBtn.click(function () {
             var d = parseInt(dInput.val());
             var t = parseInt(tInput.val());
@@ -3773,7 +3842,7 @@
 
         var sortContainer = $('<div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;"></div>');
         sortContainer.append('<div style="font-size: 11pt; color: #2c3e50; font-weight: bold;">Sort:</div>');
-        var sortSelect = $('<select style="font-size: 11pt; flex: 1; padding: 4px; color: black; border: 1px solid #bdc3c7; border-radius: 4px; box-sizing: border-box;"></select>');
+        var sortSelect = $('<select style="font-size: 11pt; flex: 1; padding: 4px; color: black; border: 2px solid #555; border-radius: 0px; box-sizing: border-box;"></select>');
         sortSelect.append('<option value="owned">Ownership (Default)</option>');
         sortSelect.append('<option value="val">Valuation</option>');
         sortSelect.append('<option value="emps">Total Employees</option>');
@@ -3871,7 +3940,7 @@
 
         var sortContainer = $('<div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;"></div>');
         sortContainer.append('<div style="font-size: 11pt; color: #2c3e50; font-weight: bold;">Sort:</div>');
-        var sortSelect = $('<select style="font-size: 11pt; flex: 1; padding: 4px; color: black; border: 1px solid #bdc3c7; border-radius: 4px; box-sizing: border-box;"></select>');
+        var sortSelect = $('<select style="font-size: 11pt; flex: 1; padding: 4px; color: black; border: 2px solid #555; border-radius: 0px; box-sizing: border-box;"></select>');
         sortSelect.append('<option value="owned">Ownership (Default)</option>');
         sortSelect.append('<option value="val">Valuation</option>');
         sortSelect.append('<option value="emps">Total Employees</option>');
@@ -3926,7 +3995,7 @@
                     }
                 }
                 var studioName = studio ? studio.name : "Unknown Studio";
-                var item = $('<div class="cs-stagger-item" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
+                var item = $('<div class="cs-stagger-item" style="border: 2px solid #555; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 0px; display: flex; align-items: center; box-shadow: none;"></div>');
                 var details = $('<div style="flex-grow: 1; min-width: 0;"></div>');
                 details.append('<h3 style="margin: 0; font-size: 12pt; color: #2980b9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Project: ' + project.size + ' ' + project.genre + ' by ' + studioName + '</h3>');
                 details.append('<div style="font-size: 10pt; margin: 3px 0;">Topic: ' + project.topic + ' | Weeks Left: <strong style="color: #f39c12;">' + Math.ceil(project.weeksRemaining) + '</strong></div>');
@@ -3941,7 +4010,7 @@
             container.append('<h3 style="color: #d35400; text-align: center; margin-top: 16px; font-size: 12pt;">Current Publishing Offers</h3>');
             for (var i = 0; i < offers.length; i++) {
                 (function (offer) {
-                    var item = $('<div class="cs-stagger-item" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
+                    var item = $('<div class="cs-stagger-item" style="border: 2px solid #555; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 0px; display: flex; align-items: center; box-shadow: none;"></div>');
                     var details = $('<div style="flex-grow: 1; min-width: 0;"></div>');
                     details.append('<h3 style="margin: 0; font-size: 12pt; color: #d35400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Contract: ' + offer.size + ' ' + offer.genre + '</h3>');
                     details.append('<div style="font-size: 10pt; margin: 3px 0;">Advance: <strong style="color: #27ae60;">$' + UI.getShortNumberString(offer.advance) + '</strong> | Topic: ' + offer.topic + '</div>');
@@ -3980,7 +4049,7 @@
     }
 
     function showSearchableList(title, items, onSelect, inlineContainer) {
-        var modal = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; padding: 15px; display: flex; flex-direction: column; overflow: hidden; position: relative;' + (inlineContainer ? ' width: 100%; height: 100%; box-sizing: border-box;' : '') + '"></div>');
+        var modal = $('<div class="windowBorder tallWindow" style="background-color: #eee; border-radius: 0px; padding: 15px; display: flex; flex-direction: column; overflow: hidden; position: relative;' + (inlineContainer ? ' width: 100%; height: 100%; box-sizing: border-box;' : '') + '"></div>');
 
         var closeAction = function () {
             if (inlineContainer) {
@@ -3991,16 +4060,16 @@
             }
         };
 
-        var xBtn = $('<div style="position: absolute; right: 10px; top: 10px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>');
+        var xBtn = $('<div style="position: absolute; right: 10px; top: 10px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: none;">×</div>');
         xBtn.click(closeAction);
         xBtn.hover(function () { $(this).css('background', '#c0392b'); }, function () { $(this).css('background', '#e74c3c'); });
         modal.append(xBtn);
         modal.append('<h2 style="text-align: center; color: #2c3e50; margin: 0 0 10px 0; font-size: 15pt;">' + title + '</h2>');
 
-        var searchInput = $('<input type="text" placeholder="Search..." style="width: 100%; padding: 10px; font-size: 12pt; margin-bottom: 10px; border: 1px solid #bdc3c7; border-radius: 4px; color: black; box-sizing: border-box;">');
+        var searchInput = $('<input type="text" placeholder="Search..." style="width: 100%; padding: 10px; font-size: 12pt; margin-bottom: 10px; border: 2px solid #555; border-radius: 0px; color: black; box-sizing: border-box;">');
         modal.append(searchInput);
 
-        var listContainer = $('<div style="flex: 1; overflow-y: auto; background: white; border: 1px solid #bdc3c7; border-radius: 4px; padding: 5px;"></div>');
+        var listContainer = $('<div style="flex: 1; overflow-y: auto; background: white; border: 2px solid #555; border-radius: 0px; padding: 5px;"></div>');
         modal.append(listContainer);
 
         function renderItems(filter) {
@@ -4012,7 +4081,7 @@
                 if (filter && name.toLowerCase().indexOf(filter.toLowerCase()) === -1) continue;
 
                 (function (n) {
-                    var row = $('<div class="selectorButton" style="padding: 8px 12px; margin-bottom: 4px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 11pt; color: black; background: #f9f9f9; border-radius: 3px;">' + n + '</div>');
+                    var row = $('<div class="selectorButton" style="padding: 8px 12px; margin-bottom: 4px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 11pt; color: black; background: #f9f9f9; border-radius: 0px;">' + n + '</div>');
                     row.click(function () {
                         Sound.click();
                         onSelect(n);
@@ -4051,14 +4120,14 @@
         container.css({ opacity: 0 });
         container.empty();
 
-        var formBox = $('<div class="windowBorder" style="background-color: #ecf0f1; border: 1px solid #bdc3c7; padding: 20px; margin-bottom: 20px;"></div>');
+        var formBox = $('<div class="windowBorder" style="background-color: #eee; border: 2px solid #555; padding: 20px; margin-bottom: 20px;"></div>');
 
         var titleContainer = $('<div style="text-align: center; margin-bottom: 20px;"></div>');
         titleContainer.append('<div style="font-size: 20pt; font-weight: bold; color: #2c3e50; margin-bottom: 5px;">Game Concept</div>');
         formBox.append(titleContainer);
 
         var row1 = $('<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"></div>');
-        var titleInput = $('<input type="text" id="pub_title" placeholder="Game #???" style="font-size: 16pt; width: 60%; background: white; border: 2px solid #d35400; color: #2c3e50; padding: 5px 10px; border-radius: 4px;">');
+        var titleInput = $('<input type="text" id="pub_title" placeholder="Game #???" style="font-size: 16pt; width: 60%; background: white; border: 2px solid #d35400; color: #2c3e50; padding: 5px 10px; border-radius: 0px;">');
         if (prefilled && prefilled.title) titleInput.val(prefilled.title);
         row1.append(titleInput);
         row1.append('<div style="font-size: 14pt; color: #2c3e50;">Cost: <span id="pub_cost_disp" style="font-weight: bold;">$500K</span></div>');
@@ -4074,12 +4143,12 @@
         var selectedSize = (prefilled && prefilled.size) ? prefilled.size : "Small";
 
         sizes.forEach(function (s) {
-            var btn = $('<div class="selectorButton" style="flex: 1; text-align: center; padding: 10px 0; font-size: 12pt; font-weight: bold; background-color: #ecf0f1; border-radius: 6px; cursor: pointer; border-bottom: 3px solid #bdc3c7;">' + s.label + '</div>');
+            var btn = $('<div class="selectorButton" style="flex: 1; text-align: center; padding: 10px 0; font-size: 12pt; font-weight: bold; background-color: #eee; border-radius: 0px; cursor: pointer; border-bottom: 3px solid #bdc3c7;">' + s.label + '</div>');
             if (s.id === selectedSize) btn.css({ "background-color": s.color, "color": "white", "border-bottom": "3px solid #d35400" });
             btn.click(function () {
                 Sound.click();
                 selectedSize = s.id;
-                sizeShelf.find('.selectorButton').css({ "background-color": "#ecf0f1", "color": "#2c3e50", "border-bottom": "3px solid #bdc3c7" });
+                sizeShelf.find('.selectorButton').css({ "background-color": "#eee", "color": "#2c3e50", "border-bottom": "3px solid #bdc3c7" });
                 btn.css({ "background-color": s.color, "color": "white", "border-bottom": "3px solid #d35400" });
                 $('#pub_cost_disp').text('$' + UI.getShortNumberString(s.cost));
             });
@@ -4093,7 +4162,7 @@
         var selectedGenre2 = "";
         var selectedPlats = [];
 
-        var topicBtn = $('<div class="selectorButton lightBlueButton" style="display: block; width: 80%; margin: 0 auto 10px auto; text-align: center; font-size: 13pt; padding: 10px 0; border-radius: 6px;">Pick Topic (' + selectedTopic + ')</div>');
+        var topicBtn = $('<div class="selectorButton lightBlueButton" style="display: block; width: 80%; margin: 0 auto 10px auto; text-align: center; font-size: 13pt; padding: 10px 0; border-radius: 0px;">Pick Topic (' + selectedTopic + ')</div>');
         topicBtn.click(function () {
             showSearchableList("Select Topic", Topics.topics, function (name) {
                 selectedTopic = name;
@@ -4103,8 +4172,8 @@
         formBox.append(topicBtn);
 
         var genreRow = $('<div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;"></div>');
-        var g1Btn = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 12pt; padding: 10px 0; border-radius: 6px;">Pick Genre (' + selectedGenre + ')</div>');
-        var g2Btn = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 12pt; padding: 10px 0; border-radius: 6px;">Pick Genre (None)</div>');
+        var g1Btn = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 12pt; padding: 10px 0; border-radius: 0px;">Pick Genre (' + selectedGenre + ')</div>');
+        var g2Btn = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 12pt; padding: 10px 0; border-radius: 0px;">Pick Genre (None)</div>');
 
         g1Btn.click(function () {
             showSearchableList("Select Main Genre", GameGenre.getAll(), function (name) {
@@ -4152,15 +4221,15 @@
 
         function updatePlatShelf() {
             platRow.empty();
-            var b1 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 6px;">Slot 1 (' + p1 + ')</div>');
+            var b1 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 0px;">Slot 1 (' + p1 + ')</div>');
             b1.click(function () { showSearchableList("Select Platform 1", pList, function (name) { p1 = name; updatePlatShelf(); }, container); });
             platRow.append(b1);
 
-            var b2 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 6px;">Slot 2 (' + p2 + ')</div>');
+            var b2 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 0px;">Slot 2 (' + p2 + ')</div>');
             b2.click(function () { showSearchableList("Select Platform 2", pList, function (name) { p2 = name; updatePlatShelf(); }, container); });
             platRow.append(b2);
 
-            var b3 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 6px;">Slot 3 (' + p3 + ')</div>');
+            var b3 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 0px;">Slot 3 (' + p3 + ')</div>');
             b3.click(function () { showSearchableList("Select Platform 3", pList, function (name) { p3 = name; updatePlatShelf(); }, container); });
             platRow.append(b3);
         }
@@ -4168,10 +4237,10 @@
         formBox.append(platRow);
 
         var footer = $('<div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;"></div>');
-        var cancelBtn = $('<div class="selectorButton deleteButton" style="width: 120px; text-align: center; font-size: 12pt; font-weight: bold; border-radius: 6px;">Cancel</div>');
+        var cancelBtn = $('<div class="selectorButton deleteButton" style="width: 120px; text-align: center; font-size: 12pt; font-weight: bold; border-radius: 0px;">Cancel</div>');
         cancelBtn.click(function () { routeModMenu("publishing"); });
 
-        var confirmBtn = $('<div class="selectorButton orangeButton" style="width: 160px; text-align: center; font-size: 12pt; font-weight: bold; border-radius: 6px;">Post Offer</div>');
+        var confirmBtn = $('<div class="selectorButton orangeButton" style="width: 160px; text-align: center; font-size: 12pt; font-weight: bold; border-radius: 0px;">Post Offer</div>');
         confirmBtn.click(function () {
             var advance = sizes.filter(function (x) { return x.id === selectedSize; })[0].cost;
             selectedPlats = [p1, p2, p3].filter(function (x) { return x !== "None"; });
@@ -4212,7 +4281,7 @@
         }
 
         hist.forEach(function (r) {
-            var item = $('<div class="cs-stagger-item" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
+            var item = $('<div class="cs-stagger-item" style="border: 2px solid #555; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 0px; box-shadow: none;"></div>');
             var header = $('<h3 style="margin: 0; font-size: 12pt; color: #d35400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + r.gameName + ' <span style="font-size:10pt;color:#7f8c8d;">by ' + r.studioName + '</span></h3>');
             item.append(header);
 
@@ -4232,7 +4301,7 @@
         if (sortedGames.length === 0) {
             container.append('<div style="font-size: 12pt; text-align: center; margin-top: 30px; color: #7f8c8d;">You have not released any games yet.</div>');
         } else {
-            var searchBar = $('<input type="text" placeholder="Search released games..." style="font-size: 11pt; width: 100%; margin-bottom: 12px; background: white; border: 1px solid #bdc3c7; color: black; padding: 6px 8px; border-radius: 4px; box-sizing: border-box;">');
+            var searchBar = $('<input type="text" placeholder="Search released games..." style="font-size: 11pt; width: 100%; margin-bottom: 12px; background: white; border: 2px solid #555; color: black; padding: 6px 8px; border-radius: 0px; box-sizing: border-box;">');
             container.append(searchBar);
 
             var listContainer = $('<div id="dlc_list_container"></div>');
@@ -4249,7 +4318,7 @@
                         if (age >= 480) return;
 
 
-                        var item = $('<div class="dlcItem" style="border: 1px solid #bdc3c7; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></div>');
+                        var item = $('<div class="dlcItem" style="border: 2px solid #555; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 0px; box-shadow: none;"></div>');
                         item.append('<h3 style="margin: 0 0 3px 0; font-size: 12pt; color: #8e44ad; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + game.title + '</h3>');
                         var rawDlcInfo = store.data.dlcData[game.id] || {};
                         var dlcCount = rawDlcInfo.count || 0;
@@ -4352,11 +4421,11 @@
         activeSection.append('<h3 style="font-size: 12pt; color: #2c3e50; margin-bottom: 10px;">Ongoing Campaigns</h3>');
 
         if (store.data.activeCampaigns.length === 0) {
-            activeSection.append('<div style="font-size: 10pt; color: #7f8c8d; font-style: italic; background: #fff; padding: 10px; border-radius: 6px; border: 1px dashed #bdc3c7;">No active marketing campaigns.</div>');
+            activeSection.append('<div style="font-size: 10pt; color: #7f8c8d; font-style: italic; background: #fff; padding: 10px; border-radius: 0px; border: 1px dashed #bdc3c7;">No active marketing campaigns.</div>');
         } else {
             var aCampaigns = store.data.activeCampaigns || [];
             aCampaigns.forEach(function (c) {
-                var cCard = $('<div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #bdc3c7; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
+                var cCard = $('<div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 0px; border: 2px solid #555; margin-bottom: 8px; box-shadow: none;"></div>');
                 cCard.append('<div><strong style="color: #2980b9;">' + c.targetName + '</strong><br><span style="font-size: 9pt; color: #7f8c8d;">' + c.campaignName + '</span></div>');
                 cCard.append('<div style="text-align: right;"><span style="color: #27ae60; font-weight: bold;">' + (Math.round((c.boostFactor - 1) * 100)) + '% Boost</span><br><span style="font-size: 9pt; color: #7f8c8d;">' + c.weeksLeft + ' weeks left</span></div>');
                 activeSection.append(cCard);
@@ -4365,15 +4434,15 @@
         container.append(activeSection);
 
 
-        var formBox = $('<div class="cs-stagger-item" style="background: #fdf6e3; border: 3px solid #f1c40f; border-radius: 12px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"></div>');
+        var formBox = $('<div class="cs-stagger-item" style="background: #ddd; border: 3px solid #f1c40f; border-radius: 0px; padding: 15px; box-shadow: none;"></div>');
         formBox.append('<h3 style="margin: 0 0 12px 0; font-size: 12pt; color: #d35400; text-align: center;">Launch New Campaign</h3>');
 
 
         formBox.append('<div style="font-size: 11pt; color: #2c3e50; margin-bottom: 5px;">Target Project:</div>');
-        var searchInput = $('<input type="text" placeholder="Search project..." style="width: 100%; font-size: 10pt; padding: 6px; margin-bottom: 8px; border: 1px solid #bdc3c7; border-radius: 4px; color: black; box-sizing: border-box;">');
+        var searchInput = $('<input type="text" placeholder="Search project..." style="width: 100%; font-size: 10pt; padding: 6px; margin-bottom: 8px; border: 2px solid #555; border-radius: 0px; color: black; box-sizing: border-box;">');
         formBox.append(searchInput);
 
-        var targetSelect = $('<select style="width: 100%; font-size: 11pt; padding: 5px; margin-bottom: 15px; border: 1px solid #bdc3c7; border-radius: 4px; color: black;"></select>');
+        var targetSelect = $('<select style="width: 100%; font-size: 11pt; padding: 5px; margin-bottom: 15px; border: 2px solid #555; border-radius: 0px; color: black;"></select>');
 
 
         var targets = [];
@@ -4437,7 +4506,7 @@
         var selectedC = campaigns[0];
         var campShelf = $('<div style="display: flex; gap: 8px; margin-bottom: 20px;"></div>');
         campaigns.forEach(function (camp) {
-            var btn = $('<div style="flex: 1; text-align: center; padding: 10px 5px; background: #fff; border: 2px solid #bdc3c7; border-radius: 8px; cursor: pointer;"></div>');
+            var btn = $('<div style="flex: 1; text-align: center; padding: 10px 5px; background: #fff; border: 2px solid #bdc3c7; border-radius: 0px; cursor: pointer;"></div>');
             btn.append('<div style="font-size: 10pt; font-weight: bold; color: ' + camp.color + '; margin-bottom: 3px;">' + camp.name + '</div>');
             btn.append('<div style="font-size: 9pt; color: #7f8c8d;">$' + UI.getShortNumberString(camp.cost) + '</div>');
 
@@ -4453,7 +4522,7 @@
         });
         formBox.append(campShelf);
 
-        var launchBtn = $('<div class="selectorButton orangeButton" style="width: 200px; margin: 0 auto; display: block; text-align: center; padding: 10px 0; border-radius: 6px; font-weight: bold;">Launch Campaign</div>');
+        var launchBtn = $('<div class="selectorButton orangeButton" style="width: 200px; margin: 0 auto; display: block; text-align: center; padding: 10px 0; border-radius: 0px; font-weight: bold;">Launch Campaign</div>');
         launchBtn.click(function () {
             if (targets.length === 0) return;
             var targetId = targetSelect.val();
@@ -4478,23 +4547,23 @@
     }
 
     function _buildPieCard(entity, canvasId) {
-        var item=$('<div class="studioCard" style="border:1px solid #d1d9e6;background:#ffffff;padding:12px;margin-bottom:10px;border-radius:8px;display:flex;align-items:flex-start;box-shadow:0 2px 6px rgba(0,0,0,.05);transition:all 0.2s ease;"></div>');
-        var pie=$('<div style="width:60px;min-width:60px;text-align:center;margin-right:12px;"></div>')
-            .append('<canvas id="'+canvasId+'" width="50" height="50" data-shares="'+entity.sharesOwned+'" data-name="'+entity.name+'" class="pieChartCanvas"></canvas>')
-            .append('<div style="font-size:10pt;margin-top:5px;color:#34495e;font-weight:bold;">'+entity.sharesOwned+'%</div>');
+        var item = $('<div class="studioCard" style="border:1px solid #d1d9e6;background:#ffffff;padding:12px;margin-bottom:10px;border-radius:8px;display:flex;align-items:flex-start;box-shadow:0 2px 6px rgba(0,0,0,.05);transition:all 0.2s ease;"></div>');
+        var pie = $('<div style="width:60px;min-width:60px;text-align:center;margin-right:12px;"></div>')
+            .append('<canvas id="' + canvasId + '" width="50" height="50" data-shares="' + entity.sharesOwned + '" data-name="' + entity.name + '" class="pieChartCanvas"></canvas>')
+            .append('<div style="font-size:10pt;margin-top:5px;color:#34495e;font-weight:bold;">' + entity.sharesOwned + '%</div>');
         item.append(pie);
-        setTimeout(function(){
-            var canvas=document.getElementById(canvasId); if(!canvas) return;
-            var shares=parseInt(canvas.getAttribute('data-shares'));
-            var sName=canvas.getAttribute('data-name')||"Co";
-            var ctx=canvas.getContext('2d'), cx=25, cy=25, r=25;
-            ctx.fillStyle="#bdc3c7"; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
-            if(shares>0){ ctx.fillStyle="#d35400"; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,-Math.PI/2,(-Math.PI/2)+Math.PI*2*(shares/100)); ctx.fill(); }
-            ctx.fillStyle="#34495e"; ctx.beginPath(); ctx.arc(cx,cy,15,0,Math.PI*2); ctx.fill();
-            var words=sName.split(' '), initials=words.length>=2?(words[0][0]+words[1][0]):words[0].substring(0,2);
-            ctx.fillStyle="white"; ctx.font="bold 12px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
-            ctx.fillText(initials.toUpperCase(),cx,cy);
-        },50);
+        setTimeout(function () {
+            var canvas = document.getElementById(canvasId); if (!canvas) return;
+            var shares = parseInt(canvas.getAttribute('data-shares'));
+            var sName = canvas.getAttribute('data-name') || "Co";
+            var ctx = canvas.getContext('2d'), cx = 25, cy = 25, r = 25;
+            ctx.fillStyle = "#bdc3c7"; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+            if (shares > 0) { ctx.fillStyle = "#d35400"; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, -Math.PI / 2, (-Math.PI / 2) + Math.PI * 2 * (shares / 100)); ctx.fill(); }
+            ctx.fillStyle = "#34495e"; ctx.beginPath(); ctx.arc(cx, cy, 15, 0, Math.PI * 2); ctx.fill();
+            var words = sName.split(' '), initials = words.length >= 2 ? (words[0][0] + words[1][0]) : words[0].substring(0, 2);
+            ctx.fillStyle = "white"; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(initials.toUpperCase(), cx, cy);
+        }, 50);
         return item;
     }
 
@@ -4504,7 +4573,7 @@
         var totalMaint = 0;
         for (var t = 1; t <= 5; t++) totalMaint += (starTiers[t].maint * studio.staff[t]);
 
-        var item = _buildPieCard(studio, 'pie_'+studio.id);
+        var item = _buildPieCard(studio, 'pie_' + studio.id);
 
         var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1; min-width: 0;"></div>');
         var headerRow = $('<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"></div>')
@@ -4580,7 +4649,7 @@
 
         if (studio.sharesOwned >= 50) {
             middleBtns = $('<div style="display: flex; gap: 6px; align-items: center;"></div>');
-            var staffSelect = $('<select id="staff_tier_' + studio.id + '" style="font-size: 10pt; padding: 3px; color: black; flex: 2; border-radius: 3px; border: 1px solid #bdc3c7; box-sizing: border-box;"></select>');
+            var staffSelect = $('<select id="staff_tier_' + studio.id + '" style="font-size: 10pt; padding: 3px; color: black; flex: 2; border-radius: 0px; border: 2px solid #555; box-sizing: border-box;"></select>');
             staffSelect.append('<option value="1">1* (H:$2K)</option><option value="2" selected>2* (H:$5K)</option><option value="3">3* (H:$15K)</option><option value="4">4* (H:$50K)</option><option value="5">5* (H:$200K)</option>');
 
             var hireBtn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt; padding: 4px; text-align: center;">Hire</div>');
@@ -4605,7 +4674,7 @@
             });
             middleBtns.append(staffSelect).append(hireBtn).append(fireBtn);
 
-            var specSelect = $('<select id="spec_' + studio.id + '" style="font-size: 10pt; padding: 3px; color: black; flex: 2; border-radius: 3px; border: 1px solid #bdc3c7; box-sizing: border-box; margin-left: 5px;"></select>');
+            var specSelect = $('<select id="spec_' + studio.id + '" style="font-size: 10pt; padding: 3px; color: black; flex: 2; border-radius: 0px; border: 2px solid #555; box-sizing: border-box; margin-left: 5px;"></select>');
             specSelect.append('<option value="Any">General (Any)</option>');
             specSelect.append('<option value="DLC">Always DLC</option>');
             specSelect.append('<option value="CoDev">Always Co-Dev</option>');
@@ -4726,15 +4795,15 @@
         formContainer.append('<div>Funding: <strong style="color: #f39c12;">$1,000,000</strong></div>');
 
         formContainer.append('<div>Topic:</div>');
-        var topicSearch = $('<input type="text" placeholder="Search topics..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
+        var topicSearch = $('<input type="text" placeholder="Search topics..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 2px solid #555; color: black; padding: 4px 6px; border-radius: 0px; box-sizing: border-box;">');
         formContainer.append(topicSearch);
-        var topicSelect = $('<select id="inst_topic" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
+        var topicSelect = $('<select id="inst_topic" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 2px solid #555; border-radius: 0px; padding: 3px; box-sizing: border-box;"></select>');
         Topics.topics.forEach(function (t) { topicSelect.append('<option value="' + t.name + '">' + t.name + '</option>'); });
         formContainer.append(topicSelect);
 
-        var genreSearch = $('<input type="text" placeholder="Search genre..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 1px solid #bdc3c7; color: black; padding: 4px 6px; border-radius: 3px; box-sizing: border-box;">');
+        var genreSearch = $('<input type="text" placeholder="Search genre..." style="font-size: 11pt; width: 100%; margin-bottom: 4px; background: white; border: 2px solid #555; color: black; padding: 4px 6px; border-radius: 0px; box-sizing: border-box;">');
         formContainer.append('<div>Genre:</div>').append(genreSearch);
-        var genreSelect = $('<select id="inst_genre" style="font-size: 11pt; width: 100%; margin-bottom: 4px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
+        var genreSelect = $('<select id="inst_genre" style="font-size: 11pt; width: 100%; margin-bottom: 4px; color: black; border: 2px solid #555; border-radius: 0px; padding: 3px; box-sizing: border-box;"></select>');
         var genres = GameGenre.getAll();
         genres.forEach(function (g) { genreSelect.append('<option value="' + g.name + '">' + g.name + '</option>'); });
         formContainer.append(genreSelect);
@@ -4785,7 +4854,7 @@
 
         updateInstMatch();
 
-        var pSizeSelect = $('<select id="inst_size" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; padding: 3px; box-sizing: border-box;"></select>');
+        var pSizeSelect = $('<select id="inst_size" style="font-size: 11pt; width: 100%; margin-bottom: 10px; color: black; border: 2px solid #555; border-radius: 0px; padding: 3px; box-sizing: border-box;"></select>');
         pSizeSelect.append('<option value="Small">Small</option>');
         pSizeSelect.append('<option value="Medium">Medium</option>');
         pSizeSelect.append('<option value="Large">Large</option>');
@@ -4800,15 +4869,15 @@
 
         function updatePlatShelf() {
             platRow.empty();
-            var b1 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 6px 0; border-radius: 4px;">Slot 1 (' + p1 + ')</div>');
+            var b1 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 6px 0; border-radius: 0px;">Slot 1 (' + p1 + ')</div>');
             b1.click(function () { showSearchableList("Select Platform 1", pList, function (n) { p1 = n; updatePlatShelf(); }, contentArea); });
             platRow.append(b1);
 
-            var b2 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 6px 0; border-radius: 4px;">Slot 2 (' + p2 + ')</div>');
+            var b2 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 6px 0; border-radius: 0px;">Slot 2 (' + p2 + ')</div>');
             b2.click(function () { showSearchableList("Select Platform 2", pList, function (n) { p2 = n; updatePlatShelf(); }, contentArea); });
             platRow.append(b2);
 
-            var b3 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 6px 0; border-radius: 4px;">Slot 3 (' + p3 + ')</div>');
+            var b3 = $('<div class="selectorButton lightBlueButton" style="flex: 1; text-align: center; font-size: 11pt; padding: 6px 0; border-radius: 0px;">Slot 3 (' + p3 + ')</div>');
             b3.click(function () { showSearchableList("Select Platform 3", pList, function (n) { p3 = n; updatePlatShelf(); }, contentArea); });
             platRow.append(b3);
         }
@@ -4861,22 +4930,22 @@
         var cost = 5000000;
         if (GameManager.company.cash >= cost) {
             $.modal.close();
-            var input = $('<input type="text" style="font-size: 12pt; padding: 4px 6px; width: 80%; margin-bottom: 12px; color: black; border: 1px solid #bdc3c7; border-radius: 3px; box-sizing: border-box;">');
-            function goSubs(){ setTimeout(function(){ if($('#modUI').length===0) showModMenu("subsidiaries"); else routeModMenu("subsidiaries"); }, 300); }
+            var input = $('<input type="text" style="font-size: 12pt; padding: 4px 6px; width: 80%; margin-bottom: 12px; color: black; border: 2px solid #555; border-radius: 0px; box-sizing: border-box;">');
+            function goSubs() { setTimeout(function () { if ($('#modUI').length === 0) showModMenu("subsidiaries"); else routeModMenu("subsidiaries"); }, 300); }
             var confirmBtn = $('<div class="selectorButton greenButton" style="width: 130px; font-size: 11pt;">Found ($5M)</div>');
             confirmBtn.click(function () {
                 var name = input.val().trim();
                 if (name) {
                     GameManager.company.adjustCash(-cost, "Founded Subsidiary: " + name);
-                    store.data.studios.push({ id: "FS_"+Date.now(), name: name, valuation: cost, sharesOwned: 100, isFounded: true, currentProject: null });
+                    store.data.studios.push({ id: "FS_" + Date.now(), name: name, valuation: cost, sharesOwned: 100, isFounded: true, currentProject: null });
                     $.modal.close(); goSubs();
                 }
             });
             var cancelBtn = $('<div class="selectorButton deleteButton" style="width: 130px; font-size: 11pt;">Cancel</div>');
             cancelBtn.click(function () { $.modal.close(); goSubs(); });
-            var xBtn = $('<div style="position: absolute; right: 10px; top: 10px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">×</div>');
+            var xBtn = $('<div style="position: absolute; right: 10px; top: 10px; width: 24px; height: 24px; line-height: 22px; text-align: center; border-radius: 50%; background: #e74c3c; color: white; font-weight: bold; cursor: pointer; font-size: 14pt; z-index: 1000; box-shadow: none;">×</div>');
             xBtn.click(function () { $.modal.close(); }).hover(function () { $(this).css('background', '#c0392b'); }, function () { $(this).css('background', '#e74c3c'); });
-            var container = $('<div class="windowBorder tallWindow" style="background-color: #ecf0f1; border-radius: 14px; padding: 14px; text-align: center; position: relative;"></div>')
+            var container = $('<div class="windowBorder tallWindow" style="background-color: #eee; border-radius: 0px; padding: 14px; text-align: center; position: relative;"></div>')
                 .append(xBtn)
                 .append('<h2 style="color: #d35400; font-size: 13pt; margin: 0 0 10px 0;">Found New Studio</h2>')
                 .append('<div style="margin: 10px 0; font-size: 11pt; color: #34495e;">Enter a name for your new subsidiary:</div>')
@@ -4890,8 +4959,8 @@
     }
 
     function renderLeaderboardTab(c) {
-        _ae(c,'<h3 style="text-align:center;">Top Studios</h3>'); (store.data.studios||[]).slice().sort(function(a,b){return b.valuation-a.valuation}).slice(0,5).forEach(function(s,i){ _ae(c,'<div style="border:1px solid #bdc3c7;padding:6px 10px;margin:4px 0;">#'+(i+1)+': '+s.name+' ($'+UI.getShortNumberString(s.valuation)+')</div>') });
-        _ae(c,'<h3 style="text-align:center;margin-top:10px;">AI Hall Of Fame</h3>'); (store.data.leaderboardGames||[]).forEach(function(g,i){ _ae(c,'<div style="border:1px solid #bdc3c7;padding:6px 10px;margin:4px 0;">#'+(i+1)+': '+g.gameName+' ('+g.score+'/10)</div>') });
+        _ae(c, '<h3 style="text-align:center;">Top Studios</h3>'); (store.data.studios || []).slice().sort(function (a, b) { return b.valuation - a.valuation }).slice(0, 5).forEach(function (s, i) { _ae(c, '<div style="border:1px solid #bdc3c7;padding:6px 10px;margin:4px 0;">#' + (i + 1) + ': ' + s.name + ' ($' + UI.getShortNumberString(s.valuation) + ')</div>') });
+        _ae(c, '<h3 style="text-align:center;margin-top:10px;">AI Hall Of Fame</h3>'); (store.data.leaderboardGames || []).forEach(function (g, i) { _ae(c, '<div style="border:1px solid #bdc3c7;padding:6px 10px;margin:4px 0;">#' + (i + 1) + ': ' + g.gameName + ' (' + g.score + '/10)</div>') });
     }
 
 
@@ -4908,7 +4977,7 @@
         if (isSequel) {
             var modal = $('#screen-item-selector');
             if (modal.length > 0) {
-                var searchBar = $('<input type="text" placeholder="Search games..." style="width: 80%; display: block; margin: 10px auto; padding: 10px; font-size: 14pt; border-radius: 5px; border: 1px solid #ccc; color: black; background: white;">');
+                var searchBar = $('<input type="text" placeholder="Search games..." style="width: 80%; display: block; margin: 10px auto; padding: 10px; font-size: 14pt; border-radius: 0px; border: 1px solid #ccc; color: black; background: white;">');
 
 
                 var header = modal.find('.window-header');
@@ -4936,7 +5005,7 @@
         }
     };
 
-    
+
     $(document).on('click', '#gameSalesContainer .gameSalesCard, #gameSalesContainer > div', function (e) {
         var name = $(this).find('.gameNameLabel').text();
         if (!name) return;
@@ -4950,12 +5019,12 @@
 
     function showMarketDropdown(game, el) {
         $('.cs-market-dropdown').remove();
-        var dropdown = $('<div class="cs-market-dropdown" style="position: absolute; z-index: 20000; background: #2c3e50; color: white; border: 1px solid #34495e; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); padding: 8px; width: 180px; font-family: Segoe UI, Tahoma, sans-serif;"></div>');
+        var dropdown = $('<div class="cs-market-dropdown" style="position: absolute; z-index: 20000; background: #2c3e50; color: white; border: 1px solid #34495e; border-radius: 0px; box-shadow: none; padding: 8px; width: 180px; font-family: Segoe UI, Tahoma, sans-serif;"></div>');
 
-        dropdown.append('<div style="font-size: 10pt; font-weight: bold; border-bottom: 1px solid #555; margin-bottom: 8px; padding-bottom: 4px; color: #ecf0f1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + game.title + '</div>');
+        dropdown.append('<div style="font-size: 10pt; font-weight: bold; border-bottom: 1px solid #555; margin-bottom: 8px; padding-bottom: 4px; color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + game.title + '</div>');
 
-        
-        var withdrawAction = $('<div style="padding: 6px; cursor: pointer; font-size: 9pt; border-radius: 4px; transition: background 0.2s; color: #e74c3c;">\u26D4 Withdraw from Market</div>');
+
+        var withdrawAction = $('<div style="padding: 6px; cursor: pointer; font-size: 9pt; border-radius: 0px; transition: background 0.2s; color: #e74c3c;">\u26D4 Withdraw from Market</div>');
         withdrawAction.hover(function () { $(this).css('background', '#3d1c1c'); }, function () { $(this).css('background', 'transparent'); });
         withdrawAction.click(function () {
             if (confirm("Withdraw " + game.title + " from the market?")) {
@@ -4966,9 +5035,9 @@
         });
         dropdown.append(withdrawAction);
 
-        
+
         var mCost = Math.floor((game.totalSalesCash || 100000) * 0.05) + 20000;
-        var maintainAction = $('<div style="padding: 6px; cursor: pointer; font-size: 9pt; border-radius: 4px; transition: background 0.2s; color: #2ecc71;">\u267B Maintain (+$' + UI.getShortNumberString(mCost) + ')</div>');
+        var maintainAction = $('<div style="padding: 6px; cursor: pointer; font-size: 9pt; border-radius: 0px; transition: background 0.2s; color: #2ecc71;">\u267B Maintain (+$' + UI.getShortNumberString(mCost) + ')</div>');
         maintainAction.hover(function () { $(this).css('background', '#1b3d2c'); }, function () { $(this).css('background', 'transparent'); });
         maintainAction.click(function () {
             if (GameManager.company.cash >= mCost) {
@@ -4993,17 +5062,16 @@
 
     function csRenderDistributionTab(container) {
         container.empty();
-        container.append('<h3 style="color: #d35400; margin-top: 0; margin-bottom: 20px;">Media Distribution</h3>');
+        _ae(container, '<h3 style="color: #333; border-bottom: 2px solid #555; padding-bottom: 5px; margin-bottom: 15px;">Media Distribution</h3>');
 
         var currentWeek = Math.floor(GameManager.company.currentWeek);
 
-        
-        var pendingObj = $('<div style="margin-bottom: 30px;"></div>');
-        pendingObj.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Awaiting Distribution Decision</h4>');
+        var pendingObj = _ae(container, '<div style="margin-bottom: 25px;"></div>');
+        _ae(pendingObj, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">AWAITING DISTRIBUTION DECISION</div>');
 
         var distPending = store.data.pendingDistribution || [];
         if (distPending.length === 0) {
-            pendingObj.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px;">No projects currently awaiting distribution.</div>');
+            _ae(pendingObj, '<div style="color: #666; font-style: italic; padding: 10px; background: #eee;">No projects currently awaiting distribution.</div>');
         } else {
             distPending.forEach(function (pd) {
                 var mediaProj = csGetMediaProjectById(pd.mediaProjectId);
@@ -5011,31 +5079,26 @@
 
                 var weeksLeft = Math.max(0, pd.decisionDeadlineWeek - currentWeek);
                 var isExpiringSoon = weeksLeft <= 1;
-                var colorClass = isExpiringSoon ? "color: #e74c3c;" : "color: #27ae60;";
+                var color = isExpiringSoon ? "#e74c3c" : "#27ae60";
 
-                var card = $('<div style="background: #fff; border: 1px solid #bdc3c7; border-left: 4px solid ' + (isExpiringSoon ? '#e74c3c' : '#f39c12') + '; padding: 15px; border-radius: 4px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
+                var card = _ae(pendingObj, '<div style="background: #ddd; border: 2px solid #555; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;"></div>');
 
-                var info = $('<div></div>');
-                info.append('<div style="font-weight: bold; font-size: 12pt;">' + mediaProj.title + ' <span style="font-size: 10pt; font-weight: normal; color: #7f8c8d;">(' + mediaProj.type + ')</span></div>');
-                info.append('<div style="font-size: 10pt; margin-top: 5px;">Score: ' + mediaProj.score + '/10 | Base Value: $' + UI.getShortNumberString(mediaProj.estimatedRevenue) + '</div>');
-                info.append('<div style="font-size: 10pt; margin-top: 3px; font-weight: bold; ' + colorClass + '">Decision expires in ' + weeksLeft + ' weeks</div>');
-                card.append(info);
+                var info = _ae(card, '<div></div>');
+                _ae(info, '<div style="font-weight: bold; font-size: 11pt; color:#111;">' + mediaProj.title + ' <span style="font-size: 8pt; color: #555;">[' + mediaProj.type.toUpperCase() + ']</span></div>');
+                _ae(info, '<div style="font-size: 9pt; margin-top: 4px;">SCORE: ' + mediaProj.score + '/10 | EST. REVENUE: $' + UI.getShortNumberString(mediaProj.estimatedRevenue) + '</div>');
+                _ae(info, '<div style="font-size: 9pt; margin-top: 4px; font-weight: bold; color: ' + color + '">EXPIRES IN ' + weeksLeft + ' WEEKS</div>');
 
-                var actionBtn = $('<div class="selectorButton orangeButton" style="padding: 8px 15px;">Review Offers</div>');
+                var actionBtn = _ae(card, '<div class="selectorButton orangeButton" style="padding: 10px 15px; font-weight:bold;">REVIEW OFFERS</div>');
                 actionBtn.click(function () {
                     Sound.click();
                     store.data.activeDistributionChoice = mediaProj;
                     routeModMenu("distribution_offers", "media");
                 });
-                card.append(actionBtn);
-                pendingObj.append(card);
             });
         }
-        container.append(pendingObj);
 
-        
-        var streamObj = $('<div style="margin-bottom: 30px;"></div>');
-        streamObj.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Active Streaming Contracts</h4>');
+        var streamObj = _ae(container, '<div style="margin-bottom: 25px;"></div>');
+        _ae(streamObj, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">ACTIVE STREAMING CONTRACTS</div>');
 
         var activeStreamDeals = [];
         if (store.data.streamingPlatforms) {
@@ -5051,97 +5114,85 @@
         }
 
         if (activeStreamDeals.length === 0) {
-            streamObj.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px;">No active streaming contracts.</div>');
+            _ae(streamObj, '<div style="color: #666; font-style: italic; padding: 10px; background: #eee;">No active streaming contracts.</div>');
         } else {
-            var sTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></table>');
-            sTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th><th>Action</th></tr>');
+            var sTable = _ae(streamObj, '<table style="width: 100%; border-collapse: collapse; font-size: 9pt; background: #fff; border: 2px solid #555;"></table>');
+            _ae(sTable, '<tr style="background: #555; color: white; text-align: left;"><th style="padding: 8px;">Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th><th>Action</th></tr>');
 
             activeStreamDeals.forEach(function (item) {
                 var d = item.deal;
                 var p = item.platform;
-                var sRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
-                sRow.append('<td style="padding: 10px; font-weight: bold;">' + d.title + '</td>');
-                sRow.append('<td>' + p.name + '</td>');
-                sRow.append('<td style="color: #27ae60;">+$' + UI.getShortNumberString(d.weeklyRevenue) + '</td>');
-                sRow.append('<td>' + d.weeksActive + ' / ' + d.weeksTotal + ' wks</td>');
-                
-                var actionTd = $('<td></td>');
-                var breakBtn = $('<span style="color: #e74c3c; cursor: pointer; text-decoration: underline; font-weight: bold;">Break Deal</span>');
-                breakBtn.hover(function(){ $(this).css('color', '#c0392b'); }, function(){ $(this).css('color', '#e74c3c'); });
-                breakBtn.click(function() {
+                var sRow = _ae(sTable, '<tr style="border-bottom: 1px solid #999;"></tr>');
+                _ae(sRow, '<td style="padding: 8px; font-weight: bold;">' + d.title + '</td>');
+                _ae(sRow, '<td>' + p.name + '</td>');
+                _ae(sRow, '<td style="color: #27ae60; font-weight:bold;">+$' + UI.getShortNumberString(d.weeklyRevenue) + '</td>');
+                _ae(sRow, '<td>' + d.weeksActive + ' / ' + d.weeksTotal + ' wks</td>');
+
+                var actionTd = _ae(sRow, '<td></td>');
+                var breakBtn = _ae(actionTd, '<div class="selectorButton deleteButton" style="padding: 4px 8px; font-size: 8pt; font-weight: bold;">BREAK</div>');
+                breakBtn.click(function () {
                     Sound.click();
                     var penalty = Math.floor((d.weeklyRevenue * (d.weeksTotal - d.weeksActive)) * 1.5) || 500000;
                     if (confirm("Break the distribution contract for '" + d.title + "' with " + p.name + "?\n\nPenalty Fee: $" + UI.getShortNumberString(penalty) + "\nThe project will become available for distribution again.")) {
                         if (GameManager.company.cash < penalty) { csNotify("You cannot afford the contract breach penalty."); return; }
                         GameManager.company.adjustCash(-penalty, "Contract Breach Penalty: " + p.name);
-                        
-                        
-                        p.activeDeals = p.activeDeals.filter(function(x) { return x.mediaProjectId !== d.mediaProjectId; });
-                        
-                        
+                        p.activeDeals = p.activeDeals.filter(function (x) { return x.mediaProjectId !== d.mediaProjectId; });
                         var proj = csGetMediaProjectById(d.mediaProjectId);
                         if (proj) {
                             proj.distributionStatus = null;
                             store.data.pendingDistribution = store.data.pendingDistribution || [];
                             store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: Math.floor(GameManager.company.currentWeek) + 4 });
                         }
-                        routeModMenu("media", "media"); 
+                        routeModMenu("media", "media");
                     }
                 });
-                actionTd.append(breakBtn);
-                sRow.append(actionTd);
-                sTable.append(sRow);
             });
-            streamObj.append(sTable);
         }
-        container.append(streamObj);
 
-        
-        var theaterObj = $('<div style="margin-bottom: 30px;"></div>');
-        theaterObj.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Active Theater Runs</h4>');
+        var theaterObj = _ae(container, '<div style="margin-bottom: 25px;"></div>');
+        _ae(theaterObj, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">ACTIVE THEATER RUNS</div>');
 
         var activeTheater = (store.data.theaterReleases || []).filter(function (r) { return r.status === "active"; });
 
         if (activeTheater.length === 0) {
-            theaterObj.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px;">No active theater releases.</div>');
+            _ae(theaterObj, '<div style="color: #666; font-style: italic; padding: 10px; background: #eee;">No active theater releases.</div>');
         } else {
-            var tTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></table>');
-            tTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Movie</th><th>Chain</th><th>Your Share</th><th>Progress</th><th>Action</th></tr>');
+            var tTable = _ae(theaterObj, '<table style="width: 100%; border-collapse: collapse; font-size: 9pt; background: #fff; border: 2px solid #555;"></table>');
+            _ae(tTable, '<tr style="background: #555; color: white; text-align: left;"><th style="padding: 8px;">Movie</th><th>Chain</th><th>Your Share</th><th>Progress</th><th>Action</th></tr>');
 
             activeTheater.forEach(function (tr) {
                 var chain = csGetTheaterChainById(tr.theaterChainId);
                 var chainName = chain ? chain.name : "Unknown Chain";
 
-                var tRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
-                tRow.append('<td style="padding: 10px; font-weight: bold;">' + tr.title + '</td>');
-                tRow.append('<td>' + chainName + '</td>');
-                tRow.append('<td style="color: #27ae60;">$' + UI.getShortNumberString(tr.playerShare) + '</td>');
-                tRow.append('<td>' + tr.weeksActive + ' / ' + tr.maxWeeks + ' wks</td>');
-                
-                var actionTd = $('<td></td>');
-                var cancelBtn = $('<span style="color: #e74c3c; cursor: pointer; text-decoration: underline; font-weight: bold;">Cancel Run</span>');
-                cancelBtn.hover(function(){ $(this).css('color', '#c0392b'); }, function(){ $(this).css('color', '#e74c3c'); });
-                cancelBtn.click(function() {
+                var tRow = _ae(tTable, '<tr style="border-bottom: 1px solid #999;"></tr>');
+                _ae(tRow, '<td style="padding: 8px; font-weight: bold;">' + tr.title + '</td>');
+                _ae(tRow, '<td>' + chainName + '</td>');
+                _ae(tRow, '<td style="color: #27ae60; font-weight:bold;">$' + UI.getShortNumberString(tr.playerShare) + '</td>');
+                _ae(tRow, '<td>' + tr.weeksActive + ' / ' + tr.maxWeeks + ' wks</td>');
+
+                var actionTd = _ae(tRow, '<td></td>');
+                var cancelBtn = _ae(actionTd, '<div class="selectorButton deleteButton" style="padding: 4px 8px; font-size: 8pt; font-weight: bold;">CANCEL</div>');
+                cancelBtn.click(function () {
                     Sound.click();
                     var penalty = 2000000;
                     if (confirm("Cancel the remaining theater run for '" + tr.title + "' at " + chainName + "?\n\nCancellation Fee: $" + UI.getShortNumberString(penalty) + "\nThe project will become available for distribution again.")) {
                         if (GameManager.company.cash < penalty) { csNotify("You cannot afford the cancellation fee."); return; }
                         GameManager.company.adjustCash(-penalty, "Theater Cancellation Fee: " + chainName);
-                        
+
                         tr.status = "abandoned";
-                        
+
                         var proj = csGetMediaProjectById(tr.mediaProjectId);
                         if (proj) {
                             proj.distributionStatus = null;
                             store.data.pendingDistribution = store.data.pendingDistribution || [];
                             store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: Math.floor(GameManager.company.currentWeek) + 4 });
                         }
-                        routeModMenu("media", "media"); 
+                        routeModMenu("media", "media");
                     }
                 });
                 actionTd.append(cancelBtn);
                 tRow.append(actionTd);
-                
+
                 tTable.append(tRow);
             });
             theaterObj.append(tTable);
@@ -5169,7 +5220,7 @@
         if (store.data.gridService && store.data.gridService.isActive) {
             var gridScoreEst = (typeof project.score === "number" && !isNaN(project.score)) ? project.score : 5;
             var estBoost = Math.floor(gridScoreEst * 500 * (gridScoreEst >= 8 ? 3 : (gridScoreEst >= 6 ? 1.5 : 1)));
-            var gridObj = $('<div class="cs-stagger-item" style="background: #fdf6e3; border: 2px solid #f39c12; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
+            var gridObj = $('<div class="cs-stagger-item" style="background: #ddd; border: 2px solid #f39c12; padding: 15px; border-radius: 0px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
             var gInfo = $('<div><h3 style="margin: 0; color: #d35400;">Your Grid Service</h3><div style="font-size: 10pt; margin-top: 5px;">Add directly to your Grid platform as exclusive content.</div><div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. +' + UI.getShortNumberString(estBoost) + ' subscribers</div></div>');
             gridObj.append(gInfo);
             var gridBtn = $('<div class="selectorButton orangeButton" style="padding: 10px 20px;">Publish to Grid</div>');
@@ -5187,7 +5238,7 @@
                 var projected = csEstimateTheaterRevenue(project, chain);
                 var minReqScore = Math.ceil(chain.prestige * 1.5);
                 var isAcceptable = project.score >= minReqScore;
-                var tObj = $('<div style="background: #fff; border: 1px solid #bdc3c7; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ' + (!isAcceptable ? 'opacity: 0.6;' : '') + '"></div>');
+                var tObj = $('<div style="background: #fff; border: 2px solid #555; padding: 12px; border-radius: 0px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ' + (!isAcceptable ? 'opacity: 0.6;' : '') + '"></div>');
                 var tInfo = $('<div><div style="font-weight: bold; font-size: 11pt;">' + chain.name + '</div><div style="font-size: 10pt;">Fee: ' + (chain.distributionFeeRate * 100).toFixed(0) + '% | Min Score: ' + minReqScore + '</div></div>');
                 if (isAcceptable) tInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. Share: $' + UI.getShortNumberString(projected.playerShare.min) + ' - $' + UI.getShortNumberString(projected.playerShare.max) + '</div>');
                 else tInfo.append('<div style="font-size: 10pt; color: #e74c3c; font-weight: bold; margin-top: 5px;">Score too low.</div>');
@@ -5209,7 +5260,7 @@
             store.data.streamingPlatforms.forEach(function (platform) {
                 if (platform.acceptsType && platform.acceptsType.indexOf(project.type) === -1) return;
                 var projected = csEstimateStreamingRevenue(project, platform);
-                var sObj = $('<div style="background: #fff; border: 1px solid #bdc3c7; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;"></div>');
+                var sObj = $('<div style="background: #fff; border: 2px solid #555; padding: 12px; border-radius: 0px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;"></div>');
                 var sInfo = $('<div><div style="font-weight: bold; font-size: 11pt;">' + platform.name + '</div><div style="font-size: 10pt;">Contract: ' + projected.weeks + ' weeks</div><div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Total Est: $' + UI.getShortNumberString(projected.totalRevenue) + '</div></div>');
                 sObj.append(sInfo);
                 var sBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
@@ -5232,11 +5283,11 @@
 
         var offersContainer = $('<div style="flex: 1; overflow-y: auto; padding-right: 10px;"></div>');
 
-        
+
         if (store.data.gridService && store.data.gridService.isActive) {
             var gridScoreEst2 = (typeof project.score === "number" && !isNaN(project.score)) ? project.score : 5;
             var estBoost2 = Math.floor(gridScoreEst2 * 500 * (gridScoreEst2 >= 8 ? 3 : (gridScoreEst2 >= 6 ? 1.5 : 1)));
-            var gridObj = $('<div class="cs-stagger-item" style="background: #fdf6e3; border: 2px solid #f39c12; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
+            var gridObj = $('<div class="cs-stagger-item" style="background: #ddd; border: 2px solid #f39c12; padding: 15px; border-radius: 0px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
             var gInfo = $('<div></div>');
             gInfo.append('<h3 style="margin: 0; color: #d35400;">Your Grid Service</h3>');
             gInfo.append('<div style="font-size: 10pt; margin-top: 5px;">Add directly to your Grid platform as exclusive content.</div>');
@@ -5253,7 +5304,7 @@
             offersContainer.append(gridObj);
         }
 
-        
+
         if (project.type === "movie" && store.data.theaterChains) {
             offersContainer.append('<h3 style="margin-bottom: 10px; border-bottom: 1px solid #bdc3c7;">Theatrical Releases</h3>');
             store.data.theaterChains.forEach(function (chain) {
@@ -5261,7 +5312,7 @@
                 var minReqScore = Math.ceil(chain.prestige * 1.5);
                 var isAcceptable = project.score >= minReqScore;
 
-                var tObj = $('<div style="background: #fff; border: 1px solid #bdc3c7; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ' + (!isAcceptable ? 'opacity: 0.6;' : '') + '"></div>');
+                var tObj = $('<div style="background: #fff; border: 2px solid #555; padding: 12px; border-radius: 0px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ' + (!isAcceptable ? 'opacity: 0.6;' : '') + '"></div>');
 
                 var tInfo = $('<div></div>');
                 tInfo.append('<div style="font-weight: bold; font-size: 11pt;">' + chain.name + ' <span style="font-size: 9pt; color: #7f8c8d;">(Prestige: ' + chain.prestige + ')</span></div>');
@@ -5290,14 +5341,14 @@
             });
         }
 
-        
+
         if (store.data.streamingPlatforms) {
             offersContainer.append('<h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #bdc3c7;">Streaming Exclusive Deals</h3>');
             store.data.streamingPlatforms.forEach(function (platform) {
                 if (platform.acceptsType && platform.acceptsType.indexOf(project.type) === -1) return;
                 var projected = csEstimateStreamingRevenue(project, platform);
 
-                var sObj = $('<div style="background: #fff; border: 1px solid #bdc3c7; padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;"></div>');
+                var sObj = $('<div style="background: #ddd; border: 2px solid #555; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;"></div>');
 
                 var sInfo = $('<div></div>');
                 sInfo.append('<div style="font-weight: bold; font-size: 11pt;">' + platform.name + ' <span style="font-size: 9pt; color: #7f8c8d;">(Users: ' + UI.getShortNumberString(platform.subscriberBase) + ')</span></div>');
@@ -5328,29 +5379,27 @@
             containerCss: {
                 width: "700px",
                 height: "600px",
-                backgroundColor: "#ecf0f1",
-                borderRadius: "8px",
+                backgroundColor: "#eee",
+                border: "4px solid #333",
                 padding: "15px"
             }
         });
     }
 
-    function csRenderGridTab(container) {
+       function csRenderGridTab(container) {
         container.empty();
-        container.append('<h3 style="color: #d35400; margin-top: 0; margin-bottom: 20px;">Grid Content Management</h3>');
+        _ae(container, '<h3 style="color: #333; border-bottom: 2px solid #555; padding-bottom: 5px; margin-bottom: 15px;">Grid Content Management</h3>');
 
         var grid = store.data.gridService;
         if (!grid || !grid.isActive) {
-            container.append('<div style="color: #7f8c8d; font-style: italic;">Grid platform is not active. Research it in Settings.</div>');
+            _ae(container, '<div style="color: #666; font-style: italic; background:#eee; padding:20px; border:2px solid #555;">Grid platform is not active. Research it in Settings.</div>');
             return;
         }
 
-        
-        var btnDash = $('<div class="selectorButton orangeButton" style="padding: 10px 20px; font-weight: bold; margin-bottom: 10px; display: inline-block;">Open Grid Dashboard</div>');
+        var btnContainer = _ae(container, '<div style="margin-bottom:15px; display:flex; gap:10px;"></div>');
+        var btnDash = _ae(btnContainer, '<div class="selectorButton orangeButton" style="padding: 15px 20px; font-weight: bold; flex:1; text-align:center;">OPEN DASHBOARD</div>');
         btnDash.click(function () { Sound.click(); routeModMenu("grid_dashboard"); });
-        container.append(btnDash);
 
-        
         var eligibleMedia = (store.data.mediaProjects || []).filter(function (p) {
             if (p.status !== "released" || p.distributionStatus !== "pending") return false;
             var validTypes = ["movie", "tvSeries", "animatedShow", "comicBook", "soundtrack"];
@@ -5360,38 +5409,39 @@
             }
             return true;
         });
+
         if (eligibleMedia.length > 0) {
-            var bulkBtn = $('<div class="selectorButton" style="padding: 10px 20px; font-weight: bold; margin-bottom: 20px; margin-left: 10px; display: inline-block; background: #27ae60; color: white; border-radius: 4px;">Add All Eligible Media (' + eligibleMedia.length + ')</div>');
+            var bulkBtn = _ae(btnContainer, '<div class="selectorButton greenButton" style="padding: 15px 20px; font-weight: bold; flex:1; text-align:center;">ADD ALL (' + eligibleMedia.length + ')</div>');
             bulkBtn.click(function () {
                 Sound.click();
                 eligibleMedia.forEach(function (mp) { csAddToGrid(mp); });
+                csNotify("Grid: Library updated!");
                 csRenderGridTab(container);
             });
-            container.append(bulkBtn);
         }
 
-        
-        container.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Internal Content on Grid</h4>');
+        _ae(container, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">INTERNAL CONTENT</div>');
         var internalContent = grid.contentLibrary.filter(function (c) { return c.isOriginal; });
 
         if (internalContent.length === 0) {
-            container.append('<div style="color: #7f8c8d; font-style: italic; padding: 10px; margin-bottom: 20px;">No internal content on Grid yet.</div>');
+            _ae(container, '<div style="color: #666; font-style: italic; padding: 10px; background:#eee; margin-bottom: 20px;">No original content found.</div>');
         } else {
-            var iTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 30px;"></table>');
-            iTable.append('<tr style="background: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Title</th><th>Score</th><th>Freshness</th><th>Added Wk</th><th>Views/Wk</th><th>Action</th></tr>');
+            var iTable = _ae(container, '<table style="width: 100%; border-collapse: collapse; font-size: 9pt; background: #fff; border: 2px solid #555; margin-bottom: 25px;"></table>');
+            _ae(iTable, '<tr style="background: #555; color: white; text-align: left;"><th style="padding: 8px;">Title</th><th>Score</th><th>Fresh</th><th>Added</th><th>Views</th><th>Action</th></tr>');
 
             internalContent.forEach(function (c) {
                 var fresh = (typeof c.freshness === "number") ? c.freshness : 0.5;
                 var freshColor = fresh >= 0.7 ? "#27ae60" : (fresh >= 0.4 ? "#f39c12" : "#e74c3c");
                 var freshPct = Math.round(fresh * 100);
-                var iRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
-                iRow.append('<td style="padding: 10px; font-weight: bold;">' + c.title + '</td>');
-                iRow.append('<td>' + c.score + '/10</td>');
-                iRow.append('<td><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:' + freshColor + '; margin-right:4px; vertical-align:middle;"></span>' + freshPct + '%</td>');
-                iRow.append('<td>Wk ' + c.addedWeek + '</td>');
-                iRow.append('<td style="color: #2980b9;">' + UI.getShortNumberString(c.viewsThisWeek || 0) + '</td>');
-                var rmCell = $('<td></td>');
-                var rmBtn = $('<div class="selectorButton" style="padding: 4px 8px; font-size: 8pt; background: #e74c3c; color: white; border-radius: 3px; display: inline-block; cursor: pointer;">Remove</div>');
+                var iRow = _ae(iTable, '<tr style="border-bottom: 1px solid #999;"></tr>');
+                _ae(iRow, '<td style="padding: 8px; font-weight: bold;">' + c.title + '</td>');
+                _ae(iRow, '<td>' + c.score + '/10</td>');
+                _ae(iRow, '<td style="color:' + freshColor + '; font-weight:bold;">' + freshPct + '%</td>');
+                _ae(iRow, '<td>Wk ' + c.addedWeek + '</td>');
+                _ae(iRow, '<td style="color: #2980b9;">' + UI.getShortNumberString(c.viewsThisWeek || 0) + '</td>');
+                
+                var actionTd = _ae(iRow, '<td></td>');
+                var rmBtn = _ae(actionTd, '<div class="selectorButton deleteButton" style="padding: 4px 8px; font-size: 8pt; font-weight: bold;">REMOVE</div>');
                 (function (entryId, projId) {
                     rmBtn.click(function () {
                         Sound.click();
@@ -5401,7 +5451,6 @@
                                 break;
                             }
                         }
-                        
                         if (projId) {
                             var mp = csGetMediaProjectById(projId);
                             if (mp) mp.distributionStatus = "pending";
@@ -5409,24 +5458,16 @@
                         csRenderGridTab(container);
                     });
                 })(c.id, c.mediaProjectId);
-                rmCell.append(rmBtn);
-                iRow.append(rmCell);
-                iTable.append(iRow);
             });
-            container.append(iTable);
         }
 
-        
-        container.append('<h4 style="border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; color: #2c3e50;">Available External Licenses</h4>');
-        var licenseObj = $('<div class="cs-stagger-item" style="background: #fff; border: 1px solid #bdc3c7; padding: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>');
-
+        _ae(container, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">AVAILABLE FOR LICENSE</div>');
         var extMovies = [];
         if (store.data.releaseHistory) {
             store.data.releaseHistory.forEach(function (h) {
                 if (h.platformIds && h.platformIds.indexOf("movie") !== -1) extMovies.push(h);
             });
         }
-
         var availableExt = extMovies.filter(function (m) {
             for (var i = 0; i < grid.contentLibrary.length; i++) {
                 if (grid.contentLibrary[i].title === m.title) return false;
@@ -5436,66 +5477,83 @@
         availableExt.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
 
         if (availableExt.length === 0) {
-            licenseObj.append('<div style="color: #7f8c8d; font-style: italic;">No external movies available to license right now.</div>');
+            _ae(container, '<div style="color: #666; font-style: italic; background:#eee; padding:10px;">No external licenses available.</div>');
         } else {
-            var lTable = $('<table style="width: 100%; border-collapse: collapse; font-size: 10pt;"></table>');
-            lTable.append('<tr style="border-bottom: 1px solid #bdc3c7; text-align: left;"><th style="padding: 10px;">Movie (Studio)</th><th>Rating</th><th>Cost/Wk</th><th>Action</th></tr>');
+            var lTable = _ae(container, '<table style="width: 100%; border-collapse: collapse; font-size: 9pt; background:#fff; border:2px solid #555;"></table>');
+            _ae(lTable, '<tr style="background:#555; color:white; text-align: left;"><th style="padding: 8px;">Movie/Studio</th><th>Rating</th><th>Cost/Wk</th><th>Action</th></tr>');
 
             var limit = Math.min(10, availableExt.length);
             for (var extI = 0; extI < limit; extI++) {
                 var em = availableExt[extI];
                 var cost = Math.floor(10000 + ((em.score || 5) * (em.score || 5) * 5000));
 
-                var lRow = $('<tr style="border-bottom: 1px solid #eee;"></tr>');
-                lRow.append('<td style="padding: 8px;"><b>' + em.title + '</b><br><span style="font-size: 8pt; color: #7f8c8d;">' + (em.studioName || "Unknown Studio") + '</span></td>');
-                lRow.append('<td>' + (em.score || "?") + '</td>');
-                lRow.append('<td style="color: #e74c3c;">-$' + UI.getShortNumberString(cost) + '</td>');
+                var lRow = _ae(lTable, '<tr style="border-bottom: 1px solid #999;"></tr>');
+                _ae(lRow, '<td style="padding: 6px 8px;"><b>' + em.title + '</b><br><span style="font-size: 7pt; color: #666;">' + (em.studioName || "Unknown Studio") + '</span></td>');
+                _ae(lRow, '<td>' + (em.score || "?") + '/10</td>');
+                _ae(lRow, '<td style="color: #e74c3c; font-weight:bold;">-$' + UI.getShortNumberString(cost) + '</td>');
 
-                var acCell = $('<td></td>');
-                var acBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 5px 10px; font-size: 8pt;">License (52wks)</div>');
+                var acCell = _ae(lRow, '<td></td>');
+                var acBtn = _ae(acCell, '<div class="selectorButton whiteBoardButton" style="padding: 5px 8px; font-size: 8pt; font-weight:bold;">LICENSE</div>');
                 acBtn.click((function (extM, extCost) {
                     return function () {
                         csLicenseExternalToGrid(extM, extCost, 52);
                         Sound.click();
+                        csNotify("Licensed: " + extM.title);
                         csRenderGridTab(container);
                     };
                 })(em, cost));
-                acCell.append(acBtn);
-                lRow.append(acCell);
-                lTable.append(lRow);
             }
-            licenseObj.append(lTable);
         }
-        container.append(licenseObj);
     }
 
     function csRenderGridDashboard(contentArea) {
         var g = store.data.gridService; if (!g || !g.isActive) return;
-        var h = _ae(contentArea, '<h2 style="color:#d35400; font-size:16pt; margin:0 0 15px 0; border-bottom:2px solid #bdc3c7; padding-bottom:8px; display:flex; justify-content:space-between; align-items:flex-end;"><span>Grid Platform Dashboard</span></h2>'), ps="";
-        for(var i=0;i<(g.prestige||1);i++) ps+='\u2B50'; _ae(h, '<span style="font-size:11pt; color:#7f8c8d; font-weight:normal;">Prestige: '+ps+'</span>');
-        var tm = _ae(contentArea, '<div style="display:flex; gap:12px; margin-bottom:15px;"></div>'), lC=0; (g.contentLibrary||[]).forEach(function(l){ if(!l.isOriginal && l.licenseCostWeekly>0) lC+=l.licenseCostWeekly*4; });
-        var mRev=(g.weeklyRevenue||0)*4, mExp=((g.weeklyUpkeep||0)+(g.marketingBudgetWeekly||0))*4+lC, sD=(g.subscribers||0)-(g.lastWeekSubscribers||0), sC=sD>0?'#2ecc71':(sD<0?'#e74c3c':'#95a5a6'), sA=sD>0?'\u25B2':(sD<0?'\u25BC':'\u25CF');
-        var _c = function(p,l,v,s){ var d=_ae(p,'<div style="flex:1; background:linear-gradient(135deg,#2c3e50,#34495e); color:white; padding:18px; border-radius:8px; text-align:center;"></div>'); _ae(d,'<div style="font-size:9pt; color:#95a5a6; text-transform:uppercase; margin-bottom:4px;">'+l+'</div><div style="font-size:22pt; font-weight:bold; color:'+(s||'white')+'">'+v+'</div>'); return d; };
-        var gS = _c(tm, 'Subscribers', UI.getShortNumberString(g.subscribers||0), '#3498db'); _ae(gS, '<div style="font-size:9pt; margin-top:4px; color:'+sC+';">'+sA+' '+UI.getShortNumberString(Math.abs(sD))+'/wk</div>');
-        _c(tm, 'Monthly Revenue', '$'+UI.getShortNumberString(mRev), '#2ecc71');
-        var gE = _c(tm, 'Monthly Expenses', '$'+UI.getShortNumberString(mExp), '#e74c3c'); _ae(gE, '<div style="font-size:8pt; margin-top:4px;">Infra: $'+UI.getShortNumberString(g.weeklyUpkeep*4)+' | Mkt: $'+UI.getShortNumberString(g.marketingBudgetWeekly*4)+'</div>');
-        var oC = (g.contentLibrary||[]).filter(function(c){return c.isOriginal}).length; _c(tm, 'Content Library', (g.contentLibrary||[]).length, '#f39c12');
-        var pM = mRev - mExp, pC = _ae(contentArea, '<div style="background:'+(pM>=0?'#eafaf1':'#fdedec')+'; border:2px solid '+(pM>=0?'#27ae60':'#e74c3c')+'; padding:14px 20px; border-radius:8px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;"></div>');
-        _ae(pC, '<div style="font-size:12pt; font-weight:bold;">Monthly '+(pM>=0?'Profit':'Loss')+'</div><div style="font-size:18pt; font-weight:bold; color:'+(pM>=0?'#27ae60':'#e74c3c')+'">'+(pM>=0?'+':'-')+'$'+UI.getShortNumberString(Math.abs(pM))+'</div>');
+        var h = _ae(contentArea, '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #555; padding-bottom:10px; margin-bottom:15px;"></div>');
+        _ae(h, '<div style="font-size:16pt; font-weight:bold; color:#111;">GRID DASHBOARD</div>');
+        var ps = ""; for (var i = 0; i < (g.prestige || 1); i++) ps += '\u2B50';
+        _ae(h, '<div style="font-size:10pt; font-weight:bold; color:#444;">PRESTIGE: ' + ps + '</div>');
+
+        var tm = _ae(contentArea, '<div style="display:flex; gap:10px; margin-bottom:15px;"></div>');
+        var lC = 0; (g.contentLibrary || []).forEach(function (l) { if (!l.isOriginal && l.licenseCostWeekly > 0) lC += l.licenseCostWeekly * 4; });
+        var mRev = (g.weeklyRevenue || 0) * 4, mExp = ((g.weeklyUpkeep || 0) + (g.marketingBudgetWeekly || 0)) * 4 + lC;
+        var sD = (g.subscribers || 0) - (g.lastWeekSubscribers || 0), sC = sD > 0 ? '#2ecc71' : (sD < 0 ? '#e74c3c' : '#95a5a6');
+        
+        var _c = function (p, l, v, s) { 
+            var d = _ae(p, '<div style="flex:1; background:#eee; border:2px solid #555; padding:15px; text-align:center;"></div>'); 
+            _ae(d, '<div style="font-size:8pt; color:#444; font-weight:bold; margin-bottom:4px;">' + l.toUpperCase() + '</div>');
+            _ae(d, '<div style="font-size:18pt; font-weight:bold; color:' + (s || '#111') + '">' + v + '</div>'); 
+            return d; 
+        };
+
+        var gS = _c(tm, 'Subscribers', UI.getShortNumberString(g.subscribers || 0), '#3498db');
+        _ae(gS, '<div style="font-size:8pt; font-weight:bold; color:' + sC + ';">' + (sD > 0 ? '+' : '') + UI.getShortNumberString(sD) + ' /WK</div>');
+        _c(tm, 'Monthly Revenue', '$' + UI.getShortNumberString(mRev), '#27ae60');
+        _c(tm, 'Monthly Expenses', '$' + UI.getShortNumberString(mExp), '#e74c3c');
+
+        var mP = mRev - mExp;
+        _c(tm, 'Monthly Profit', (mP >= 0 ? '+' : '-') + '$' + UI.getShortNumberString(Math.abs(mP)), mP >= 0 ? '#27ae60' : '#e74c3c');
+        _c(tm, 'Monthly Revenue', '$' + UI.getShortNumberString(mRev), '#2ecc71');
+        var gE = _c(tm, 'Monthly Expenses', '$' + UI.getShortNumberString(mExp), '#e74c3c'); _ae(gE, '<div style="font-size:8pt; margin-top:4px;">Infra: $' + UI.getShortNumberString(g.weeklyUpkeep * 4) + ' | Mkt: $' + UI.getShortNumberString(g.marketingBudgetWeekly * 4) + '</div>');
+        var oC = (g.contentLibrary || []).filter(function (c) { return c.isOriginal }).length; _c(tm, 'Content Library', (g.contentLibrary || []).length, '#f39c12');
+        var pM = mRev - mExp, pC = _ae(contentArea, '<div style="background:' + (pM >= 0 ? '#eafaf1' : '#fdedec') + '; border:2px solid ' + (pM >= 0 ? '#27ae60' : '#e74c3c') + '; padding:14px 20px; border-radius:8px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;"></div>');
+        _ae(pC, '<div style="font-size:12pt; font-weight:bold;">Monthly ' + (pM >= 0 ? 'Profit' : 'Loss') + '</div><div style="font-size:18pt; font-weight:bold; color:' + (pM >= 0 ? '#27ae60' : '#e74c3c') + '">' + (pM >= 0 ? '+' : '-') + '$' + UI.getShortNumberString(Math.abs(pM)) + '</div>');
         var ms = _ae(contentArea, '<div style="background:#fff; padding:18px; border-radius:8px; border:1px solid #bdc3c7; margin-bottom:15px; display:flex; gap:20px;"></div>'), d1 = _ae(ms, '<div style="flex:1;"></div>'), d2 = _ae(ms, '<div style="flex:1;"></div>');
-        _ae(d1, '<b>Subscription Price:</b>'); var pS = _ae(d1, '<select style="width:100%; padding:8px; margin-top:5px;"></select>'), psO=[{v:4.99,t:'$4.99 - Fast',gr:0.035,ch:0.005},{v:9.99,t:'$9.99 - Bal',gr:0.025,ch:0.008},{v:14.99,t:'$14.99 - Prem',gr:0.015,ch:0.015},{v:19.99,t:'$19.99 - Plus',gr:0.008,ch:0.025},{v:24.99,t:'$24.99 - Max',gr:0.003,ch:0.045}];
-        psO.forEach(function(o){ pS.append('<option value="'+o.v+'" '+(Math.abs(g.monthlySubFee-o.v)<0.5?'selected':'')+'>'+o.t+'</option>') }); pS.change(function(){ var v=parseFloat($(this).val()); g.monthlySubFee=v; psO.forEach(function(o){ if(Math.abs(o.v-v)<0.5){ g.subscriberGrowthRate=o.gr; g.churnRate=o.ch; } }); });
-        _ae(d2, '<b>Weekly Marketing:</b>'); var mS = _ae(d2, '<select style="width:100%; padding:8px; margin-top:5px;"></select>'), msO=[{v:0,t:'$0 (Organic)'},{v:1.25e5,t:'$125K/wk'},{v:5e5,t:'$500K/wk'},{v:1.25e6,t:'$1.25M/wk'},{v:2.5e6,t:'$2.5M/wk'}];
-        msO.forEach(function(o){ mS.append('<option value="'+o.v+'" '+(g.marketingBudgetWeekly===o.v?'selected':'')+'>'+o.t+'</option>') }); mS.change(function(){ g.marketingBudgetWeekly=parseFloat($(this).val()); });
-        _ae(contentArea, '<h4 style="margin-top:0; border-bottom:1px solid #eee;">Leaderboard</h4>'); var sC = (g.contentLibrary||[]).slice().sort(function(a,b){return (b.totalViews||0)-(a.totalViews||0)}).slice(0,5);
-        if(!sC.length) _ae(contentArea, '<div style="text-align:center; padding:20px;">No content.</div>');
-        else { var lB = _ae(contentArea, '<div style="background:white; border-radius:8px; border:1px solid #eee;"></div>'); sC.forEach(function(c, i){ var r = _ae(lB, '<div style="display:flex; justify-content:space-between; padding:8px 10px; border-bottom:1px solid #f5f5f5;"></div>');
-            _ae(r, '<div><b>'+(i+1)+'. '+c.title+'</b><br><span style="font-size:8pt;">Score: '+c.score+'/10</span></div>'); _ae(r, '<div style="text-align:right;"><b>'+UI.getShortNumberString(c.totalViews||0)+'</b><br><span style="font-size:8pt; color:#2ecc71;">+'+UI.getShortNumberString(c.viewsThisWeek||0)+'/wk</span></div>');
-        }); }
+        _ae(d1, '<b>Subscription Price:</b>'); var pS = _ae(d1, '<select style="width:100%; padding:8px; margin-top:5px;"></select>'), psO = [{ v: 4.99, t: '$4.99 - Fast', gr: 0.035, ch: 0.005 }, { v: 9.99, t: '$9.99 - Bal', gr: 0.025, ch: 0.008 }, { v: 14.99, t: '$14.99 - Prem', gr: 0.015, ch: 0.015 }, { v: 19.99, t: '$19.99 - Plus', gr: 0.008, ch: 0.025 }, { v: 24.99, t: '$24.99 - Max', gr: 0.003, ch: 0.045 }];
+        psO.forEach(function (o) { pS.append('<option value="' + o.v + '" ' + (Math.abs(g.monthlySubFee - o.v) < 0.5 ? 'selected' : '') + '>' + o.t + '</option>') }); pS.change(function () { var v = parseFloat($(this).val()); g.monthlySubFee = v; psO.forEach(function (o) { if (Math.abs(o.v - v) < 0.5) { g.subscriberGrowthRate = o.gr; g.churnRate = o.ch; } }); });
+        _ae(d2, '<b>Weekly Marketing:</b>'); var mS = _ae(d2, '<select style="width:100%; padding:8px; margin-top:5px;"></select>'), msO = [{ v: 0, t: '$0 (Organic)' }, { v: 1.25e5, t: '$125K/wk' }, { v: 5e5, t: '$500K/wk' }, { v: 1.25e6, t: '$1.25M/wk' }, { v: 2.5e6, t: '$2.5M/wk' }];
+        msO.forEach(function (o) { mS.append('<option value="' + o.v + '" ' + (g.marketingBudgetWeekly === o.v ? 'selected' : '') + '>' + o.t + '</option>') }); mS.change(function () { g.marketingBudgetWeekly = parseFloat($(this).val()); });
+        _ae(contentArea, '<h4 style="margin-top:0; border-bottom:1px solid #eee;">Leaderboard</h4>'); var sC = (g.contentLibrary || []).slice().sort(function (a, b) { return (b.totalViews || 0) - (a.totalViews || 0) }).slice(0, 5);
+        if (!sC.length) _ae(contentArea, '<div style="text-align:center; padding:20px;">No content.</div>');
+        else {
+            var lB = _ae(contentArea, '<div style="background:white; border-radius:8px; border:1px solid #eee;"></div>'); sC.forEach(function (c, i) {
+                var r = _ae(lB, '<div style="display:flex; justify-content:space-between; padding:8px 10px; border-bottom:1px solid #f5f5f5;"></div>');
+                _ae(r, '<div><b>' + (i + 1) + '. ' + c.title + '</b><br><span style="font-size:8pt;">Score: ' + c.score + '/10</span></div>'); _ae(r, '<div style="text-align:right;"><b>' + UI.getShortNumberString(c.totalViews || 0) + '</b><br><span style="font-size:8pt; color:#2ecc71;">+' + UI.getShortNumberString(c.viewsThisWeek || 0) + '/wk</span></div>');
+            });
+        }
     }
 
     function buildMediaStudioCard(ms) {
-        var item = _buildPieCard(ms, 'pie_m_'+ms.id);
+        var item = _buildPieCard(ms, 'pie_m_' + ms.id);
 
         var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1; min-width: 0;"></div>');
         var headerRow = $('<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"></div>')
@@ -5517,16 +5575,16 @@
         var isLicensed = (store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === ms.id && GameManager.company.currentWeek < d.endWeek; });
         var hasInbound = (store.data.pendingInboundDeal && store.data.pendingInboundDeal.studioId === ms.id && GameManager.company.currentWeek <= store.data.pendingInboundDeal.expires);
         var inCooldown = (ms.negotiationCooldown && GameManager.company.currentWeek < ms.negotiationCooldown);
-        
+
         var btnText = "Negotiate Catalogue Deal";
         if (isLicensed) btnText = "Catalogue Active [DEAL]";
         else if (hasInbound) btnText = "Review Inbound Offer!";
         else if (inCooldown) btnText = "Studio Refusing Offers";
-        
+
         var dealBtn = $('<button class="selectorButton whiteBoardButton" style="width: 100%; font-size: 10pt;">' + btnText + '</button>');
-        if (hasInbound) dealBtn.css({"background": "#f39c12", "color": "white", "border-color": "#e67e22"});
-        else if (inCooldown) dealBtn.css({"background": "#ecf0f1", "color": "#bdc3c7", "cursor": "not-allowed"});
-        
+        if (hasInbound) dealBtn.css({ "background": "#f39c12", "color": "white", "border-color": "#e67e22" });
+        else if (inCooldown) dealBtn.css({ "background": "#eee", "color": "#bdc3c7", "cursor": "not-allowed" });
+
         dealBtn.click(function () {
             if (isLicensed || inCooldown) return;
             Sound.click();
@@ -5595,19 +5653,20 @@
     }
 
     function csRenderFilmSubsTab(c) {
-        c.empty(); var ms = store.data.movieStudios||[]; _ae(c,'<h3 style="color:#d35400;">Film Subsidiaries</h3>');
-        if(!ms.length) return _ae(c,'<div style="text-align:center;padding:40px;">None found.</div>');
-        var s = _ae(c,'<select style="margin-bottom:15px;"><option value="val">Valuation</option><option value="shares">Shares</option></select>');
-        s.change(function(){ refresh() }); ms.forEach(function(m){ c.append(buildMediaStudioCard(m)) });
+        c.empty(); var ms = store.data.movieStudios || []; _ae(c, '<h3 style="color:#d35400;">Film Subsidiaries</h3>');
+        if (!ms.length) return _ae(c, '<div style="text-align:center;padding:40px;">None found.</div>');
+        var s = _ae(c, '<select style="margin-bottom:15px;"><option value="val">Valuation</option><option value="shares">Shares</option></select>');
+        s.change(function () { refresh() }); ms.forEach(function (m) { c.append(buildMediaStudioCard(m)) });
     }
 
     function csRenderLicensingReview(c) {
-        var off = (store.data.aiLicensingOffers||[]).concat(store.data.activeLicensingOffer?[store.data.activeLicensingOffer]:[]);
-        _ae(c,'<h2 style="color:#d35400;">License Offers</h2><div class="selectorButton" style="margin-bottom:15px;">&lt; Back</div>').click(function(){ routeModMenu("franchises","media") });
-        if(!off.length) return _ae(c,'<p>No offers.</p>');
-        off.forEach(function(o){ var r=_ae(c,'<div style="background:white;padding:15px;margin-bottom:10px;border:1px solid #ccc;"></div>');
-            _ae(r,'<b>'+o.studioName+'</b>: '+o.franchiseName+' ('+o.entryType+')<br>Fee: $'+UI.getShortNumberString(o.licenseFee));
-            _ae(r,'<div class="selectorButton greenButton">Accept</div>').click(function(){ acceptLicensingOffer(o); routeModMenu("franchises","media"); });
+        var off = (store.data.aiLicensingOffers || []).concat(store.data.activeLicensingOffer ? [store.data.activeLicensingOffer] : []);
+        _ae(c, '<h2 style="color:#d35400;">License Offers</h2><div class="selectorButton" style="margin-bottom:15px;">&lt; Back</div>').click(function () { routeModMenu("franchises", "media") });
+        if (!off.length) return _ae(c, '<p>No offers.</p>');
+        off.forEach(function (o) {
+            var r = _ae(c, '<div style="background:white;padding:15px;margin-bottom:10px;border:1px solid #ccc;"></div>');
+            _ae(r, '<b>' + o.studioName + '</b>: ' + o.franchiseName + ' (' + o.entryType + ')<br>Fee: $' + UI.getShortNumberString(o.licenseFee));
+            _ae(r, '<div class="selectorButton greenButton">Accept</div>').click(function () { acceptLicensingOffer(o); routeModMenu("franchises", "media"); });
         });
     }
 
@@ -5641,22 +5700,22 @@
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         var hasInbound = (store.data.pendingInboundDeal && store.data.pendingInboundDeal.studioId === ms.id && currentWeek <= store.data.pendingInboundDeal.expires);
 
-        var termsBox = $('<div style="background: #ecf0f1; border: 1px solid #bdc3c7; border-radius: 5px; padding: 15px; margin-bottom: 20px;"></div>');
-        
+        var termsBox = $('<div style="background: #eee; border: 2px solid #555; border-radius: 0px; padding: 15px; margin-bottom: 20px;"></div>');
+
         var signStudioId = ms.id;
         var signStudioName = ms.name;
-        
+
         if (hasInbound) {
-            termsBox.css({"border": "2px solid #f39c12", "background": "#fdf6e3"});
+            termsBox.css({ "border": "2px solid #f39c12", "background": "#ddd" });
             termsBox.append('<h3 style="color: #d35400; margin-top: 0;">Inbound Licensing Offer</h3>');
             termsBox.append('<p style="font-size: 11pt; color: #2c3e50;">This studio contacted us and wants to license their entire film catalogue to Grid for 2 years (104 weeks).</p>');
-            
+
             var offerPrice = store.data.pendingInboundDeal.price;
             termsBox.append('<div style="font-size: 14pt; font-weight: bold; color: #27ae60; margin: 15px 0;">Requested Upfront Flat Fee: $' + UI.getShortNumberString(offerPrice) + '</div>');
-            
+
             var actionRow = $('<div style="display: flex; gap: 10px; margin-top: 15px;"></div>');
             var acceptBtn = $('<div class="selectorButton greenButton" style="flex: 1; padding: 12px; font-size: 12pt; text-align: center;">Accept Offer</div>');
-            acceptBtn.click(function() {
+            acceptBtn.click(function () {
                 if (GameManager.company.cash < offerPrice) { Sound.click(); csNotify("Insufficient funds!"); return; }
                 Sound.click();
                 GameManager.company.adjustCash(-offerPrice, "Inbound Catalogue Deal: " + signStudioName);
@@ -5669,7 +5728,7 @@
                 routeModMenu("film_subs", "media");
             });
             var declineBtn = $('<div class="selectorButton deleteButton" style="flex: 1; padding: 12px; font-size: 12pt; text-align: center;">Decline</div>');
-            declineBtn.click(function() {
+            declineBtn.click(function () {
                 Sound.click();
                 store.data.pendingInboundDeal = null;
                 routeModMenu("film_subs", "media");
@@ -5680,44 +5739,44 @@
         } else {
             termsBox.append('<h3 style="margin-top: 0;">Outbound Deal Bidding</h3>');
             termsBox.append('<p style="font-size: 10pt; color: #2c3e50; margin-bottom: 15px;">You are approaching this studio to secure their catalogue for 2 years. They will evaluate your offer based on their reputation and Valuation ($' + UI.getShortNumberString(ms.valuation) + ') against your Grid platform\'s size and reach.</p>');
-            
+
             var grid = store.data.gridService;
-            var subPower = Math.min(1.0, (grid.subscribers || 0) / 10000000); 
+            var subPower = Math.min(1.0, (grid.subscribers || 0) / 10000000);
             var baseValue = ms.valuation * 0.10;
             var repMultiplier = 1.0 + ((ms.reputation || 1) * 0.1);
             var discountMultiplier = 1.0 - (subPower * 0.5);
             var minThreshold = Math.floor(baseValue * repMultiplier * discountMultiplier);
             var maxThreshold = Math.floor(minThreshold * 1.5);
-            
+
             var isMajorityOwner = ms.sharesOwned >= 50;
 
             if (isMajorityOwner) {
                 termsBox.append('<div style="background: #e8f8f5; border-left: 4px solid #27ae60; padding: 10px; margin-bottom: 15px; font-size: 10pt; color: #145a32;">' +
-                                '<b>Ownership Benefit:</b> As majority owner of ' + ms.name + ', you can sign this catalogue deal for <b>FREE</b>.' +
-                                '</div>');
+                    '<b>Ownership Benefit:</b> As majority owner of ' + ms.name + ', you can sign this catalogue deal for <b>FREE</b>.' +
+                    '</div>');
             } else {
                 termsBox.append('<div style="background: #fff; border-left: 4px solid #3498db; padding: 10px; margin-bottom: 15px; font-size: 10pt; color: #34495e;">' +
-                                '<b>Market Analysis:</b> Based on ' + ms.name + '\'s reputation and your Grid reach, a bid between <b>$' + minThreshold.toLocaleString() + '</b> (Uncertain) and <b>$' + maxThreshold.toLocaleString() + '</b> (Guaranteed) is recommended.' +
-                                '</div>');
+                    '<b>Market Analysis:</b> Based on ' + ms.name + '\'s reputation and your Grid reach, a bid between <b>$' + minThreshold.toLocaleString() + '</b> (Uncertain) and <b>$' + maxThreshold.toLocaleString() + '</b> (Guaranteed) is recommended.' +
+                    '</div>');
             }
 
             termsBox.append('<div style="margin-bottom: 15px;">');
             termsBox.append('<label style="font-weight: bold; color: #2c3e50; display: block; margin-bottom: 5px;">Your Cash Offer ($):</label>');
             var initialBid = isMajorityOwner ? 0 : Math.floor(minThreshold);
-            termsBox.append('<input type="number" id="cs_catalogue_bid" value="' + initialBid + '" ' + (isMajorityOwner ? 'disabled' : '') + ' style="font-size: 14pt; padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; border-radius: 4px; background: ' + (isMajorityOwner ? '#f1f1f1' : '#fff') + ';">');
+            termsBox.append('<input type="number" id="cs_catalogue_bid" value="' + initialBid + '" ' + (isMajorityOwner ? 'disabled' : '') + ' style="font-size: 14pt; padding: 8px; width: 100%; box-sizing: border-box; border: 2px solid #555; border-radius: 0px; background: ' + (isMajorityOwner ? '#f1f1f1' : '#fff') + ';">');
             termsBox.append('</div>');
 
             var btnText = isMajorityOwner ? "Finalize Free Deal" : "Submit Offer";
             var bidBtn = $('<div class="selectorButton orangeButton" style="width: 100%; padding: 12px; font-size: 12pt; font-weight: bold; text-align: center;">' + btnText + '</div>');
-            bidBtn.click(function() {
+            bidBtn.click(function () {
                 Sound.click();
                 var offer = isMajorityOwner ? 0 : parseInt($('#cs_catalogue_bid').val(), 10);
                 if (!isMajorityOwner && (isNaN(offer) || offer <= 0)) { csNotify("Enter a valid offer."); return; }
                 if (GameManager.company.cash < offer) { csNotify("You don't have enough cash."); return; }
-                
+
                 var ratio = offer / minThreshold;
                 var chance = 0;
-                
+
                 csLog("Bidding: Offer=" + offer + ", Min=" + minThreshold + ", Max=" + maxThreshold + ", Ratio=" + ratio);
 
                 if (isMajorityOwner || offer >= maxThreshold) {
@@ -5726,7 +5785,7 @@
                     if (ratio <= 0.5) chance = 0.0;
                     else chance = ratio - 0.5;
                 }
-                
+
                 csLog("Bidding Result: Chance=" + (chance * 100).toFixed(1) + "%");
 
                 if (Math.random() <= chance) {
@@ -5748,9 +5807,9 @@
         }
     }
 
-    function csGenerateMovieTitle(){
-        var p=['Operation','Dark','Secret','Project','Last','New','Shadow','Iron'], m=['Eagle','Star','Moon','Shadow','Knight','Rise','Fall'], s=['Omega','Zero','Alpha','One','Rebirth'];
-        return p[~~(Math.random()*p.length)]+' '+m[~~(Math.random()*m.length)]+' '+(Math.random()>.5?s[~~(Math.random()*s.length)]:'');
+    function csGenerateMovieTitle() {
+        var p = ['Operation', 'Dark', 'Secret', 'Project', 'Last', 'New', 'Shadow', 'Iron'], m = ['Eagle', 'Star', 'Moon', 'Shadow', 'Knight', 'Rise', 'Fall'], s = ['Omega', 'Zero', 'Alpha', 'One', 'Rebirth'];
+        return p[~~(Math.random() * p.length)] + ' ' + m[~~(Math.random() * m.length)] + ' ' + (Math.random() > .5 ? s[~~(Math.random() * s.length)] : '');
     }
 
     function csSeedFilmMarket() {
@@ -5785,15 +5844,15 @@
         }
 
         films.forEach(function (f) {
-            var row = $('<div style="background: #fff; border: 1px solid #bdc3c7; border-radius: 4px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"></div>');
+            var row = $('<div style="background: #fff; border: 2px solid #555; border-radius: 0px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: none;"></div>');
 
             var info = $('<div></div>');
             info.append('<div style="font-weight: bold; font-size: 13pt; color: #2c3e50;">' + f.title + '</div>');
             info.append('<div style="font-size: 10pt; color: #7f8c8d;">Originated by: ' + f.studioName + ' | Metacritic: <span style="color: #e67e22; font-weight: bold;">' + f.score + '/10</span></div>');
             row.append(info);
 
-            var baseCost = 2000000 + (f.score * 500000); 
-            var wCost = 10000 + (f.score * 5000); 
+            var baseCost = 2000000 + (f.score * 500000);
+            var wCost = 10000 + (f.score * 5000);
 
             var btn = $('<div class="selectorButton greenButton" style="padding: 6px 15px; font-size: 10pt; text-align: center;">License<br><span style="font-size: 8pt; font-weight: normal;">$' + UI.getShortNumberString(baseCost) + ' (50 wks)</span></div>');
             btn.click(function () {
