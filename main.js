@@ -3666,7 +3666,8 @@
 
                         var revBtn = $('<div class="selectorButton orangeButton" style="padding: 8px 15px; font-weight: bold;">Review Offer</div>');
                         revBtn.click(function () {
-                            csShowAILicensingModal(o);
+                            store.data.activeLicensingOffer = o;
+                            routeModMenu("licensing_review", "media");
                         });
                         card.append(revBtn);
                         container.append(card);
@@ -4499,7 +4500,7 @@
                 Sound.click(); GameManager.company.adjustCash(-cost, 'Marketing: ' + f.name);
                 f.fans = (f.fans || 0) + Math.floor(Math.random() * 50000 * (f.level || 1));
                 f.experience = (f.experience || 0) + 100;
-                csNotify('Marketing campaign successful for ' + f.name); refresh();
+                csNotify('Marketing campaign successful for ' + f.name); renderMarketingTab(container);
             });
         });
     }
@@ -4748,6 +4749,15 @@
         contentArea.css({ opacity: 0 });
         contentArea.empty();
 
+        var currentWkInst = Math.floor(GameManager.company.currentWeek);
+        var myPlats = Platforms.allPlatforms.filter(function (p) {
+            var pubWk = (typeof p.published === 'number') ? p.published : 0;
+            var retWk = p.retireDate ? (typeof p.retireDate === 'number' ? p.retireDate : Infinity) : Infinity;
+            return (pubWk <= currentWkInst) && (retWk > currentWkInst);
+        });
+        if (myPlats.length === 0) myPlats = [Platforms.allPlatforms[0]];
+        var pList = [{ name: "None" }].concat(myPlats);
+
         contentArea.append('<h2 style="color: #d35400; font-size: 13pt; margin: 0 0 10px 0;">Instruct ' + studio.name + '</h2>');
 
         var formContainer = $('<div style="padding: 10px; font-size: 11pt; line-height: 1.8;"></div>');
@@ -4823,7 +4833,6 @@
         var p1 = myPlats[0] ? myPlats[0].name : "PC";
         var p2 = "None";
         var p3 = "None";
-        var pList = [{ name: "None" }].concat(myPlats);
         var platRow = $('<div style="display: flex; gap: 8px; margin-bottom: 20px; justify-content: center;"></div>');
 
         function updatePlatShelf() {
@@ -5101,7 +5110,7 @@
                             _da(store.data, 'pendingDistribution');
                             store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: currentWeek + 4 });
                         }
-                        refresh();
+                        csRenderDistributionTab(container);
                     }
                 });
             });
@@ -5141,7 +5150,7 @@
                             _da(store.data, 'pendingDistribution');
                             store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: currentWeek + 4 });
                         }
-                        refresh();
+                        csRenderDistributionTab(container);
                     }
                 });
             });
@@ -5404,7 +5413,7 @@
                 Sound.click();
                 GameManager.company.adjustCash(-25e6, 'Grid Launch');
                 store.data.gridService = { isActive: true, subscribers: 100000, pricePerMonth: 9.99, monthlyMarketing: 50000, licensedContent: [] };
-                refresh();
+                csRenderGridDashboard(contentArea);
             });
             return;
         }
@@ -5416,13 +5425,13 @@
         _ae(priceCol, '<div style="font-weight:bold; font-size:8pt; text-transform:uppercase; margin-bottom:4px; color:#555;">Subscription Price</div>');
         var pS = _ae(priceCol, '<select style="width:100% !important; font-size:11pt; padding:6px; font-weight:bold;"></select>');
         [4.99, 7.99, 9.99, 12.99, 14.99, 19.99].forEach(function (v) { pS.append('<option value="' + v + '" ' + (g.pricePerMonth === v ? 'selected' : '') + '>$' + v.toFixed(2) + ' / mo</option>'); });
-        pS.change(function () { g.pricePerMonth = parseFloat($(this).val()); Sound.click(); refresh(); });
+        pS.change(function () { g.pricePerMonth = parseFloat($(this).val()); Sound.click(); csRenderGridDashboard(contentArea); });
 
         var markCol = _ae(ctrlRow, '<div style="flex:1;"></div>');
         _ae(markCol, '<div style="font-weight:bold; font-size:8pt; text-transform:uppercase; margin-bottom:4px; color:#555;">Monthly Marketing</div>');
         var mS = _ae(markCol, '<select style="width:100% !important; font-size:11pt; padding:6px; font-weight:bold;"></select>');
         [0, 50000, 250000, 1000000, 5000000].forEach(function (v) { mS.append('<option value="' + v + '" ' + (g.monthlyMarketing === v ? 'selected' : '') + '>$' + UI.getShortNumberString(v) + ' / mo</option>'); });
-        mS.change(function () { g.monthlyMarketing = parseInt($(this).val()); Sound.click(); refresh(); });
+        mS.change(function () { g.monthlyMarketing = parseInt($(this).val()); Sound.click(); csRenderGridDashboard(contentArea); });
 
         // Metric Tiles (GDT Stats Style)
         var statsRow = _ae(contentArea, '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;"></div>');
@@ -5577,7 +5586,7 @@
                 store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
                 store.data.activeCatalogueDeals.push({ studioId: ms.id, studioName: ms.name, endWeek: currentWeek + 104 });
                 store.data.activeCatalogueNegotiation = null; store.data.pendingInboundDeal = null;
-                csAutoRouteMediaCatalog(); routeModMenu("film_subs", "media"); 
+                csAutoRouteMediaCatalog(ms); routeModMenu("film_subs", "media"); 
             });
         } else {
             var outBox = _ae(right, '<div style="background:#f8f9fa; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:20px; border-radius:8px;"></div>');
@@ -5609,7 +5618,7 @@
                     store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
                     store.data.activeCatalogueDeals.push({ studioId: ms.id, studioName: ms.name, endWeek: currentWeek + 104 });
                     _n('Deal Secured!', ms.name + ' movies are now on Grid.');
-                    csAutoRouteMediaCatalog(); routeModMenu("film_subs", "media"); 
+                    csAutoRouteMediaCatalog(ms); routeModMenu("film_subs", "media"); 
                 } else {
                     csNotify('Offer Rejected! Studio is offended.'); 
                     ms.negotiationCooldown = currentWeek + 4; routeModMenu("film_subs", "media");
@@ -5672,7 +5681,7 @@
                 
                 var idx = store.data.releaseHistory.indexOf(f);
                 if (idx > -1) store.data.releaseHistory.splice(idx, 1);
-                refresh();
+                csRenderFilmMarketTab(container);
             });
         });
     }
