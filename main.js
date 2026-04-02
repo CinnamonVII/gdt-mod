@@ -21,23 +21,47 @@
         css.id = 'cs-mod-styles';
         css.textContent =
             '.mod-franchise-icon{display:inline-block;color:#d35400;font-weight:bold;margin-right:5px;cursor:help;}' +
-            '#modUI input,#modUI select,.simplemodal-data input,.simplemodal-data select{border:2px solid #555 !important; border-radius:0 !important; color:black !important;}' +
-            '#modUI input:focus,#modUI select:focus,.simplemodal-data input:focus,.simplemodal-data select:focus{border-color:#d35400 !important; outline:none !important;}' +
-            '.simplemodal-container{display:flex !important;flex-direction:column !important;border: 4px solid #555 !important;}' +
-            '.simplemodal-data{flex:1 !important;display:flex !important;flex-direction:column !important;overflow:hidden !important;min-height:0 !important;}' +
+            '#modUI input,#modUI select,.simplemodal-data input,.simplemodal-data select{border:1px solid #bdc3c7 !important; border-radius:4px !important; color:black !important;}' +
+            '#modUI input:focus,#modUI select:focus,.simplemodal-data input:focus,.simplemodal-data select:focus{border-color:#d35400 !important; outline:none !important; box-shadow:0 0 0 2px rgba(211,84,0,0.2) !important;}' +
+            '.modal-content { border-radius: 8px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; border:none !important; }' +
+            '#modUI_container.simplemodal-container{display:flex !important;flex-direction:column !important;border:none !important;box-shadow:0 10px 25px rgba(0,0,0,0.3) !important;border-radius:8px !important;overflow:hidden !important;}' +
+            '#modUI_container .simplemodal-data{flex:1 !important;display:flex !important;flex-direction:column !important;overflow:hidden !important;min-height:0 !important;background:#f8f9fa !important;}' +
             '#modUI_content{scroll-behavior:auto !important;}' +
             '.fran-tier-1{background:#95a5a6;}.fran-tier-2{background:#2980b9;}.fran-tier-3{background:#27ae60;}.fran-tier-4{background:#d35400;}.fran-tier-5{background:#f39c12;}' +
-            '.fanbase-bar-track{background:#aaa;border:1px solid #333;height:10px;overflow:hidden;}.fanbase-bar-fill{height:100%;transition:width 0.4s ease;}' +
-            '.entry-type-btn{display:inline-block;padding:8px 12px;margin:5px;background:#bdc3c7;color:#2c3e50;cursor:pointer;font-size:10pt;font-weight:bold;border:2px solid #555;}' +
+            '.fanbase-bar-track{background:#eee;border:none;height:10px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.1);}.fanbase-bar-fill{height:100%;transition:width 0.4s ease;}' +
+            '.entry-type-btn{display:inline-block;padding:8px 12px;margin:5px;background:#bdc3c7;color:#2c3e50;cursor:pointer;font-size:10pt;font-weight:bold;border:1px solid #aaa;}' +
             '.entry-type-btn:hover:not(.disabled){background:#d35400;color:white;}' +
-            '.entry-type-btn.selected{background:#d35400;color:white;border:2px solid #000;}' +
+            '.entry-type-btn.selected{background:#d35400;color:white;border:1px solid #000;}' +
             '.entry-type-btn.disabled{opacity:0.5;cursor:not-allowed;background:#eee;color:#999;}' +
-            '.media-type-card{border:2px solid #555;padding:10px 14px;margin-bottom:8px;cursor:pointer;background:#ddd;}' +
-            '.media-type-card:hover{border-color:#000;background:#eee;}.media-type-card.selected{border-color:#d35400;background:#fff; border-width:3px;}' +
-            '.cs-progress-track{background:#aaa;border:1px solid #333;height:12px;overflow:hidden;margin-top:6px;}' +
-            '.cs-progress-fill{height:100%;background:#d35400;transition:width .3s ease;}';
+            '.media-type-card{border:none;padding:10px 14px;margin-bottom:8px;cursor:pointer;background:#f8f9fa;box-shadow:0 1px 3px rgba(0,0,0,0.12);}' +
+            '.media-type-card:hover{background:#fff;box-shadow:0 3px 6px rgba(0,0,0,0.15);}.media-type-card.selected{border-left:4px solid #d35400;background:#fff;}' +
+            '.cs-progress-track{background:#e0e0e0;border:none;height:12px;overflow:hidden;margin-top:6px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);}' +
+            '.cs-progress-fill{height:100%;background:#d35400;transition:width .3s ease;}'
+ +
+            '#modUI .selectorButton { white-space: normal !important; height: auto !important; min-height: 28px !important; width: fit-content !important; min-width: 100px; box-sizing: border-box; line-height: 1.2; }';
         document.head.appendChild(css);
     })();
+
+    function makeSelectSearchable($select) {
+        if ($select.find('option').length <= 10) return;
+        var placeholder = "Search " + ($select.find('option').length) + " items...";
+        var $search = $('<input type="text" class="cs-select-search" placeholder="' + placeholder + '" style="width:100% !important; box-sizing:border-box; margin-bottom:5px !important; font-size:10pt !important; padding:5px !important; border:2px solid #555 !important;">');
+        $search.insertBefore($select);
+        $search.on('input', function () {
+            var val = $(this).val().toLowerCase();
+            var firstMatch = null;
+            $select.find('option').each(function () {
+                var text = $(this).text().toLowerCase();
+                var show = text.indexOf(val) > -1;
+                $(this).prop('disabled', !show).toggle(show);
+                if (show && firstMatch === null) firstMatch = $(this).val();
+            });
+            if (firstMatch !== null) {
+                $select.val(firstMatch);
+                $select.trigger('change');
+            }
+        });
+    }
 
 
 
@@ -119,6 +143,35 @@
     }
     function _n(h, t) { GameManager.company.notifications.push(new Notification({ header: h, text: t, image: "" })); }
     function _nb(h, t, b, f) { GameManager.company.notifications.push(new Notification({ header: h, text: t, image: "", buttonText: b, onClick: f })); }
+
+
+    // UI Helpers for GDT-Native aesthetic
+    function csRenderScoreBadge(score) {
+        var color = score >= 7 ? '#27ae60' : (score >= 5 ? '#e67e22' : '#e74c3c');
+        return '<span style="background:' + color + '; color:white; padding:2px 6px; font-size:9pt; font-weight:bold; border-radius:0px;">' + (score || 0) + '/10</span>';
+    }
+
+    function csRenderMiniBar(pct, color, widthPx) {
+        pct = Math.max(0, Math.min(100, pct || 0));
+        color = color || '#d35400';
+        widthPx = widthPx || 80;
+        return '<div style="display:inline-block; width:' + widthPx + 'px; height:8px; background:#e0e0e0; vertical-align:middle; border-radius:4px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.1); overflow:hidden;">' +
+               '<div style="width:' + pct + '%; height:100%; background:' + color + ';"></div></div>';
+    }
+
+    function csRenderEmptyState(message) {
+        return '<div style="color:#7f8c8d; font-style:italic; padding:25px; text-align:center; background:#f8f9fa; border:1px dashed #bdc3c7; border-radius:6px;">' + message + '</div>';
+    }
+
+    function csRenderSectionHeader(label) {
+        return '<div style="background:#34495e; color:white; padding:8px 12px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; font-size:9pt; margin-bottom:12px; border-radius:4px;">' + label + '</div>';
+    }
+    
+    function csRenderSearchBar(placeholder, onInput) {
+        var $input = $('<input type="text" class="cs-search-input" placeholder="' + placeholder + '" style="width:100% !important; box-sizing:border-box; margin-bottom:15px !important; font-size:10pt !important; padding:10px !important; border:1px solid #bdc3c7 !important; border-radius:6px !important; background:white !important; color:black !important;">');
+        $input.on('input', function() { onInput($(this).val().toLowerCase()); });
+        return $input;
+    }
 
     function initData() {
         [
@@ -229,7 +282,7 @@
     function csCreateDefaultGrid() {
         return {
             isActive: false, isResearched: false, launchCost: 25000000, name: "Grid", subscribers: 0,
-            subscriberGrowthRate: 0.02, monthlySubFee: 14.99, contentLibrary: [], totalRevenue: 0, marketingBudgetWeekly: 0,
+            subscriberGrowthRate: 0.02, pricePerMonth: 14.99, contentLibrary: [], totalRevenue: 0, marketingBudgetWeekly: 0,
             churnRate: 0.01, prestige: 1, originalContentBonus: 0, weeklyRevenue: 0, launchWeek: -1, pendingUpkeep: 0,
             weeklyUpkeep: 0, pendingRevenue: 0, pendingMarketing: 0, pendingLicenses: 0, lastWeekSubscribers: 0, revenueHistory: []
         };
@@ -1834,7 +1887,7 @@
         if (isNaN(grid.subscribers) || !isFinite(grid.subscribers)) grid.subscribers = 0;
 
 
-        var weeklySubRevenue = Math.floor((grid.subscribers || 0) * ((grid.monthlySubFee || 14.99) / 4));
+        var weeklySubRevenue = Math.floor((grid.subscribers || 0) * ((grid.pricePerMonth || 9.99) / 4));
         if (isNaN(weeklySubRevenue)) weeklySubRevenue = 0;
         grid.weeklyRevenue = weeklySubRevenue;
         if (weeklySubRevenue > 0) {
@@ -2446,6 +2499,7 @@
             container.append(btnArea);
 
             container.modal({
+                containerId: 'modUI_container',
                 overlayClose: false,
                 opacity: 60,
                 overlayCss: { backgroundColor: "#000" },
@@ -2996,6 +3050,7 @@
         container.append(closeWrapper);
 
         container.modal({
+            containerId: 'modUI_container',
             overlayClose: false,
             opacity: 60,
             overlayCss: { backgroundColor: "#000" },
@@ -3054,14 +3109,15 @@
             subsidiaries: { label: "Studios", type: "studios", render: renderSubsidiariesTab },
             film_subs: { label: "Film Studios", type: "media", render: csRenderFilmSubsTab },
             film_market: { label: "Film Market", type: "media", render: csRenderFilmMarketTab },
+            distribution: { label: "Distribution", type: "media", render: csRenderDistributionTab },
+            licensing_review: { label: "Review Offer", type: "media", render: csRenderLicensingReview, hidden: true },
+            catalogue_negotiation: { label: "Negotiation", type: "media", render: csRenderCatalogueNegotiation, hidden: true },
+            media: { label: "Media", type: "media", render: renderMediaTab },
             publishing: { label: "Publishing", type: "studios", render: renderPublishingTab },
             schedule: { label: "Releases", type: "studios", render: renderScheduleTab },
             leaderboard: { label: "Leaderboard", type: "studios", render: renderLeaderboardTab },
             dlc: { label: "DLCs", type: "studios", render: renderDLCTab },
             franchises: { label: "Franchises", type: "any", render: renderFranchisesTab },
-            licensing_review: { label: "Review Offer", type: "media", render: csRenderLicensingReview },
-            catalogue_negotiation: { label: "Negotiation", type: "media", render: csRenderCatalogueNegotiation },
-            media: { label: "Media", type: "media", render: renderMediaTab },
             marketing: { label: "Marketing", type: "studios", render: renderMarketingTab },
             settings: { label: "Settings", type: "studios", render: renderSettingsTab },
             grid_dashboard: { label: "Grid", type: "media", render: csRenderGridDashboard, condition: function () { return store.data.gridService && store.data.gridService.isActive; } },
@@ -3256,7 +3312,7 @@
             var x = _ae(r2, '<div class="entry-type-btn" style="background:#bdc3c7;">' + s + '</div>');
             x.click(function () { sz = s; bod.find('.entry-type').css('background', '#bdc3c7'); x.css('background', '#d35400'); upE() });
         });
-        _ae(bod, '<div class="selectorButton orangeButton" style="width:100%; text-align:center; padding:10px 0;">Develop Internally</div>').click(function () {
+        _ae(bod, '<div class="selectorButton orangeButton" style="text-align:center; padding:10px 0;">Develop Internally</div>').click(function () {
             var cs = getEntryTypeCost(ty, sz, f, (ty === 'bundle' ? bs.length : 1)); if (GameManager.company.cash < cs) return csNotify('No cash!');
             store.data.activePlayerFranchiseProject = { franchiseId: f.id, entryType: ty, size: sz, bundledIds: bs, remakeTargetId: rem };
             GameManager.company.adjustCash(-cs, 'Franchise: ' + f.name); $.modal.close();
@@ -3272,7 +3328,9 @@
             ava = (store.data.studios || []).filter(function (s) { return s.sharesOwned >= 50 && !s.currentProject });
         if (!ava.length) _ae(su, '<div style="font-size:8pt; color:#7f8c8d;">No units idle.</div>');
         else {
-            var sl = _ae(su, '<select style="width:100%;"></select>'); ava.forEach(function (s) { sl.append('<option value="' + s.id + '">' + s.name + '</option>') });
+            var sl = _ae(su, '<select style="width:100% !important; margin-bottom:5px;"></select>'); 
+            ava.forEach(function (s) { sl.append('<option value="' + s.id + '">' + s.name + '</option>') });
+            makeSelectSearchable(sl);
             _ae(su, '<div class="selectorButton greenButton" style="text-align:center; padding:5px 0; margin-top:5px;">Assign</div>').click(function () {
                 startSubsidiaryFranchiseProject(ava.find(function (x) { return x.id === sl.val() }), f, ty, sz, bs, 0); b();
             });
@@ -3286,9 +3344,14 @@
         var h = _ae(m, '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h3 style="color:#d35400; margin:0;">License ' + f.name + '</h3><div class="selectorButton" style="font-size:10pt;">BACK</div></div>');
         h.find('.selectorButton').click(b); _ae(m, '<p style="font-size:10pt;">Assign a subsidiary to develop.</p>');
         var subs = (store.data.studios || []).filter(function (s) { return s.sharesOwned >= 50 }); if (!subs.length) return _ae(m, '<p>No units.</p>');
-        var sSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:10px;"></select>'); subs.forEach(function (s) { sSl.append('<option value="' + s.id + '">' + s.name + (s.currentProject ? ' (Busy)' : ' (Idle)') + '</option>') });
-        var tSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:10px;"></select>');['sequel', 'remaster', 'remake', 'spinoff', 'prequel', 'bundle'].forEach(function (t) { if (canAddFranchiseEntry(f, t, true).ok) tSl.append('<option value="' + t + '">' + t.toUpperCase() + '</option>') });
-        var zSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:20px;"></select>');['Small', 'Medium', 'Large', 'AAA'].forEach(function (s) { zSl.append('<option value="' + s + '">' + s + '</option>') });
+        var sSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:10px;"></select>'); 
+        subs.forEach(function (s) { sSl.append('<option value="' + s.id + '">' + s.name + (s.currentProject ? ' (Busy)' : ' (Idle)') + '</option>') });
+        makeSelectSearchable(sSl);
+        var tSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:10px;"></select>');
+        ['sequel', 'remaster', 'remake', 'spinoff', 'prequel', 'bundle'].forEach(function (t) { if (canAddFranchiseEntry(f, t, true).ok) tSl.append('<option value="' + t + '">' + t.toUpperCase() + '</option>') });
+        makeSelectSearchable(tSl);
+        var zSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:20px;"></select>');
+        ['Small', 'Medium', 'Large', 'AAA'].forEach(function (s) { zSl.append('<option value="' + s + '">' + s + '</option>') });
         _ae(m, '<div class="selectorButton greenButton" style="text-align:center; padding:10px 0;">Assign to Studio</div>').click(function () {
             var s = subs.find(function (x) { return x.id === sSl.val() }), ty = tSl.val(), sz = zSl.val(), fee = [5000, 12500, 25000, 50000, 125000][f.tier - 1] || 125000;
             if (GameManager.company.cash < fee) return csNotify('No cash!'); if (s.currentProject && !confirm('Studio busy. Reset?')) return;
@@ -3376,10 +3439,21 @@
             if (subTab === "my") {
                 var fans = getPlayerFranchises();
                 if (fans.length === 0) _ae(container, '<div style="text-align: center; padding: 40px; color: #7f8c8d; font-style: italic;">You don\'t own any franchises yet. Go to "Create / Register" to start one!</div>');
+                
+                if (fans.length > 5) {
+                    var $search = csRenderSearchBar("Search my " + fans.length + " franchises...", function(val) {
+                        container.find('.cs-franchise-card').each(function() {
+                            var name = $(this).find('.cs-fran-name').val() || "";
+                            $(this).toggle(name.toLowerCase().indexOf(val) > -1);
+                        });
+                    });
+                    container.append($search);
+                }
+
                 fans.forEach(function (f) {
-                    var card = _ae(container, '<div class="cs-stagger-item" style="background:white; border-radius:8px; border:1px solid #bdc3c7; padding:15px; margin-bottom:15px; box-shadow:0 2px 4px rgba(0,0,0,0.05);"></div>');
+                    var card = _ae(container, '<div class="cs-stagger-item cs-franchise-card" style="background:white; border-radius:8px; border:1px solid #bdc3c7; padding:15px; margin-bottom:15px; box-shadow:0 2px 4px rgba(0,0,0,0.05);"></div>');
                     var header = _ae(card, '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;"></div>');
-                    _ae(header, '<input type="text" value="' + f.name + '" style="font-size:14pt; font-weight:bold; border:none; background:transparent; color:#2c3e50; border-bottom:1px dashed #bdc3c7; width:60%;">').change(function () { f.name = $(this).val(); });
+                    _ae(header, '<input type="text" class="cs-fran-name" value="' + f.name + '" style="font-size:14pt; font-weight:bold; border:none; background:transparent; color:#2c3e50; border-bottom:1px dashed #bdc3c7; width:60%;">').change(function () { f.name = $(this).val(); });
                     header.append(renderTierBadge(f.tier));
                     _ae(card, '<div style="display:flex; gap:20px; font-size:10pt; color:#7f8c8d; margin-bottom:10px;"><div><b>Total Revenue:</b> $' + UI.getShortNumberString(f.totalRevenue) + '</div><div><b>Installments:</b> ' + f.installments.length + '</div></div>');
                     card.append('<div style="font-size:9pt; font-weight:bold; color:#34495e; margin-bottom:4px;">Fanbase Score: ' + Math.floor(f.fanbaseScore) + '/100</div>').append(renderFanbaseBar(f.fanbaseScore));
@@ -3423,6 +3497,7 @@
                     var select = $('<select style="width: 100%; padding: 10px; border-radius: 0px; border: 2px solid #555; font-size: 11pt; margin-bottom: 15px; color: black;"></select>');
                     games.forEach(function (g) { select.append('<option value="' + g.id + '">' + g.title + ' (Score: ' + g.score + ')</option>'); });
                     container.append(select);
+                    makeSelectSearchable(select);
 
                     container.append('<div style="font-weight: bold; margin-bottom: 5px;">Franchise Name:</div>');
                     var nameInput = $('<input type="text" placeholder="Enter Name" style="width: 100%; padding: 10px; border-radius: 0px; border: 2px solid #555; font-size: 11pt; margin-bottom: 15px; color: black;">');
@@ -3605,67 +3680,73 @@
     }
 
     function renderMediaTab(container) {
-        var subTab = 'active'; function refresh() {
-            container.empty(); 
-            var h = _ae(container, '<div style="display:flex; gap:5px; margin-bottom:15px; border-bottom: 2px solid #333; padding-bottom: 5px;"></div>');
-            ['active', 'produce', 'distribution', 'archive', 'grid'].forEach(function (t) {
-                var btnClass = (subTab === t) ? "selectorButton orangeButton" : "selectorButton";
-                var b = _ae(h, '<div class="' + btnClass + '" style="flex:1; text-align:center; padding:8px 0; font-size:10pt; font-weight:bold;">' + t.toUpperCase() + '</div>');
-                b.click(function () { subTab = t; Sound.click(); refresh() });
+        var subTab = 'active';
+
+        function refresh() {
+            container.empty();
+            
+            // Sub-tab bar: Horizontal pill-row
+            var h = _ae(container, '<div style="display:flex; margin-bottom:15px; border:1px solid #bdc3c7; background:#f4f4f4; border-radius:6px; overflow:hidden;"></div>');
+            ['active', 'produce', 'archive', 'grid'].forEach(function (t) {
+                var isActive = (subTab === t);
+                var b = _ae(h, '<div style="flex:1; text-align:center; padding:10px 0; font-size:9pt; font-weight:bold; text-transform:uppercase; cursor:pointer; border-right:1px solid #bdc3c7; background:' + (isActive ? '#d35400' : 'transparent') + '; color:' + (isActive ? 'white' : '#555') + ';">' + t + '</div>');
+                if (t === 'grid') b.css('border-right', 'none');
+                b.click(function () { subTab = t; Sound.click(); refresh(); });
             });
 
             if (subTab === 'active') {
                 var ac = (store.data.mediaProjects || []).filter(function (p) { return p.status === 'inProduction' || p.status === 'releasing' });
                 var cur = Math.floor(GameManager.company.currentWeek);
-                
+
                 if (!ac.length) {
-                    return _ae(container, '<div style="text-align:center; padding:40px; color: #555; font-style: italic; background: rgba(0,0,0,0.05); border-radius: 0px;">No active projects. Go to "PRODUCE" to start a new production.</div>');
+                    _ae(container, csRenderEmptyState('No active projects. Go to "PRODUCE" to greenlight a new production.'));
+                    return;
                 }
 
                 ac.forEach(function (p) {
-                    var tI = csGetMediaTypeInfo(p.type);
-                    var card = _ae(container, '<div style="background:#ddd; padding:12px; border: 2px solid #555; margin-bottom:10px; display:flex; gap:15px; align-items:center;"></div>');
-                    
-                    // Type Icon (GDT Native Style square)
-                    _ae(card, '<div style="width:50px; height:50px; background:' + tI.c + '; border: 2px solid #333; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; font-size:20pt; text-shadow: 1px 1px 0 #000;">' + tI.i + '</div>');
-                    
-                    var mainInfo = _ae(card, '<div style="flex:1; min-width:0;"></div>');
-                    _ae(mainInfo, '<div style="font-size:12pt; font-weight:bold; color:#111; margin-bottom: 2px;">' + p.title + '</div>');
-                    _ae(mainInfo, '<div style="font-size:8pt; font-weight:bold; color:' + tI.c + '; text-transform:uppercase;">' + tI.l + '</div>');
+                    var tI = csGetMediaTypeInfo(p.type || "movie");
+                    var card = _ae(container, '<div style="background:white; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:16px; margin-bottom:12px; display:flex; align-items:center; border-radius:6px;"></div>');
+                    _ae(card, '<div style="width:36px; height:36px; background:' + tI.c + '; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; font-size:14pt; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.2);">' + tI.i + '</div>');
 
-                    var progressSection = _ae(card, '<div style="flex:1.5;"></div>');
+                    var mainInfo = _ae(card, '<div style="flex:1; min-width:0; display:flex; flex-direction:column; margin-left:12px;"></div>');
+                    _ae(mainInfo, '<div style="font-size:11pt; font-weight:bold; color:#2c3e50; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">' + p.title + '</div>');
+                    _ae(mainInfo, '<div style="font-size:8pt; font-weight:bold; color:' + tI.c + '; text-transform:uppercase; letter-spacing:0.5px;">' + tI.l + '</div>');
+                    if (p.franchiseId) {
+                        var fr = getFranchiseById(p.franchiseId);
+                        if (fr) _ae(mainInfo, '<div style="font-size:8pt; color:#7f8c8d; font-style:italic;">' + fr.name + ' Franchise</div>');
+                    }
+
+                    // PROGRESS BAR SECTION
+                    var progressSection = _ae(card, '<div style="flex:1.2; display:flex; flex-direction:column;"></div>');
                     var pct = 0, label = "";
                     if (p.status === 'inProduction') {
                         pct = Math.round(((p.totalWeeks - p.weeksRemaining) / p.totalWeeks) * 100) || 5;
-                        pct = Math.min(100, Math.max(0, pct));
-                        label = "PRODUCTION: " + Math.ceil(p.weeksRemaining) + " WEEKS LEFT";
+                        label = Math.ceil(p.weeksRemaining) + " WEEKS LEFT";
                     } else {
                         pct = Math.round((p.currentEpisode / p.totalEpisodes) * 100) || 10;
-                        pct = Math.min(pct, 100);
                         var unitName = (p.type === 'comicBook' ? 'ISSUE' : 'EPISODE');
-                        label = "RELEASING: " + unitName + " " + p.currentEpisode + " / " + p.totalEpisodes;
+                        label = unitName + " " + p.currentEpisode + " / " + p.totalEpisodes;
                     }
 
-                    _ae(progressSection, '<div style="font-size:7pt; color:#333; margin-bottom:2px; font-weight:bold;">' + label + '</div>');
-                    var track = _ae(progressSection, '<div style="height:12px; background:#aaa; border: 1px solid #333; overflow:hidden;"></div>');
-                    _ae(track, '<div style="height:100%; width:' + pct + '%; background:' + tI.c + '; box-shadow: none;"></div>');
+                    _ae(progressSection, '<div style="font-size:7pt; color:#444; margin-bottom:2px; font-weight:bold; text-transform:uppercase;">' + label + '</div>');
+                    _ae(progressSection, csRenderMiniBar(pct, tI.c, '100%'));
 
-                    var actionGroup = _ae(card, '<div style="display:flex; gap:5px;"></div>');
-                    
-                    if (p.status !== 'cancelled' && (p.currentEpisode || 0) < (p.totalEpisodes || 1)) {
+                    // ACTIONS
+                    var actionGroup = _ae(card, '<div style="display:flex; flex-direction:column; gap:4px; min-width:100px; margin-left:12px;"></div>');
+                    if (p.status === 'releasing' && (p.currentEpisode || 0) < (p.totalEpisodes || 1)) {
                         var airLabel = (p.type === 'comicBook') ? "PUBLISH NEXT" : "RELEASE NEXT";
-                        var airBtn = _ae(actionGroup, '<div class="selectorButton greenButton" style="padding:8px 12px; font-weight:bold; font-size:9pt; min-width: 100px; text-align:center;">' + airLabel + '</div>');
+                        var airBtn = _ae(actionGroup, '<div class="selectorButton greenButton" style="padding:5px 0; font-weight:bold; font-size:9pt; text-align:center;">' + airLabel + '</div>');
                         airBtn.click(function () { 
                             p.nextReleaseWeek = cur - 1; 
-                            csNotify(p.title + ": Next release forced!");
+                            csNotify(p.title + ": Forced next release.");
                             Sound.click(); 
                             refresh(); 
                         });
                     }
 
-                    var cancelBtn = _ae(actionGroup, '<div class="selectorButton deleteButton" style="padding:8px 10px; font-size:9pt; font-weight:bold;">CANCEL</div>');
+                    var cancelBtn = _ae(actionGroup, '<div class="selectorButton deleteButton" style="padding:5px 0; font-size:9pt; font-weight:bold; text-align:center;">CANCEL</div>');
                     cancelBtn.click(function () { 
-                        if (confirm('Cancel project "' + p.title + '"? All investment will be lost.')) { 
+                        if (confirm('Cancel project "' + p.title + '"?')) { 
                             p.status = 'cancelled'; 
                             Sound.click(); 
                             refresh(); 
@@ -3673,145 +3754,106 @@
                     });
                 });
             } else if (subTab === 'produce') {
-                var f = _ae(container, '<div style="background:#eee; padding:15px; border: 2px solid #555;"></div>'),
-                    ts = [{ id: 'movie', l: 'Film', m: 1e6 }, { id: 'tvSeries', l: 'TV Series', m: 5e5 }, { id: 'animatedShow', l: 'Anim. Show', m: 3e5 }, { id: 'soundtrack', l: 'Music/OST', m: 5e4 }, { id: 'merchandise', l: 'Merch', m: 2.5e5 }, { id: 'comicBook', l: 'Comic Book', m: 2.5e4 }];
+                var f = _ae(container, '<div style="background:#eee; padding:20px; border: 2px solid #555;"></div>');
+                _ae(f, csRenderSectionHeader('Greenlight New Production'));
                 
-                _ae(f, '<div style="font-weight:bold; font-size:10pt; margin-bottom:5px;">Media Type:</div>');
-                var tS = _ae(f, '<select style="width:100%; height:30px; margin-bottom:15px;"></select>'); 
+                var grid = _ae(f, '<div style="display:flex; flex-wrap:wrap; gap:15px; margin-bottom:20px;"></div>');
+                
+                var typeCol = _ae(grid, '<div style="flex:1; min-width:200px;"></div>');
+                _ae(typeCol, '<div style="font-weight:bold; font-size:8pt; text-transform:uppercase; margin-bottom:4px;">Media Type</div>');
+                var tS = _ae(typeCol, '<select style="width:100% !important;"></select>'); 
+                var ts = [{ id: 'movie', l: 'Film', m: 1e6 }, { id: 'tvSeries', l: 'TV Series', m: 5e5 }, { id: 'animatedShow', l: 'Anim. Show', m: 3e5 }, { id: 'soundtrack', l: 'Music/OST', m: 5e4 }, { id: 'merchandise', l: 'Merch', m: 2.5e5 }, { id: 'comicBook', l: 'Comic Book', m: 2.5e4 }];
                 ts.forEach(function (t) { tS.append('<option value="' + t.id + '">' + t.l + ' (Min: $' + UI.getShortNumberString(t.m) + ')</option>') });
                 
-                _ae(f, '<div style="font-weight:bold; font-size:10pt; margin-bottom:5px;">Target Franchise:</div>');
-                var fS = _ae(f, '<select style="width:100%; height:30px; margin-bottom:15px;"><option value="">Original IP</option></select>'); 
+                var franCol = _ae(grid, '<div style="flex:1; min-width:200px;"></div>');
+                _ae(franCol, '<div style="font-weight:bold; font-size:8pt; text-transform:uppercase; margin-bottom:4px;">Target Franchise</div>');
+                var fS = _ae(franCol, '<select style="width:100% !important;"><option value="">Original IP</option></select>'); 
                 getPlayerFranchises().forEach(function (x) { fS.append('<option value="' + x.id + '">' + x.name + '</option>') });
                 
-                _ae(f, '<div style="font-weight:bold; font-size:10pt; margin-bottom:5px;">Project Budget ($):</div>');
-                var bI = _ae(f, '<input type="number" value="1000000" style="width:100%; height:30px; margin-bottom:15px;">');
+                var budCol = _ae(grid, '<div style="flex:1; min-width:200px;"></div>');
+                _ae(budCol, '<div style="font-weight:bold; font-size:8pt; text-transform:uppercase; margin-bottom:4px;">Budget ($)</div>');
+                var bI = _ae(budCol, '<input type="number" value="1000000" style="width:100% !important;">');
+
+                var estBox = _ae(f, '<div style="font-size:10pt; color:#555; text-align:center; margin-bottom:15px; font-weight:bold;">Estimated Duration: <span id="cs_est_dur">~20 weeks</span></div>');
+                var updateEst = function() {
+                    var b = parseInt(bI.val()) || 0;
+                    var w = Math.min(300, Math.floor(Math.pow(b / 1e5, 0.75)) + 8);
+                    f.find('#cs_est_dur').text('~' + w + ' weeks');
+                };
+                bI.on('input', updateEst);
+                updateEst();
                 
-                var gBtn = _ae(f, '<div class="selectorButton orangeButton" style="width:100%; text-align:center; padding:10px 0; font-weight:bold; font-size:11pt;">Greenlight Project</div>');
+                var gBtn = _ae(f, '<div class="selectorButton orangeButton" style="width:100%; text-align:center; padding:12px 0; font-weight:bold; font-size:11pt;">Greenlight Project</div>');
                 gBtn.click(function () {
                     var b = parseInt(bI.val()), t = tS.val(), m = (ts.filter(function (x) { return x.id === t })[0] || {}).m || 0; 
-                    if (GameManager.company.cash < b || b < m) {
-                        return csNotify('Insufficient funds or budget below minimum for this type.');
-                    }
+                    if (GameManager.company.cash < b || b < m) return csNotify('Check funds/minimum budget.');
                     var w = Math.min(300, Math.floor(Math.pow(b / 1e5, 0.75)) + 8), fr = getFranchiseById(fS.val());
-                    var p = { 
-                        id: 'MEDIA_' + Date.now(), 
-                        type: t, 
-                        franchiseId: fS.val() || null, 
-                        title: (fr ? fr.name : 'New') + ' ' + t.toUpperCase(), 
-                        budget: b, 
-                        weeksRemaining: w, 
-                        totalWeeks: w, 
-                        status: 'inProduction', 
-                        totalEpisodes: 1 
-                    };
+                    var p = { id: 'MEDIA_' + Date.now(), type: t, franchiseId: fS.val() || null, title: (fr ? fr.name : 'New') + ' ' + t.toUpperCase(), budget: b, weeksRemaining: w, totalWeeks: w, status: 'inProduction', totalEpisodes: 1, totalRevenue:0, weeklyRevenue:0, currentEpisode:0 };
                     store.data.mediaProjects.push(p); 
                     GameManager.company.adjustCash(-b, 'Media: ' + p.title); 
-                    subTab = 'active'; 
-                    Sound.click();
-                    refresh();
+                    subTab = 'active'; Sound.click(); refresh();
                 });
             } else if (subTab === 'archive') {
-                _ae(container, '<h3 style="color:#333; border-bottom: 2px solid #777;">Production Archive</h3>'); 
+                _ae(container, csRenderSectionHeader('Production Archive')); 
                 var rel = (store.data.mediaProjects || []).filter(function (p) { return p.status === 'released' || p.status === 'cancelled' });
-                if (!rel.length) return _ae(container, '<div style="padding:20px; text-align:center; color:#555;">No records found.</div>');
+                if (!rel.length) {
+                    _ae(container, csRenderEmptyState('No past productions in the archives.'));
+                    return;
+                }
                 
-                var t = _ae(container, '<table style="width:100%; font-size:9pt; border-collapse: collapse;"><tr style="background:#555; color:white;"><th>Title</th><th>Type</th><th>Score</th><th>ROI</th></tr></table>');
-                rel.forEach(function (p) {
+                var t = _ae(container, '<table style="width:100%; font-size:9pt; border-collapse:collapse; background:#fff; border:1px solid #bdc3c7; border-radius:6px; overflow:hidden;">' +
+                    '<tr style="background:#34495e; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:10px; text-align:left;">Title</th><th>Type</th><th>Score</th><th>ROI</th><th>Status</th></tr></table>');
+                rel.sort(function(a,b){ return (b.releaseWeek || 0) - (a.releaseWeek || 0); });
+                rel.forEach(function (p, idx) {
                     var roi = p.budget > 0 ? Math.floor(((p.totalRevenue - p.budget) / p.budget) * 100) : 0;
-                    _ae(t, '<tr style="border-bottom:1px solid #999;"><td>' + p.title + '</td><td>' + p.type + '</td><td>' + (p.score || '-') + '</td><td style="color:' + (roi >= 0 ? '#27ae60' : '#e74c3c') + '; font-weight:bold;">' + roi + '%</td></tr>');
+                    var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
+                    var r = _ae(t, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
+                    _ae(r, '<td style="padding:10px; font-weight:bold; color:#2c3e50;">' + p.title + '</td>');
+                    _ae(r, '<td style="text-align:center; text-transform:uppercase; font-size:8pt;">' + p.type + '</td>');
+                    _ae(r, '<td style="text-align:center;">' + csRenderScoreBadge(p.score) + '</td>');
+                    _ae(r, '<td style="text-align:center; color:' + (roi >= 0 ? '#27ae60' : '#e74c3c') + '; font-weight:bold;">' + (roi > 0 ? '+' : '') + roi + '%</td>');
+                    _ae(r, '<td style="text-align:center; font-size:8pt; text-transform:uppercase; color:#7f8c8d;">' + p.status + '</td>');
                 });
-            } else if (subTab === 'distribution') csRenderDistributionTab(container);
-            else if (subTab === 'grid') csRenderGridTab(container);
-        } refresh();
+            } else if (subTab === 'grid') csRenderGridTab(container);
+        }
+        refresh();
     }
 
     function renderSettingsTab(container) {
-        container.append('<h2 style="color: #d35400; font-size: 14pt; margin: 0 0 15px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px;">Mod Settings</h2>');
+        container.empty();
+        _ae(container, csRenderSectionHeader('Concurrent Studios Settings'));
 
-        if (!store.data.gridService || !store.data.gridService.isActive) {
-            var gridRnD = $('<div class="selectorButton orangeButton" style="width: 100%; text-align: center; font-size: 11pt; padding: 12px 0; border-radius: 0px; font-weight: bold; margin-bottom: 20px;">Research "Grid" Streaming Service ($50M)</div>');
-            gridRnD.click(function () {
-                if (GameManager.company.cash >= 50000000) {
-                    if (confirm("Launch your own streaming platform 'Grid' for $50,000,000?")) {
-                        GameManager.company.adjustCash(-50000000, "Grid Platform R&D");
-                        store.data.gridService = csCreateDefaultGrid();
-                        store.data.gridService.isActive = true;
-                        store.data.gridService.isResearched = true;
-                        store.data.gridService.subscribers = 500000;
-                        store.data.gridService.launchWeek = Math.floor(GameManager.company.currentWeek);
-                        Sound.click();
-                        routeModMenu("settings");
-                    }
-                } else {
-                    csNotify("Not enough funds! Need $50M.");
-                }
-            });
-            container.append(gridRnD);
-        } else {
-            var grid = store.data.gridService;
-            var prestigeStr = "";
-            for (var gps = 0; gps < (grid.prestige || 1); gps++) prestigeStr += "\u2B50";
-            var gridStatus = $('<div class="cs-stagger-item" style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 15px 20px; border-radius: 0px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;"></div>');
-            gridStatus.append('<div><div style="font-weight: bold; font-size: 12pt;">Grid Streaming Platform</div><div style="font-size: 9pt; color: #95a5a6; margin-top: 3px;">Status: Active | Prestige: ' + prestigeStr + '</div></div>');
-            gridStatus.append('<div style="text-align: right;"><div style="font-size: 14pt; font-weight: bold; color: #3498db;">' + UI.getShortNumberString(grid.subscribers || 0) + '</div><div style="font-size: 9pt; color: #95a5a6;">subscribers</div></div>');
-            container.append(gridStatus);
-        }
-
-        var overloadDiv = $('<div class="cs-stagger-item" style="display: flex; align-items: center; margin-bottom: 20px; font-size: 12pt; background: #fff; padding: 15px; border-radius: 0px; border: 2px solid #555; box-shadow: none; cursor: pointer;"></div>');
-        var overloadCheck = $('<input type="checkbox" style="margin-right: 15px; width: 22px; height: 22px; pointer-events: none;">');
-        overloadCheck.prop('checked', !!store.data.disableOverloadMalus);
-
-        overloadDiv.click(function () {
-            store.data.disableOverloadMalus = !store.data.disableOverloadMalus;
-            overloadCheck.prop('checked', store.data.disableOverloadMalus);
-            Sound.click();
+        // Feature Overload Toggle
+        var ovRow = _ae(container, '<div style="display:flex; align-items:center; background:#fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15); padding:15px; margin-bottom:15px; cursor:pointer; border-radius:6px;"></div>');
+        var ovChk = _ae(ovRow, '<input type="checkbox" style="width:20px; height:20px; margin-right:15px; pointer-events:none;">');
+        ovChk.prop('checked', !!store.data.disableOverloadMalus);
+        
+        var ovTxt = _ae(ovRow, '<div style="flex:1;"></div>');
+        _ae(ovTxt, '<div style="font-weight:bold; color:#2c3e50;">Disable Engine Overload Penalty</div>');
+        _ae(ovTxt, '<div style="font-size:9pt; color:#7f8c8d;">Removes the score penalty for excessive features and auto-cleans 80% of project bugs.</div>');
+        
+        ovRow.click(function () {
+            Sound.click(); store.data.disableOverloadMalus = !store.data.disableOverloadMalus;
+            ovChk.prop('checked', store.data.disableOverloadMalus);
         });
 
-        var labelWrapper = $('<div style="flex: 1;"></div>');
-        labelWrapper.append('<div style="font-weight: bold; cursor: pointer;">Disable Feature Overload Malus</div>');
-        labelWrapper.append('<div style="font-size: 10pt; color: #7f8c8d; margin-top: 5px; display: block; border-top: 1px solid #eee; padding-top: 5px;">When enabled, this removes the penalty for having too many features in a game and proactively cleans up 80% of project bugs. (Experimental)</div>');
-
-        overloadDiv.append(overloadCheck).append(labelWrapper);
-        container.append(overloadDiv);
-
-
-        var healerDiv = $('<div class="cs-stagger-item" style="background: #fff; padding: 15px; border-radius: 0px; border: 2px solid #555; box-shadow: none;"></div>');
-        healerDiv.append('<h3 style="margin: 0 0 10px 0; font-size: 12pt; color: #d35400;">Baseline Recovery</h3>');
-        healerDiv.append('<p style="font-size: 10pt; color: #7f8c8d; margin-bottom: 12px;">Reset Design and Tech baselines based on your entire company history.</p>');
-
-        var healGrid = $('<div style="display: flex; gap: 10px; margin-bottom: 15px;"></div>');
-        var dInput = $('<input type="number" placeholder="Design" value="500" style="flex: 1; padding: 8px; border: 2px solid #555; border-radius: 0px; color: black; box-sizing: border-box;">');
-        var tInput = $('<input type="number" placeholder="Tech" value="500" style="flex: 1; padding: 8px; border: 2px solid #555; border-radius: 0px; color: black; box-sizing: border-box;">');
-        healGrid.append(dInput).append(tInput);
-        healerDiv.append(healGrid);
-
-        var healBtn = $('<div class="selectorButton orangeButton" style="width: 100%; text-align: center; font-size: 11pt; padding: 10px 0; border-radius: 0px; font-weight: bold;">Heal Baselines Now</div>');
-        healBtn.click(function () {
-            var d = parseInt(dInput.val());
-            var t = parseInt(tInput.val());
-            if (isNaN(d) || isNaN(t)) { csNotify("Please enter valid numbers!"); return; }
-
+        // Baseline Recovery (Admin Tool)
+        var hBox = _ae(container, '<div style="background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:15px; border-radius:6px;"></div>');
+        _ae(hBox, csRenderSectionHeader('Internal Baseline Calibration'));
+        _ae(hBox, '<div style="font-size:9pt; color:#7f8c8d; margin-bottom:12px;">Manually calibrate Design/Tech baselines to fix score inflation/stagnation.</div>');
+        
+        var hGrid = _ae(hBox, '<div style="display:flex; gap:10px; margin-bottom:10px;"></div>');
+        var dInp = _ae(hGrid, '<input type="number" value="500" style="flex:1; padding:8px; border:1px solid #bdc3c7; font-weight:bold; border-radius:4px;">');
+        var tInp = _ae(hGrid, '<input type="number" value="500" style="flex:1; padding:8px; border:1px solid #bdc3c7; font-weight:bold; border-radius:4px;">');
+        
+        var hBtn = _ae(hBox, '<div class="selectorButton orangeButton" style="width:100%; padding:10px 0; text-align:center; font-weight:bold;">RECALIBRATE NOW</div>');
+        hBtn.click(function () {
+            var d = parseInt(dInp.val()), t = parseInt(tInp.val());
+            if (isNaN(d) || isNaN(t)) return;
             Sound.click();
-            var log = GameManager.company.gameLog;
-            if (!log) return;
-
-            for (var i = 0; i < log.length; i++) {
-                log[i].designPoints = d;
-                log[i].technologyPoints = t;
-            }
-            GameManager.company.designBaseline = d;
-            GameManager.company.technologyBaseline = t;
-            if (typeof GameManager.company.prevDesignPoints !== 'undefined') GameManager.company.prevDesignPoints = d;
-            if (typeof GameManager.company.prevTechnologyPoints !== 'undefined') GameManager.company.prevTechnologyPoints = t;
-            if (typeof GameManager.company.lastDesignPoints !== 'undefined') GameManager.company.lastDesignPoints = d;
-            if (typeof GameManager.company.lastTechPoints !== 'undefined') GameManager.company.lastTechPoints = t;
-
-
-            csNotify("Baselines successfully recovered! Entire history adjusted to D:" + d + " / T:" + t + ".");
+            GameManager.company.designBaseline = d; GameManager.company.technologyBaseline = t;
+            csNotify('Baselines reset. Future projects will use D:'+d+' T:'+t+' as floor.');
         });
-        healerDiv.append(healBtn);
-        container.append(healerDiv);
     }
 
     function renderMarketTab(container) {
@@ -3854,6 +3896,7 @@
             routeModMenu("market");
         });
         sortContainer.append(sortSelect);
+        makeSelectSearchable(sortSelect);
         container.append(sortContainer);
 
         for (var i = 0; i < studios.length; i++) {
@@ -3952,6 +3995,7 @@
             routeModMenu("subsidiaries");
         });
         sortContainer.append(sortSelect);
+        makeSelectSearchable(sortSelect);
         container.append(sortContainer);
 
         if (studios.length === 0) {
@@ -3995,7 +4039,7 @@
                     }
                 }
                 var studioName = studio ? studio.name : "Unknown Studio";
-                var item = $('<div class="cs-stagger-item" style="border: 2px solid #555; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 0px; display: flex; align-items: center; box-shadow: none;"></div>');
+                var item = $('<div class="cs-stagger-item" style="background-color: #fff; padding: 12px; margin-bottom: 12px; border-radius: 6px; display: flex; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.15);"></div>');
                 var details = $('<div style="flex-grow: 1; min-width: 0;"></div>');
                 details.append('<h3 style="margin: 0; font-size: 12pt; color: #2980b9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Project: ' + project.size + ' ' + project.genre + ' by ' + studioName + '</h3>');
                 details.append('<div style="font-size: 10pt; margin: 3px 0;">Topic: ' + project.topic + ' | Weeks Left: <strong style="color: #f39c12;">' + Math.ceil(project.weeksRemaining) + '</strong></div>');
@@ -4010,7 +4054,7 @@
             container.append('<h3 style="color: #d35400; text-align: center; margin-top: 16px; font-size: 12pt;">Current Publishing Offers</h3>');
             for (var i = 0; i < offers.length; i++) {
                 (function (offer) {
-                    var item = $('<div class="cs-stagger-item" style="border: 2px solid #555; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 0px; display: flex; align-items: center; box-shadow: none;"></div>');
+                    var item = $('<div class="cs-stagger-item" style="background-color: #fff; padding: 12px; margin-bottom: 12px; border-radius: 6px; display: flex; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.15);"></div>');
                     var details = $('<div style="flex-grow: 1; min-width: 0;"></div>');
                     details.append('<h3 style="margin: 0; font-size: 12pt; color: #d35400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Contract: ' + offer.size + ' ' + offer.genre + '</h3>');
                     details.append('<div style="font-size: 10pt; margin: 3px 0;">Advance: <strong style="color: #27ae60;">$' + UI.getShortNumberString(offer.advance) + '</strong> | Topic: ' + offer.topic + '</div>');
@@ -4414,136 +4458,50 @@
     }
 
     function renderMarketingTab(container) {
-        container.append('<h2 style="color: #d35400; font-size: 14pt; margin: 0 0 15px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 8px;">Marketing Campaigns</h2>');
+        container.empty();
+        _ae(container, csRenderSectionHeader('Franchise Marketing Campaigns'));
 
+        var franchises = store.data.franchises || [];
+        if (franchises.length === 0) return _ae(container, csRenderEmptyState('No active franchises to market. Create one by releasing a high-scoring project.'));
 
-        var activeSection = $('<div class="cs-stagger-item" style="margin-bottom: 25px;"></div>');
-        activeSection.append('<h3 style="font-size: 12pt; color: #2c3e50; margin-bottom: 10px;">Ongoing Campaigns</h3>');
-
-        if (store.data.activeCampaigns.length === 0) {
-            activeSection.append('<div style="font-size: 10pt; color: #7f8c8d; font-style: italic; background: #fff; padding: 10px; border-radius: 0px; border: 1px dashed #bdc3c7;">No active marketing campaigns.</div>');
-        } else {
-            var aCampaigns = store.data.activeCampaigns || [];
-            aCampaigns.forEach(function (c) {
-                var cCard = $('<div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 0px; border: 2px solid #555; margin-bottom: 8px; box-shadow: none;"></div>');
-                cCard.append('<div><strong style="color: #2980b9;">' + c.targetName + '</strong><br><span style="font-size: 9pt; color: #7f8c8d;">' + c.campaignName + '</span></div>');
-                cCard.append('<div style="text-align: right;"><span style="color: #27ae60; font-weight: bold;">' + (Math.round((c.boostFactor - 1) * 100)) + '% Boost</span><br><span style="font-size: 9pt; color: #7f8c8d;">' + c.weeksLeft + ' weeks left</span></div>');
-                activeSection.append(cCard);
-            });
-        }
-        container.append(activeSection);
-
-
-        var formBox = $('<div class="cs-stagger-item" style="background: #ddd; border: 3px solid #f1c40f; border-radius: 0px; padding: 15px; box-shadow: none;"></div>');
-        formBox.append('<h3 style="margin: 0 0 12px 0; font-size: 12pt; color: #d35400; text-align: center;">Launch New Campaign</h3>');
-
-
-        formBox.append('<div style="font-size: 11pt; color: #2c3e50; margin-bottom: 5px;">Target Project:</div>');
-        var searchInput = $('<input type="text" placeholder="Search project..." style="width: 100%; font-size: 10pt; padding: 6px; margin-bottom: 8px; border: 2px solid #555; border-radius: 0px; color: black; box-sizing: border-box;">');
-        formBox.append(searchInput);
-
-        var targetSelect = $('<select style="width: 100%; font-size: 11pt; padding: 5px; margin-bottom: 15px; border: 2px solid #555; border-radius: 0px; color: black;"></select>');
-
-
-        var targets = [];
-        var aGames = store.data.activeAIGames || [];
-        aGames.forEach(function (g) { targets.push({ id: g.id, name: g.title + " (Subsidiary)" }); });
-
-        var games = GameManager.company.gameLog || [];
-        games.forEach(function (g) {
-            if (g.state === GameState.released) {
-                var label = g.isExtensionPack ? " (DLC Pack)" : " (Player Game)";
-                targets.push({ id: g.id, name: g.title + label });
-            }
-        });
-
-        function renderOptions(term) {
-            targetSelect.empty();
-            var filtered = targets.filter(function (t) { return t.name.toLowerCase().indexOf(term) !== -1; });
-            if (filtered.length === 0) {
-                targetSelect.append('<option disabled selected>No matching projects</option>');
-            } else {
-                filtered.forEach(function (t) {
-                    targetSelect.append('<option value="' + t.id + '" data-name="' + t.name + '">' + t.name + '</option>');
+        if (franchises.length > 5) {
+            var $search = csRenderSearchBar("Search " + franchises.length + " franchises...", function(val) {
+                container.find('.cs-marketing-card').each(function() {
+                    var name = $(this).find('.cs-fran-name').text();
+                    $(this).toggle(name.toLowerCase().indexOf(val) > -1);
                 });
-            }
-        }
-
-        searchInput.on('input', function () { renderOptions($(this).val().toLowerCase()); });
-        renderOptions("");
-        formBox.append(targetSelect);
-
-        var warningArea = $('<div style="font-size: 9pt; color: #e74c3c; margin: -10px 0 15px 5px; min-height: 12px; font-weight: bold;"></div>');
-        formBox.append(warningArea);
-
-        function updateWarning() {
-            var selectedId = targetSelect.val();
-            var g = GameManager.company.gameLog.filter(function (game) { return game.id == selectedId; })[0];
-            warningArea.text("");
-            if (g && g.state === GameState.released && !g.isExtensionPack) {
-                var age = GameManager.company.currentWeek - g.releaseWeek;
-                if (age >= 20) {
-                    warningArea.text("! Project too old for marketing (limit: 20 weeks).");
-                } else if (age >= 17) {
-                    warningArea.css('color', '#f39c12').text("! Project nearing marketing limit (" + Math.floor(20 - age) + " weeks left).");
-                } else {
-                    warningArea.css('color', '#e74c3c');
-                }
-            }
-        }
-        targetSelect.change(updateWarning);
-        updateWarning();
-
-
-        formBox.append('<div style="font-size: 11pt; color: #2c3e50; margin-bottom: 8px;">Select Campaign Type:</div>');
-        var campaigns = [
-            { id: "social", name: "Social Media Blitz", cost: 50000, boost: 1.15, weeks: 4, color: "#3498db" },
-            { id: "viral", name: "Viral Video Ads", cost: 250000, boost: 1.35, weeks: 6, color: "#9b59b6" },
-            { id: "tv", name: "TV Star Feature", cost: 1000000, boost: 1.70, weeks: 8, color: "#e67e22" },
-            { id: "global", name: "Global Hype Event", cost: 5000000, boost: 2.50, weeks: 12, color: "#e74c3c" }
-        ];
-
-        var selectedC = campaigns[0];
-        var campShelf = $('<div style="display: flex; gap: 8px; margin-bottom: 20px;"></div>');
-        campaigns.forEach(function (camp) {
-            var btn = $('<div style="flex: 1; text-align: center; padding: 10px 5px; background: #fff; border: 2px solid #bdc3c7; border-radius: 0px; cursor: pointer;"></div>');
-            btn.append('<div style="font-size: 10pt; font-weight: bold; color: ' + camp.color + '; margin-bottom: 3px;">' + camp.name + '</div>');
-            btn.append('<div style="font-size: 9pt; color: #7f8c8d;">$' + UI.getShortNumberString(camp.cost) + '</div>');
-
-            if (camp.id === selectedC.id) btn.css({ "border-color": camp.color, "background": "#f0f0f0" });
-
-            btn.click(function () {
-                Sound.click();
-                selectedC = camp;
-                campShelf.find('div').css({ "border-color": "#bdc3c7", "background": "#fff" });
-                btn.css({ "border-color": camp.color, "background": "#f0f0f0" });
             });
-            campShelf.append(btn);
+            container.append($search);
+        }
+
+        var grid = _ae(container, '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"></div>');
+        if (typeof Game === 'undefined' || !Game.isModern) grid.css('display', 'block');
+
+        franchises.forEach(function (f) {
+            var card = _ae(grid, '<div class="cs-marketing-card" style="background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:16px; display:flex; flex-direction:column; gap:8px; border-radius:6px;"></div>');
+            
+            // Header
+            var head = _ae(card, '<div style="display:flex; justify-content:space-between; align-items:baseline;"></div>');
+            _ae(head, '<div class="cs-fran-name" style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + f.name + '</div>');
+            _ae(head, '<div style="font-size:8pt; color:#7f8c8d;">Level ' + (f.level || 1) + '</div>');
+            
+            _ae(card, '<div style="font-size:9pt; color:#555;">Fans: <b style="color:#2980b9;">' + UI.getShortNumberString(f.fans || 0) + '</b></div>');
+            
+            // Progress Bar
+            var expPct = Math.min(100, ((f.experience || 0) / (f.nextLevelExp || 1000)) * 100);
+            _ae(card, csRenderMiniBar(expPct, '#8e44ad', '100%'));
+            
+            // Action
+            var mBtn = _ae(card, '<div class="selectorButton whiteBoardButton" style="margin-top:auto; padding:6px 0; font-size:9pt; font-weight:bold; text-align:center;">LAUNCH CAMPAIGN</div>');
+            mBtn.click(function () {
+                var cost = (f.level || 1) * 250000;
+                if (GameManager.company.cash < cost) return csNotify('Insufficient funds ($' + UI.getShortNumberString(cost) + ')');
+                Sound.click(); GameManager.company.adjustCash(-cost, 'Marketing: ' + f.name);
+                f.fans = (f.fans || 0) + Math.floor(Math.random() * 50000 * (f.level || 1));
+                f.experience = (f.experience || 0) + 100;
+                csNotify('Marketing campaign successful for ' + f.name); refresh();
+            });
         });
-        formBox.append(campShelf);
-
-        var launchBtn = $('<div class="selectorButton orangeButton" style="width: 200px; margin: 0 auto; display: block; text-align: center; padding: 10px 0; border-radius: 0px; font-weight: bold;">Launch Campaign</div>');
-        launchBtn.click(function () {
-            if (targets.length === 0) return;
-            var targetId = targetSelect.val();
-            var targetName = targetSelect.find('option:selected').attr('data-name');
-
-            if (GameManager.company.cash >= selectedC.cost) {
-                Sound.click();
-                GameManager.company.adjustCash(-selectedC.cost, "Marketing: " + targetName);
-                store.data.activeCampaigns.push({
-                    targetId: targetId,
-                    targetName: targetName,
-                    campaignName: selectedC.name,
-                    weeksLeft: selectedC.weeks,
-                    boostFactor: selectedC.boost
-                });
-                routeModMenu("marketing");
-            } else { csNotify("Insufficient funds for this campaign!"); }
-        });
-        formBox.append(launchBtn);
-
-        container.append(formBox);
     }
 
     function _buildPieCard(entity, canvasId) {
@@ -4552,6 +4510,7 @@
             .append('<canvas id="' + canvasId + '" width="50" height="50" data-shares="' + entity.sharesOwned + '" data-name="' + entity.name + '" class="pieChartCanvas"></canvas>')
             .append('<div style="font-size:10pt;margin-top:5px;color:#34495e;font-weight:bold;">' + entity.sharesOwned + '%</div>');
         item.append(pie);
+        item.append('<div class="pie-details-container" style="flex-grow: 1; min-width: 0;"></div>');
         setTimeout(function () {
             var canvas = document.getElementById(canvasId); if (!canvas) return;
             var shares = parseInt(canvas.getAttribute('data-shares'));
@@ -4575,7 +4534,7 @@
 
         var item = _buildPieCard(studio, 'pie_' + studio.id);
 
-        var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1; min-width: 0;"></div>');
+        var detailsContainer = item.find('.pie-details-container');
         var headerRow = $('<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"></div>')
             .append('<h3 style="margin: 0; font-size: 14pt; color: #2c3e50; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; font-weight: bold;">' + studio.name + '</h3>')
             .append('<div style="font-size: 10pt; color: #7f8c8d; white-space: nowrap; font-weight: 500;">Staff: ' + totalEmps + ' (@' + UI.getShortNumberString(totalMaint) + '/wk)</div>');
@@ -4951,7 +4910,7 @@
                 .append('<div style="margin: 10px 0; font-size: 11pt; color: #34495e;">Enter a name for your new subsidiary:</div>')
                 .append(input)
                 .append($('<div style="display: flex; gap: 8px; justify-content: center;"></div>').append(confirmBtn).append(cancelBtn));
-            container.modal({ overlayClose: false, opacity: 80, overlayCss: { backgroundColor: "#000" }, containerCss: { width: "420px", height: "auto", backgroundColor: "transparent", border: "none" } });
+            container.modal({ containerId: 'modUI_container', overlayClose: false, opacity: 80, overlayCss: { backgroundColor: "#000" }, containerCss: { width: "420px", height: "auto", backgroundColor: "transparent", border: "none" } });
             setTimeout(function () { input.focus(); }, 100);
         } else {
             csNotify("You need at least $5M to found a new studio!");
@@ -5062,33 +5021,32 @@
 
     function csRenderDistributionTab(container) {
         container.empty();
-        _ae(container, '<h3 style="color: #333; border-bottom: 2px solid #555; padding-bottom: 5px; margin-bottom: 15px;">Media Distribution</h3>');
+        _ae(container, csRenderSectionHeader('Media Distribution'));
 
         var currentWeek = Math.floor(GameManager.company.currentWeek);
 
-        var pendingObj = _ae(container, '<div style="margin-bottom: 25px;"></div>');
-        _ae(pendingObj, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">AWAITING DISTRIBUTION DECISION</div>');
-
+        // Awaiting Decision Section
         var distPending = store.data.pendingDistribution || [];
+        _ae(container, '<div style="font-size:8pt; font-weight:bold; color:#444; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Pending Decisions</div>');
+        
         if (distPending.length === 0) {
-            _ae(pendingObj, '<div style="color: #666; font-style: italic; padding: 10px; background: #eee;">No projects currently awaiting distribution.</div>');
+            _ae(container, csRenderEmptyState('No projects currently awaiting distribution.'));
         } else {
             distPending.forEach(function (pd) {
                 var mediaProj = csGetMediaProjectById(pd.mediaProjectId);
                 if (!mediaProj) return;
 
                 var weeksLeft = Math.max(0, pd.decisionDeadlineWeek - currentWeek);
-                var isExpiringSoon = weeksLeft <= 1;
-                var color = isExpiringSoon ? "#e74c3c" : "#27ae60";
+                var urgencyColor = weeksLeft <= 1 ? "#e74c3c" : (weeksLeft <= 2 ? "#e67e22" : "#27ae60");
 
-                var card = _ae(pendingObj, '<div style="background: #ddd; border: 2px solid #555; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;"></div>');
+                var card = _ae(container, '<div style="background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); border-left:4px solid ' + urgencyColor + '; padding:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-radius:6px;"></div>');
 
                 var info = _ae(card, '<div></div>');
-                _ae(info, '<div style="font-weight: bold; font-size: 11pt; color:#111;">' + mediaProj.title + ' <span style="font-size: 8pt; color: #555;">[' + mediaProj.type.toUpperCase() + ']</span></div>');
-                _ae(info, '<div style="font-size: 9pt; margin-top: 4px;">SCORE: ' + mediaProj.score + '/10 | EST. REVENUE: $' + UI.getShortNumberString(mediaProj.estimatedRevenue) + '</div>');
-                _ae(info, '<div style="font-size: 9pt; margin-top: 4px; font-weight: bold; color: ' + color + '">EXPIRES IN ' + weeksLeft + ' WEEKS</div>');
+                _ae(info, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + mediaProj.title + ' <span style="font-size:8pt; color:#7f8c8d; text-transform:uppercase;">[' + mediaProj.type + ']</span></div>');
+                _ae(info, '<div style="font-size:9pt; margin-top:4px;">Score: ' + csRenderScoreBadge(mediaProj.score) + ' | Est. Revenue: <span style="color:#27ae60; font-weight:bold;">$' + UI.getShortNumberString(mediaProj.estimatedRevenue) + '</span></div>');
+                _ae(info, '<div style="font-size:11pt; margin-top:6px; font-weight:bold; color:' + urgencyColor + ';">' + weeksLeft + ' WKS LEFT</div>');
 
-                var actionBtn = _ae(card, '<div class="selectorButton orangeButton" style="padding: 10px 15px; font-weight:bold;">REVIEW OFFERS</div>');
+                var actionBtn = _ae(card, '<div class="selectorButton orangeButton" style="padding:12px 20px; font-weight:bold; font-size:11pt;">REVIEW OFFERS</div>');
                 actionBtn.click(function () {
                     Sound.click();
                     store.data.activeDistributionChoice = mediaProj;
@@ -5097,183 +5055,173 @@
             });
         }
 
-        var streamObj = _ae(container, '<div style="margin-bottom: 25px;"></div>');
-        _ae(streamObj, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">ACTIVE STREAMING CONTRACTS</div>');
-
+        // Active Streaming Section
+        _ae(container, '<div style="margin-top:25px; font-size:8pt; font-weight:bold; color:#444; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Active Streaming Contracts</div>');
         var activeStreamDeals = [];
         if (store.data.streamingPlatforms) {
             store.data.streamingPlatforms.forEach(function (platform) {
                 if (platform.activeDeals) {
                     platform.activeDeals.forEach(function (deal) {
-                        if (!deal.isGridLicense) {
-                            activeStreamDeals.push({ platform: platform, deal: deal });
-                        }
+                        if (!deal.isGridLicense) activeStreamDeals.push({ platform: platform, deal: deal });
                     });
                 }
             });
         }
 
         if (activeStreamDeals.length === 0) {
-            _ae(streamObj, '<div style="color: #666; font-style: italic; padding: 10px; background: #eee;">No active streaming contracts.</div>');
+            _ae(container, csRenderEmptyState('No active streaming contracts.'));
         } else {
-            var sTable = _ae(streamObj, '<table style="width: 100%; border-collapse: collapse; font-size: 9pt; background: #fff; border: 2px solid #555;"></table>');
-            _ae(sTable, '<tr style="background: #555; color: white; text-align: left;"><th style="padding: 8px;">Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th><th>Action</th></tr>');
+            var sTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; margin-bottom:20px; border-radius:6px; overflow:hidden;">' +
+                '<tr style="background:#34495e; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:10px; text-align:left;">Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th><th>Action</th></tr></table>');
 
-            activeStreamDeals.forEach(function (item) {
-                var d = item.deal;
-                var p = item.platform;
-                var sRow = _ae(sTable, '<tr style="border-bottom: 1px solid #999;"></tr>');
-                _ae(sRow, '<td style="padding: 8px; font-weight: bold;">' + d.title + '</td>');
-                _ae(sRow, '<td>' + p.name + '</td>');
-                _ae(sRow, '<td style="color: #27ae60; font-weight:bold;">+$' + UI.getShortNumberString(d.weeklyRevenue) + '</td>');
-                _ae(sRow, '<td>' + d.weeksActive + ' / ' + d.weeksTotal + ' wks</td>');
+            activeStreamDeals.forEach(function (item, idx) {
+                var d = item.deal, p = item.platform, bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
+                var r = _ae(sTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
+                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + d.title + '</td>');
+                _ae(r, '<td style="padding:8px;"><span style="display:inline-block; width:8px; height:8px; background:' + (p.logoColor || '#555') + '; margin-right:6px;"></span>' + p.name + '</td>');
+                _ae(r, '<td style="text-align:center; color:#27ae60; font-weight:bold;">+$' + UI.getShortNumberString(d.weeklyRevenue) + '</td>');
+                
+                var progTd = _ae(r, '<td style="text-align:center;"></td>');
+                var pct = Math.round((d.weeksActive / d.weeksTotal) * 100);
+                _ae(progTd, '<div style="font-size:8pt; margin-bottom:2px;">' + d.weeksActive + '/' + d.weeksTotal + ' w</div>');
+                _ae(progTd, csRenderMiniBar(pct, '#2980b9', 60));
 
-                var actionTd = _ae(sRow, '<td></td>');
-                var breakBtn = _ae(actionTd, '<div class="selectorButton deleteButton" style="padding: 4px 8px; font-size: 8pt; font-weight: bold;">BREAK</div>');
+                var actTd = _ae(r, '<td style="text-align:center; padding:4px;"></td>');
+                var breakBtn = _ae(actTd, '<div class="selectorButton deleteButton" style="padding:4px 8px; font-size:8pt; font-weight:bold;">⚠ BREAK</div>');
                 breakBtn.click(function () {
                     Sound.click();
                     var penalty = Math.floor((d.weeklyRevenue * (d.weeksTotal - d.weeksActive)) * 1.5) || 500000;
-                    if (confirm("Break the distribution contract for '" + d.title + "' with " + p.name + "?\n\nPenalty Fee: $" + UI.getShortNumberString(penalty) + "\nThe project will become available for distribution again.")) {
-                        if (GameManager.company.cash < penalty) { csNotify("You cannot afford the contract breach penalty."); return; }
-                        GameManager.company.adjustCash(-penalty, "Contract Breach Penalty: " + p.name);
+                    if (confirm("Break contract? Penalty: $" + UI.getShortNumberString(penalty))) {
+                        if (GameManager.company.cash < penalty) return csNotify("Cannot afford penalty.");
+                        GameManager.company.adjustCash(-penalty, "Breach: " + p.name);
                         p.activeDeals = p.activeDeals.filter(function (x) { return x.mediaProjectId !== d.mediaProjectId; });
                         var proj = csGetMediaProjectById(d.mediaProjectId);
                         if (proj) {
                             proj.distributionStatus = null;
-                            store.data.pendingDistribution = store.data.pendingDistribution || [];
-                            store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: Math.floor(GameManager.company.currentWeek) + 4 });
+                            _da(store.data, 'pendingDistribution');
+                            store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: currentWeek + 4 });
                         }
-                        routeModMenu("media", "media");
+                        refresh();
                     }
                 });
             });
         }
 
-        var theaterObj = _ae(container, '<div style="margin-bottom: 25px;"></div>');
-        _ae(theaterObj, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">ACTIVE THEATER RUNS</div>');
-
+        // Active Theater Section
+        _ae(container, '<div style="margin-top:25px; font-size:8pt; font-weight:bold; color:#444; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Theatrical Runs</div>');
         var activeTheater = (store.data.theaterReleases || []).filter(function (r) { return r.status === "active"; });
 
         if (activeTheater.length === 0) {
-            _ae(theaterObj, '<div style="color: #666; font-style: italic; padding: 10px; background: #eee;">No active theater releases.</div>');
+            _ae(container, csRenderEmptyState('No active theater releases.'));
         } else {
-            var tTable = _ae(theaterObj, '<table style="width: 100%; border-collapse: collapse; font-size: 9pt; background: #fff; border: 2px solid #555;"></table>');
-            _ae(tTable, '<tr style="background: #555; color: white; text-align: left;"><th style="padding: 8px;">Movie</th><th>Chain</th><th>Your Share</th><th>Progress</th><th>Action</th></tr>');
+            var tTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:2px solid #555;">' +
+                '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Movie</th><th>Chain</th><th>Box Office</th><th>Player Share</th><th>Week</th><th>Cancel</th></tr></table>');
 
-            activeTheater.forEach(function (tr) {
-                var chain = csGetTheaterChainById(tr.theaterChainId);
-                var chainName = chain ? chain.name : "Unknown Chain";
+            activeTheater.forEach(function (tr, idx) {
+                var chain = csGetTheaterChainById(tr.theaterChainId), chainName = chain ? chain.name : "Unknown", bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
+                var r = _ae(tTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
+                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + tr.title + '</td>');
+                _ae(r, '<td>' + chainName + '</td>');
+                _ae(r, '<td style="text-align:right; padding-right:10px;">$' + UI.getShortNumberString(tr.accumulatedRevenue || 0) + '</td>');
+                _ae(r, '<td style="text-align:right; font-weight:bold; color:#27ae60; padding-right:10px;">$' + UI.getShortNumberString(tr.playerShare) + '</td>');
+                _ae(r, '<td style="text-align:center;">' + tr.weeksActive + '/' + tr.maxWeeks + '</td>');
 
-                var tRow = _ae(tTable, '<tr style="border-bottom: 1px solid #999;"></tr>');
-                _ae(tRow, '<td style="padding: 8px; font-weight: bold;">' + tr.title + '</td>');
-                _ae(tRow, '<td>' + chainName + '</td>');
-                _ae(tRow, '<td style="color: #27ae60; font-weight:bold;">$' + UI.getShortNumberString(tr.playerShare) + '</td>');
-                _ae(tRow, '<td>' + tr.weeksActive + ' / ' + tr.maxWeeks + ' wks</td>');
-
-                var actionTd = _ae(tRow, '<td></td>');
-                var cancelBtn = _ae(actionTd, '<div class="selectorButton deleteButton" style="padding: 4px 8px; font-size: 8pt; font-weight: bold;">CANCEL</div>');
+                var actTd = _ae(r, '<td style="text-align:center;"></td>');
+                var cancelBtn = _ae(actTd, '<div class="selectorButton deleteButton" style="padding:4px 8px; font-size:8pt; font-weight:bold;">CANCEL</div>');
                 cancelBtn.click(function () {
                     Sound.click();
                     var penalty = 2000000;
-                    if (confirm("Cancel the remaining theater run for '" + tr.title + "' at " + chainName + "?\n\nCancellation Fee: $" + UI.getShortNumberString(penalty) + "\nThe project will become available for distribution again.")) {
-                        if (GameManager.company.cash < penalty) { csNotify("You cannot afford the cancellation fee."); return; }
-                        GameManager.company.adjustCash(-penalty, "Theater Cancellation Fee: " + chainName);
-
+                    if (confirm("Cancel theater run? Fee: $2M")) {
+                        if (GameManager.company.cash < penalty) return csNotify("Needs $2M!");
+                        GameManager.company.adjustCash(-penalty, "Theater Cancellation: " + chainName);
                         tr.status = "abandoned";
-
                         var proj = csGetMediaProjectById(tr.mediaProjectId);
                         if (proj) {
                             proj.distributionStatus = null;
-                            store.data.pendingDistribution = store.data.pendingDistribution || [];
-                            store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: Math.floor(GameManager.company.currentWeek) + 4 });
+                            _da(store.data, 'pendingDistribution');
+                            store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: currentWeek + 4 });
                         }
-                        routeModMenu("media", "media");
+                        refresh();
                     }
                 });
-                actionTd.append(cancelBtn);
-                tRow.append(actionTd);
-
-                tTable.append(tRow);
             });
-            theaterObj.append(tTable);
         }
-        container.append(theaterObj);
     }
 
     function csRenderDistributionOffers(container) {
         var project = store.data.activeDistributionChoice;
-        if (!project) {
-            routeModMenu("media", "media");
-            return;
-        }
+        if (!project) { routeModMenu("media", "media"); return; }
 
         container.empty();
-        var backBtn = $('<div class="selectorButton" style="padding: 8px 15px; margin-bottom: 15px; display: inline-block; cursor: pointer;"> < Back to Media</div>');
-        backBtn.click(function () { routeModMenu("media", "media"); });
-        container.append(backBtn);
+        var h = _ae(container, '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"></div>');
+        _ae(h, '<div style="font-size:16pt; font-weight:bold; color:#2c3e50;">' + project.title + '</div>');
+        _ae(h, '<div class="selectorButton" style="padding:5px 15px;">BACK</div>').click(function(){ routeModMenu("media", "media"); });
 
-        container.append('<h2 style="margin-top: 0; color: #d35400;">Distribution Offers: ' + project.title + '</h2>');
-        container.append('<p style="font-size: 11pt; color: #34495e;">Project Score: <b>' + project.score + '/10</b> | Base Value: <b>$' + UI.getShortNumberString(project.estimatedRevenue) + '</b></p>');
+        _ae(container, '<div style="background:#fff; border:2px solid #555; padding:10px; margin-bottom:20px; display:flex; gap:20px; align-items:center;">' +
+            '<div>Score: ' + csRenderScoreBadge(project.score) + '</div>' +
+            '<div style="font-size:10pt;">Estimated Value: <b style="color:#27ae60;">$' + UI.getShortNumberString(project.estimatedRevenue) + '</b></div></div>');
 
-        var offersArea = $('<div style="padding-top: 10px;"></div>');
-
+        // Section 1: Your Grid
         if (store.data.gridService && store.data.gridService.isActive) {
-            var gridScoreEst = (typeof project.score === "number" && !isNaN(project.score)) ? project.score : 5;
+            _ae(container, csRenderSectionHeader('Internal Distribution'));
+            var gridScoreEst = project.score || 5;
             var estBoost = Math.floor(gridScoreEst * 500 * (gridScoreEst >= 8 ? 3 : (gridScoreEst >= 6 ? 1.5 : 1)));
-            var gridObj = $('<div class="cs-stagger-item" style="background: #ddd; border: 2px solid #f39c12; padding: 15px; border-radius: 0px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
-            var gInfo = $('<div><h3 style="margin: 0; color: #d35400;">Your Grid Service</h3><div style="font-size: 10pt; margin-top: 5px;">Add directly to your Grid platform as exclusive content.</div><div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. +' + UI.getShortNumberString(estBoost) + ' subscribers</div></div>');
-            gridObj.append(gInfo);
-            var gridBtn = $('<div class="selectorButton orangeButton" style="padding: 10px 20px;">Publish to Grid</div>');
-            gridBtn.click(function () {
-                csAddToGrid(project);
-                routeModMenu("media", "media");
-            });
-            gridObj.append(gridBtn);
-            offersArea.append(gridObj);
+            var gCard = _ae(container, '<div style="background:#fffbf0; border:2px solid #f39c12; padding:12px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;"></div>');
+            var gL = _ae(gCard, '<div><div style="font-weight:bold; font-size:12pt; color:#d35400;">Grid Exclusive</div>' +
+                '<div style="font-size:9pt; color:#555; margin-top:2px;">Est. +' + UI.getShortNumberString(estBoost) + ' subscribers | Content Power: ' + (project.score*10) + '</div></div>');
+            var gBtn = _ae(gCard, '<div class="selectorButton orangeButton" style="padding:10px 20px; font-weight:bold;">ADD TO GRID</div>');
+            gBtn.click(function() { csAddToGrid(project); routeModMenu("media", "media"); });
         }
 
+        // Section 2: Theatrical
         if (project.type === "movie" && store.data.theaterChains) {
-            offersArea.append('<h3 style="margin-bottom: 15px; border-bottom: 1px solid #bdc3c7;">Theatrical Releases</h3>');
-            store.data.theaterChains.forEach(function (chain) {
-                var projected = csEstimateTheaterRevenue(project, chain);
-                var minReqScore = Math.ceil(chain.prestige * 1.5);
-                var isAcceptable = project.score >= minReqScore;
-                var tObj = $('<div style="background: #fff; border: 2px solid #555; padding: 12px; border-radius: 0px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ' + (!isAcceptable ? 'opacity: 0.6;' : '') + '"></div>');
-                var tInfo = $('<div><div style="font-weight: bold; font-size: 11pt;">' + chain.name + '</div><div style="font-size: 10pt;">Fee: ' + (chain.distributionFeeRate * 100).toFixed(0) + '% | Min Score: ' + minReqScore + '</div></div>');
-                if (isAcceptable) tInfo.append('<div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Est. Share: $' + UI.getShortNumberString(projected.playerShare.min) + ' - $' + UI.getShortNumberString(projected.playerShare.max) + '</div>');
-                else tInfo.append('<div style="font-size: 10pt; color: #e74c3c; font-weight: bold; margin-top: 5px;">Score too low.</div>');
-                tObj.append(tInfo);
-                if (isAcceptable) {
-                    var tBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
-                    tBtn.click(function () {
-                        csConfirmTheaterRelease(project, chain);
-                        routeModMenu("media", "media");
-                    });
-                    tObj.append(tBtn);
+            _ae(container, csRenderSectionHeader('Theatrical Distribution'));
+            var chains = store.data.theaterChains.slice().sort(function(a,b){ return b.prestige - a.prestige; });
+            chains.forEach(function(chain) {
+                var minReq = Math.ceil(chain.prestige * 1.5), isOk = project.score >= minReq;
+                var cCard = _ae(container, '<div style="background:#fff; border:2px solid #bdc3c7; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;' + (isOk?'':'opacity:0.6') + '"></div>');
+                
+                var cL = _ae(cCard, '<div style="flex:1;"></div>');
+                var stars = ""; for(var i=0; i<5; i++) stars += (i < chain.prestige ? '★' : '☆');
+                _ae(cL, '<div style="font-weight:bold; font-size:11pt;">' + chain.name + ' <span style="color:#f39c12; font-size:10pt;">' + stars + '</span></div>');
+                _ae(cL, '<div style="font-size:9pt; color:#7f8c8d;">Fee: ' + (chain.distributionFeeRate*100).toFixed(0) + '% | Screens: ' + (chain.prestige*100) + '</div>');
+
+                var cM = _ae(cCard, '<div style="flex:1; text-align:center;"></div>');
+                if (isOk) {
+                    var est = csEstimateTheaterRevenue(project, chain);
+                    _ae(cM, '<div style="color:#27ae60; font-weight:bold; font-size:10pt;">$' + UI.getShortNumberString(est.playerShare.min) + ' - $' + UI.getShortNumberString(est.playerShare.max) + '</div>');
+                } else _ae(cM, '<div style="color:#e74c3c; font-weight:bold; font-size:9pt; text-transform:uppercase;">Score too low</div>');
+
+                var cR = _ae(cCard, '<div style="width:100px; text-align:right;"></div>');
+                if (isOk) {
+                    var bBtn = _ae(cR, '<div class="selectorButton whiteBoardButton" style="padding:6px 12px; font-size:10pt;">BOOK</div>');
+                    bBtn.click(function(){ csConfirmTheaterRelease(project, chain); routeModMenu("media", "media"); });
                 }
-                offersArea.append(tObj);
             });
         }
 
+        // Section 3: Streaming
         if (store.data.streamingPlatforms) {
-            offersArea.append('<h3 style="margin-top: 20px; margin-bottom: 15px; border-bottom: 1px solid #bdc3c7;">Streaming Exclusive Deals</h3>');
-            store.data.streamingPlatforms.forEach(function (platform) {
-                if (platform.acceptsType && platform.acceptsType.indexOf(project.type) === -1) return;
-                var projected = csEstimateStreamingRevenue(project, platform);
-                var sObj = $('<div style="background: #fff; border: 2px solid #555; padding: 12px; border-radius: 0px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;"></div>');
-                var sInfo = $('<div><div style="font-weight: bold; font-size: 11pt;">' + platform.name + '</div><div style="font-size: 10pt;">Contract: ' + projected.weeks + ' weeks</div><div style="font-size: 10pt; color: #27ae60; font-weight: bold; margin-top: 5px;">Total Est: $' + UI.getShortNumberString(projected.totalRevenue) + '</div></div>');
-                sObj.append(sInfo);
-                var sBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
-                sBtn.click(function () {
-                    csConfirmStreamingDeal(project, platform);
-                    routeModMenu("media", "media");
-                });
-                sObj.append(sBtn);
-                offersArea.append(sObj);
+            _ae(container, csRenderSectionHeader('Streaming Contracts'));
+            var platforms = store.data.streamingPlatforms.slice().sort(function(a,b){ return b.subscriberBase - a.subscriberBase; });
+            platforms.forEach(function(plat) {
+                if (plat.acceptsType && plat.acceptsType.indexOf(project.type) === -1) return;
+                var est = csEstimateStreamingRevenue(project, plat);
+                var pCard = _ae(container, '<div style="background:#fff; border:2px solid #bdc3c7; border-left:4px solid ' + (plat.logoColor || '#555') + '; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;"></div>');
+                
+                var pL = _ae(pCard, '<div style="flex:1;"></div>');
+                _ae(pL, '<div style="font-weight:bold; font-size:11pt;">' + plat.name + (plat.subscriberBase > 1e8 ? ' <span style="background:#ff9f43; color:white; font-size:7pt; padding:1px 4px; vertical-align:middle;">POPULAR</span>' : '') + '</div>');
+                _ae(pL, '<div style="font-size:9pt; color:#7f8c8d;">Users: ' + UI.getShortNumberString(plat.subscriberBase) + ' | Length: ' + est.weeks + 'w</div>');
+
+                var pM = _ae(pCard, '<div style="flex:1; text-align:center;"></div>');
+                _ae(pM, '<div style="color:#27ae60; font-weight:bold; font-size:10pt;">Est. Max: $' + UI.getShortNumberString(est.totalRevenue) + '</div>');
+                _ae(pM, '<div style="font-size:8pt; color:#555;">($' + UI.getShortNumberString(Math.floor(est.totalRevenue/est.weeks)) + ' /wk)</div>');
+
+                var pR = _ae(pCard, '<div style="width:100px; text-align:right;"></div>');
+                var sBtn = _ae(pR, '<div class="selectorButton whiteBoardButton" style="padding:6px 12px; font-size:10pt;">SIGN DEAL</div>');
+                sBtn.click(function(){ csConfirmStreamingDeal(project, plat); routeModMenu("media", "media"); });
             });
         }
-
-        container.append(offersArea);
     }
 
     function csShowDistributionChoiceModal(project, onRefresh) {
@@ -5287,7 +5235,7 @@
         if (store.data.gridService && store.data.gridService.isActive) {
             var gridScoreEst2 = (typeof project.score === "number" && !isNaN(project.score)) ? project.score : 5;
             var estBoost2 = Math.floor(gridScoreEst2 * 500 * (gridScoreEst2 >= 8 ? 3 : (gridScoreEst2 >= 6 ? 1.5 : 1)));
-            var gridObj = $('<div class="cs-stagger-item" style="background: #ddd; border: 2px solid #f39c12; padding: 15px; border-radius: 0px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;"></div>');
+            var gridObj = $('<div class="cs-stagger-item" style="background: #fff; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-left:4px solid #f39c12;"></div>');
             var gInfo = $('<div></div>');
             gInfo.append('<h3 style="margin: 0; color: #d35400;">Your Grid Service</h3>');
             gInfo.append('<div style="font-size: 10pt; margin-top: 5px;">Add directly to your Grid platform as exclusive content.</div>');
@@ -5312,7 +5260,7 @@
                 var minReqScore = Math.ceil(chain.prestige * 1.5);
                 var isAcceptable = project.score >= minReqScore;
 
-                var tObj = $('<div style="background: #fff; border: 2px solid #555; padding: 12px; border-radius: 0px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ' + (!isAcceptable ? 'opacity: 0.6;' : '') + '"></div>');
+                var tObj = $('<div style="background: #fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; ' + (!isAcceptable ? 'opacity: 0.6;' : '') + '"></div>');
 
                 var tInfo = $('<div></div>');
                 tInfo.append('<div style="font-weight: bold; font-size: 11pt;">' + chain.name + ' <span style="font-size: 9pt; color: #7f8c8d;">(Prestige: ' + chain.prestige + ')</span></div>');
@@ -5343,12 +5291,12 @@
 
 
         if (store.data.streamingPlatforms) {
-            offersContainer.append('<h3 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #bdc3c7;">Streaming Exclusive Deals</h3>');
+            offersContainer.append('<div style="margin-top: 25px; margin-bottom: 12px;">' + csRenderSectionHeader('Streaming Exclusive Deals') + '</div>');
             store.data.streamingPlatforms.forEach(function (platform) {
                 if (platform.acceptsType && platform.acceptsType.indexOf(project.type) === -1) return;
                 var projected = csEstimateStreamingRevenue(project, platform);
 
-                var sObj = $('<div style="background: #ddd; border: 2px solid #555; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;"></div>');
+                var sObj = $('<div style="background: #fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-radius:6px;"></div>');
 
                 var sInfo = $('<div></div>');
                 sInfo.append('<div style="font-weight: bold; font-size: 11pt;">' + platform.name + ' <span style="font-size: 9pt; color: #7f8c8d;">(Users: ' + UI.getShortNumberString(platform.subscriberBase) + ')</span></div>');
@@ -5386,277 +5334,193 @@
         });
     }
 
-       function csRenderGridTab(container) {
+    function csRenderGridTab(container) {
         container.empty();
-        _ae(container, '<h3 style="color: #333; border-bottom: 2px solid #555; padding-bottom: 5px; margin-bottom: 15px;">Grid Content Management</h3>');
-
-        var grid = store.data.gridService;
-        if (!grid || !grid.isActive) {
-            _ae(container, '<div style="color: #666; font-style: italic; background:#eee; padding:20px; border:2px solid #555;">Grid platform is not active. Research it in Settings.</div>');
+        var g = store.data.gridService;
+        if (!g || !g.isActive) {
+            _ae(container, csRenderSectionHeader('The Grid'));
+            _ae(container, csRenderEmptyState('The Grid streaming service is not yet active. Visit the "DASHBOARD" to launch your platform and start competing.'));
             return;
         }
 
-        var btnContainer = _ae(container, '<div style="margin-bottom:15px; display:flex; gap:10px;"></div>');
-        var btnDash = _ae(btnContainer, '<div class="selectorButton orangeButton" style="padding: 15px 20px; font-weight: bold; flex:1; text-align:center;">OPEN DASHBOARD</div>');
-        btnDash.click(function () { Sound.click(); routeModMenu("grid_dashboard"); });
+        // Action Bar
+        var bar = _ae(container, '<div style="display:flex; gap:10px; margin-bottom:20px; background:#ddd; padding:10px; border:2px solid #bdc3c7;"></div>');
+        var dashBtn = _ae(bar, '<div class="selectorButton orangeButton" style="flex:1; text-align:center; padding:10px 0; font-weight:bold;">PLATFORM DASHBOARD</div>');
+        dashBtn.click(function () { Sound.click(); routeModMenu("grid_dashboard", "media"); });
+        
+        var mktBtn = _ae(bar, '<div class="selectorButton" style="flex:1; text-align:center; padding:10px 0; font-weight:bold;">CONTENT MARKET</div>');
+        mktBtn.click(function () { Sound.click(); routeModMenu("film_market", "media"); });
 
-        var eligibleMedia = (store.data.mediaProjects || []).filter(function (p) {
-            if (p.status !== "released" || p.distributionStatus !== "pending") return false;
-            var validTypes = ["movie", "tvSeries", "animatedShow", "comicBook", "soundtrack"];
-            if (validTypes.indexOf(p.type) === -1) return false;
-            for (var gi = 0; gi < grid.contentLibrary.length; gi++) {
-                if (grid.contentLibrary[gi].mediaProjectId === p.id) return false;
-            }
-            return true;
-        });
-
-        if (eligibleMedia.length > 0) {
-            var bulkBtn = _ae(btnContainer, '<div class="selectorButton greenButton" style="padding: 15px 20px; font-weight: bold; flex:1; text-align:center;">ADD ALL (' + eligibleMedia.length + ')</div>');
-            bulkBtn.click(function () {
-                Sound.click();
-                eligibleMedia.forEach(function (mp) { csAddToGrid(mp); });
-                csNotify("Grid: Library updated!");
-                csRenderGridTab(container);
-            });
-        }
-
-        _ae(container, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">INTERNAL CONTENT</div>');
-        var internalContent = grid.contentLibrary.filter(function (c) { return c.isOriginal; });
-
-        if (internalContent.length === 0) {
-            _ae(container, '<div style="color: #666; font-style: italic; padding: 10px; background:#eee; margin-bottom: 20px;">No original content found.</div>');
+        // Internal Content
+        _ae(container, csRenderSectionHeader('Internal Original Content'));
+        var internal = (store.data.mediaProjects || []).filter(function (p) { return p.distributionStatus === 'grid'; });
+        if (internal.length === 0) {
+            _ae(container, csRenderEmptyState('No original projects are currently hosted on The Grid.'));
         } else {
-            var iTable = _ae(container, '<table style="width: 100%; border-collapse: collapse; font-size: 9pt; background: #fff; border: 2px solid #555; margin-bottom: 25px;"></table>');
-            _ae(iTable, '<tr style="background: #555; color: white; text-align: left;"><th style="padding: 8px;">Title</th><th>Score</th><th>Fresh</th><th>Added</th><th>Views</th><th>Action</th></tr>');
-
-            internalContent.forEach(function (c) {
-                var fresh = (typeof c.freshness === "number") ? c.freshness : 0.5;
-                var freshColor = fresh >= 0.7 ? "#27ae60" : (fresh >= 0.4 ? "#f39c12" : "#e74c3c");
-                var freshPct = Math.round(fresh * 100);
-                var iRow = _ae(iTable, '<tr style="border-bottom: 1px solid #999;"></tr>');
-                _ae(iRow, '<td style="padding: 8px; font-weight: bold;">' + c.title + '</td>');
-                _ae(iRow, '<td>' + c.score + '/10</td>');
-                _ae(iRow, '<td style="color:' + freshColor + '; font-weight:bold;">' + freshPct + '%</td>');
-                _ae(iRow, '<td>Wk ' + c.addedWeek + '</td>');
-                _ae(iRow, '<td style="color: #2980b9;">' + UI.getShortNumberString(c.viewsThisWeek || 0) + '</td>');
-                
-                var actionTd = _ae(iRow, '<td></td>');
-                var rmBtn = _ae(actionTd, '<div class="selectorButton deleteButton" style="padding: 4px 8px; font-size: 8pt; font-weight: bold;">REMOVE</div>');
-                (function (entryId, projId) {
-                    rmBtn.click(function () {
-                        Sound.click();
-                        for (var ri = grid.contentLibrary.length - 1; ri >= 0; ri--) {
-                            if (grid.contentLibrary[ri].id === entryId) {
-                                grid.contentLibrary.splice(ri, 1);
-                                break;
-                            }
-                        }
-                        if (projId) {
-                            var mp = csGetMediaProjectById(projId);
-                            if (mp) mp.distributionStatus = "pending";
-                        }
-                        csRenderGridTab(container);
-                    });
-                })(c.id, c.mediaProjectId);
+            var iTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:2px solid #555; margin-bottom:20px;">' +
+                '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Title</th><th>Type</th><th>Score</th><th>Weekly Rev</th><th>Popularity</th></tr></table>');
+            internal.forEach(function (p, idx) {
+                var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
+                var r = _ae(iTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
+                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + p.title + '</td>');
+                _ae(r, '<td style="text-align:center; font-size:8pt; text-transform:uppercase;">' + p.type + '</td>');
+                _ae(r, '<td style="text-align:center;">' + csRenderScoreBadge(p.score) + '</td>');
+                _ae(r, '<td style="text-align:center; color:#27ae60; font-weight:bold;">+$' + UI.getShortNumberString(p.weeklyRevenue || 0) + '</td>');
+                _ae(r, '<td style="text-align:center;">' + csRenderMiniBar((p.score || 5) * 10, '#f39c12', 60) + '</td>');
             });
         }
 
-        _ae(container, '<div style="font-weight:bold; font-size:10pt; color:#444; border-bottom: 1px solid #999; margin-bottom:10px;">AVAILABLE FOR LICENSE</div>');
-        var extMovies = [];
-        if (store.data.releaseHistory) {
-            store.data.releaseHistory.forEach(function (h) {
-                if (h.platformIds && h.platformIds.indexOf("movie") !== -1) extMovies.push(h);
-            });
-        }
-        var availableExt = extMovies.filter(function (m) {
-            for (var i = 0; i < grid.contentLibrary.length; i++) {
-                if (grid.contentLibrary[i].title === m.title) return false;
-            }
-            return true;
-        });
-        availableExt.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
-
-        if (availableExt.length === 0) {
-            _ae(container, '<div style="color: #666; font-style: italic; background:#eee; padding:10px;">No external licenses available.</div>');
+        // Licensed Content
+        _ae(container, csRenderSectionHeader('Licensed External Catalog'));
+        var licensed = store.data.gridService.licensedContent || [];
+        if (licensed.length === 0) {
+            _ae(container, csRenderEmptyState('No licensed movies in your catalog. Browse the Content Market to expand your library.'));
         } else {
-            var lTable = _ae(container, '<table style="width: 100%; border-collapse: collapse; font-size: 9pt; background:#fff; border:2px solid #555;"></table>');
-            _ae(lTable, '<tr style="background:#555; color:white; text-align: left;"><th style="padding: 8px;">Movie/Studio</th><th>Rating</th><th>Cost/Wk</th><th>Action</th></tr>');
-
-            var limit = Math.min(10, availableExt.length);
-            for (var extI = 0; extI < limit; extI++) {
-                var em = availableExt[extI];
-                var cost = Math.floor(10000 + ((em.score || 5) * (em.score || 5) * 5000));
-
-                var lRow = _ae(lTable, '<tr style="border-bottom: 1px solid #999;"></tr>');
-                _ae(lRow, '<td style="padding: 6px 8px;"><b>' + em.title + '</b><br><span style="font-size: 7pt; color: #666;">' + (em.studioName || "Unknown Studio") + '</span></td>');
-                _ae(lRow, '<td>' + (em.score || "?") + '/10</td>');
-                _ae(lRow, '<td style="color: #e74c3c; font-weight:bold;">-$' + UI.getShortNumberString(cost) + '</td>');
-
-                var acCell = _ae(lRow, '<td></td>');
-                var acBtn = _ae(acCell, '<div class="selectorButton whiteBoardButton" style="padding: 5px 8px; font-size: 8pt; font-weight:bold;">LICENSE</div>');
-                acBtn.click((function (extM, extCost) {
-                    return function () {
-                        csLicenseExternalToGrid(extM, extCost, 52);
-                        Sound.click();
-                        csNotify("Licensed: " + extM.title);
-                        csRenderGridTab(container);
-                    };
-                })(em, cost));
-            }
+            var lTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:2px solid #555;">' +
+                '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Title</th><th>Studio</th><th>Score</th><th>Weekly Cost</th><th>Expires</th></tr></table>');
+            licensed.forEach(function (c, idx) {
+                var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
+                var r = _ae(lTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
+                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + c.title + '</td>');
+                _ae(r, '<td style="font-size:8pt;">' + (c.studioName || 'Indie') + '</td>');
+                _ae(r, '<td style="text-align:center;">' + csRenderScoreBadge(c.score) + '</td>');
+                _ae(r, '<td style="text-align:center; color:#e74c3c; font-weight:bold;">-$' + UI.getShortNumberString(c.weeklyCost) + '</td>');
+                _ae(r, '<td style="text-align:center;">' + (c.weeksRemaining || 0) + 'w</td>');
+            });
         }
     }
 
     function csRenderGridDashboard(contentArea) {
-        var g = store.data.gridService; if (!g || !g.isActive) return;
-        var h = _ae(contentArea, '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #555; padding-bottom:10px; margin-bottom:15px;"></div>');
-        _ae(h, '<div style="font-size:16pt; font-weight:bold; color:#111;">GRID DASHBOARD</div>');
-        var ps = ""; for (var i = 0; i < (g.prestige || 1); i++) ps += '\u2B50';
-        _ae(h, '<div style="font-size:10pt; font-weight:bold; color:#444;">PRESTIGE: ' + ps + '</div>');
-
-        var tm = _ae(contentArea, '<div style="display:flex; gap:10px; margin-bottom:15px;"></div>');
-        var lC = 0; (g.contentLibrary || []).forEach(function (l) { if (!l.isOriginal && l.licenseCostWeekly > 0) lC += l.licenseCostWeekly * 4; });
-        var mRev = (g.weeklyRevenue || 0) * 4, mExp = ((g.weeklyUpkeep || 0) + (g.marketingBudgetWeekly || 0)) * 4 + lC;
-        var sD = (g.subscribers || 0) - (g.lastWeekSubscribers || 0), sC = sD > 0 ? '#2ecc71' : (sD < 0 ? '#e74c3c' : '#95a5a6');
-        
-        var _c = function (p, l, v, s) { 
-            var d = _ae(p, '<div style="flex:1; background:#eee; border:2px solid #555; padding:15px; text-align:center;"></div>'); 
-            _ae(d, '<div style="font-size:8pt; color:#444; font-weight:bold; margin-bottom:4px;">' + l.toUpperCase() + '</div>');
-            _ae(d, '<div style="font-size:18pt; font-weight:bold; color:' + (s || '#111') + '">' + v + '</div>'); 
-            return d; 
-        };
-
-        var gS = _c(tm, 'Subscribers', UI.getShortNumberString(g.subscribers || 0), '#3498db');
-        _ae(gS, '<div style="font-size:8pt; font-weight:bold; color:' + sC + ';">' + (sD > 0 ? '+' : '') + UI.getShortNumberString(sD) + ' /WK</div>');
-        _c(tm, 'Monthly Revenue', '$' + UI.getShortNumberString(mRev), '#27ae60');
-        _c(tm, 'Monthly Expenses', '$' + UI.getShortNumberString(mExp), '#e74c3c');
-
-        var mP = mRev - mExp;
-        _c(tm, 'Monthly Profit', (mP >= 0 ? '+' : '-') + '$' + UI.getShortNumberString(Math.abs(mP)), mP >= 0 ? '#27ae60' : '#e74c3c');
-        _c(tm, 'Monthly Revenue', '$' + UI.getShortNumberString(mRev), '#2ecc71');
-        var gE = _c(tm, 'Monthly Expenses', '$' + UI.getShortNumberString(mExp), '#e74c3c'); _ae(gE, '<div style="font-size:8pt; margin-top:4px;">Infra: $' + UI.getShortNumberString(g.weeklyUpkeep * 4) + ' | Mkt: $' + UI.getShortNumberString(g.marketingBudgetWeekly * 4) + '</div>');
-        var oC = (g.contentLibrary || []).filter(function (c) { return c.isOriginal }).length; _c(tm, 'Content Library', (g.contentLibrary || []).length, '#f39c12');
-        var pM = mRev - mExp, pC = _ae(contentArea, '<div style="background:' + (pM >= 0 ? '#eafaf1' : '#fdedec') + '; border:2px solid ' + (pM >= 0 ? '#27ae60' : '#e74c3c') + '; padding:14px 20px; border-radius:8px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;"></div>');
-        _ae(pC, '<div style="font-size:12pt; font-weight:bold;">Monthly ' + (pM >= 0 ? 'Profit' : 'Loss') + '</div><div style="font-size:18pt; font-weight:bold; color:' + (pM >= 0 ? '#27ae60' : '#e74c3c') + '">' + (pM >= 0 ? '+' : '-') + '$' + UI.getShortNumberString(Math.abs(pM)) + '</div>');
-        var ms = _ae(contentArea, '<div style="background:#fff; padding:18px; border-radius:8px; border:1px solid #bdc3c7; margin-bottom:15px; display:flex; gap:20px;"></div>'), d1 = _ae(ms, '<div style="flex:1;"></div>'), d2 = _ae(ms, '<div style="flex:1;"></div>');
-        _ae(d1, '<b>Subscription Price:</b>'); var pS = _ae(d1, '<select style="width:100%; padding:8px; margin-top:5px;"></select>'), psO = [{ v: 4.99, t: '$4.99 - Fast', gr: 0.035, ch: 0.005 }, { v: 9.99, t: '$9.99 - Bal', gr: 0.025, ch: 0.008 }, { v: 14.99, t: '$14.99 - Prem', gr: 0.015, ch: 0.015 }, { v: 19.99, t: '$19.99 - Plus', gr: 0.008, ch: 0.025 }, { v: 24.99, t: '$24.99 - Max', gr: 0.003, ch: 0.045 }];
-        psO.forEach(function (o) { pS.append('<option value="' + o.v + '" ' + (Math.abs(g.monthlySubFee - o.v) < 0.5 ? 'selected' : '') + '>' + o.t + '</option>') }); pS.change(function () { var v = parseFloat($(this).val()); g.monthlySubFee = v; psO.forEach(function (o) { if (Math.abs(o.v - v) < 0.5) { g.subscriberGrowthRate = o.gr; g.churnRate = o.ch; } }); });
-        _ae(d2, '<b>Weekly Marketing:</b>'); var mS = _ae(d2, '<select style="width:100%; padding:8px; margin-top:5px;"></select>'), msO = [{ v: 0, t: '$0 (Organic)' }, { v: 1.25e5, t: '$125K/wk' }, { v: 5e5, t: '$500K/wk' }, { v: 1.25e6, t: '$1.25M/wk' }, { v: 2.5e6, t: '$2.5M/wk' }];
-        msO.forEach(function (o) { mS.append('<option value="' + o.v + '" ' + (g.marketingBudgetWeekly === o.v ? 'selected' : '') + '>' + o.t + '</option>') }); mS.change(function () { g.marketingBudgetWeekly = parseFloat($(this).val()); });
-        _ae(contentArea, '<h4 style="margin-top:0; border-bottom:1px solid #eee;">Leaderboard</h4>'); var sC = (g.contentLibrary || []).slice().sort(function (a, b) { return (b.totalViews || 0) - (a.totalViews || 0) }).slice(0, 5);
-        if (!sC.length) _ae(contentArea, '<div style="text-align:center; padding:20px;">No content.</div>');
-        else {
-            var lB = _ae(contentArea, '<div style="background:white; border-radius:8px; border:1px solid #eee;"></div>'); sC.forEach(function (c, i) {
-                var r = _ae(lB, '<div style="display:flex; justify-content:space-between; padding:8px 10px; border-bottom:1px solid #f5f5f5;"></div>');
-                _ae(r, '<div><b>' + (i + 1) + '. ' + c.title + '</b><br><span style="font-size:8pt;">Score: ' + c.score + '/10</span></div>'); _ae(r, '<div style="text-align:right;"><b>' + UI.getShortNumberString(c.totalViews || 0) + '</b><br><span style="font-size:8pt; color:#2ecc71;">+' + UI.getShortNumberString(c.viewsThisWeek || 0) + '/wk</span></div>');
+        contentArea.empty();
+        var g = store.data.gridService;
+        if (!g || !g.isActive) {
+            _ae(contentArea, csRenderSectionHeader('Launch "The Grid" Platform'));
+            var lBox = _ae(contentArea, '<div style="background:#fff; padding:40px; box-shadow:0 1px 6px rgba(0,0,0,0.15); border-top:4px solid #f1c40f; text-align:center; border-radius:8px;"></div>');
+            _ae(lBox, '<div style="font-size:12pt; color:#2c3e50; margin-bottom:20px;">Launch your own global streaming service to directly monetize your media productions and licensed content.</div>');
+            _ae(lBox, '<div style="font-size:10pt; color:#7f8c8d; margin-bottom:25px;">Initial Setup Investment: <b>$25,000,000</b></div>');
+            var launchBtn = _ae(lBox, '<div class="selectorButton orangeButton" style="margin:0 auto; padding:15px 30px; font-weight:bold; font-size:12pt; width:fit-content;">GO LIVE NOW</div>');
+            launchBtn.click(function () {
+                if (GameManager.company.cash < 25e6) return csNotify('Insufficient funds ($25M required).');
+                Sound.click();
+                GameManager.company.adjustCash(-25e6, 'Grid Launch');
+                store.data.gridService = { isActive: true, subscribers: 100000, pricePerMonth: 9.99, monthlyMarketing: 50000, licensedContent: [] };
+                refresh();
             });
+            return;
         }
+
+        // Action Bar (Marketing & Price)
+        var ctrlRow = _ae(contentArea, '<div style="display:flex; gap:15px; margin-bottom:20px; align-items:flex-end;"></div>');
+        
+        var priceCol = _ae(ctrlRow, '<div style="flex:1;"></div>');
+        _ae(priceCol, '<div style="font-weight:bold; font-size:8pt; text-transform:uppercase; margin-bottom:4px; color:#555;">Subscription Price</div>');
+        var pS = _ae(priceCol, '<select style="width:100% !important; font-size:11pt; padding:6px; font-weight:bold;"></select>');
+        [4.99, 7.99, 9.99, 12.99, 14.99, 19.99].forEach(function (v) { pS.append('<option value="' + v + '" ' + (g.pricePerMonth === v ? 'selected' : '') + '>$' + v.toFixed(2) + ' / mo</option>'); });
+        pS.change(function () { g.pricePerMonth = parseFloat($(this).val()); Sound.click(); refresh(); });
+
+        var markCol = _ae(ctrlRow, '<div style="flex:1;"></div>');
+        _ae(markCol, '<div style="font-weight:bold; font-size:8pt; text-transform:uppercase; margin-bottom:4px; color:#555;">Monthly Marketing</div>');
+        var mS = _ae(markCol, '<select style="width:100% !important; font-size:11pt; padding:6px; font-weight:bold;"></select>');
+        [0, 50000, 250000, 1000000, 5000000].forEach(function (v) { mS.append('<option value="' + v + '" ' + (g.monthlyMarketing === v ? 'selected' : '') + '>$' + UI.getShortNumberString(v) + ' / mo</option>'); });
+        mS.change(function () { g.monthlyMarketing = parseInt($(this).val()); Sound.click(); refresh(); });
+
+        // Metric Tiles (GDT Stats Style)
+        var statsRow = _ae(contentArea, '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;"></div>');
+        
+        function addTile(label, value, color) {
+            var tile = _ae(statsRow, '<div style="flex:1; min-width:130px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.12); padding:12px; text-align:center; border-radius:6px;"></div>');
+            _ae(tile, '<div style="font-size:7pt; font-weight:bold; color:#7f8c8d; text-transform:uppercase; letter-spacing:0.5px;">' + label + '</div>');
+            _ae(tile, '<div style="font-size:12pt; font-weight:bold; color:' + (color || '#2c3e50') + '; margin-top:4px;">' + value + '</div>');
+        }
+
+        var subs = g.subscribers || 0;
+        var rev = (subs * (g.pricePerMonth || 9.99)) / 4;
+        var exp = (g.monthlyMarketing || 0) + ( (g.licensedContent || []).length * 25000 );
+
+        addTile('Subscribers', UI.getShortNumberString(subs), '#2980b9');
+        addTile('Est. Revenue', '+$' + UI.getShortNumberString(rev), '#27ae60');
+        addTile('Est. Expenses', '-$' + UI.getShortNumberString(exp), '#e74c3c');
+        addTile('Net Profit', '$' + UI.getShortNumberString(rev - exp), (rev >= exp ? '#27ae60' : '#e74c3c'));
+
+        // Leaderboard (Simple Table)
+        _ae(contentArea, csRenderSectionHeader('Market Share Leaderboard'));
+        var lbTable = _ae(contentArea, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; border-radius:6px; overflow:hidden;">' +
+            '<tr style="background:#34495e; color:white; text-transform:uppercase;"><th style="padding:10px; text-align:left;">Service</th><th>Subscribers</th><th>Market Share</th></tr></table>');
+        
+        var competitors = [
+            { name: "The Grid", subs: subs, color: '#d35400' },
+            { name: "MyFlix", subs: 50000000, color: '#e74c3c' },
+            { name: "Zon Prime", subs: 42000000, color: '#3498db' },
+            { name: "HuluWho", subs: 28000000, color: '#27ae60' }
+        ].sort(function(a,b){ return b.subs - a.subs; });
+        
+        var totalSubs = competitors.reduce(function(a,c){ return a + c.subs; }, 0);
+        competitors.forEach(function(c, idx) {
+            var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
+            var share = totalSubs > 0 ? ((c.subs / totalSubs) * 100).toFixed(1) : "0.0";
+            var r = _ae(lbTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
+            _ae(r, '<td style="padding:8px; font-weight:bold;"><span style="display:inline-block; width:10px; height:10px; background:'+c.color+'; margin-right:8px;"></span>' + c.name + (c.name === "The Grid" ? ' (YOU)' : '') + '</td>');
+            _ae(r, '<td style="text-align:center;">' + UI.getShortNumberString(c.subs || 0) + '</td>');
+            _ae(r, '<td style="text-align:center;">' + share + '%</td>');
+        });
     }
 
     function buildMediaStudioCard(ms) {
-        var item = _buildPieCard(ms, 'pie_m_' + ms.id);
-
-        var detailsContainer = $('<div class="detailsContainer" style="flex-grow: 1; min-width: 0;"></div>');
+        var item = _buildPieCard(ms, 'pie_media_' + ms.id);
+        var detailsContainer = item.find('.pie-details-container');
+        
         var headerRow = $('<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"></div>')
-            .append('<h3 style="margin: 0; font-size: 14pt; color: #2c3e50; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; font-weight: bold;">' + ms.name + '</h3>')
-            .append('<div style="font-size: 10pt; color: #7f8c8d; white-space: nowrap; font-weight: 500;">\u2b50 Reputation: ' + (ms.reputation || 1).toFixed(1) + '</div>');
+            .append('<h3 style="margin: 0; font-size: 14pt; color: #2c3e50; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; font-weight: bold;">' + ms.name + '</h3>');
         detailsContainer.append(headerRow);
-
-        detailsContainer.append('<div style="font-size: 11pt; margin: 3px 0;">Val: <strong style="color: #27ae60;">$' + UI.getShortNumberString(ms.valuation) + '</strong></div>');
-
+        detailsContainer.append('<div style="font-size: 11pt; margin: 3px 0;">Val: <strong style="color: #27ae60;">$' + UI.getShortNumberString(ms.valuation) + '</strong> | Owned: <b>' + (ms.sharesOwned || 0) + '%</b></div>');
+        
         if (ms.currentProject) {
-            var typelabel = ms.currentProject.isPlayerFunded ? "<span style='color:#e67e22'>[PUB]</span> " : "<span style='color:#8e44ad'>[AI]</span> ";
-            detailsContainer.append('<div style="font-size: 10pt; margin: 3px 0; color: #7f8c8d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Dev: ' + typelabel + ms.currentProject.title + ' (' + Math.ceil(ms.currentProject.weeksRemaining) + 'w left)</div>');
-        } else {
-            detailsContainer.append('<div style="font-size: 10pt; margin: 3px 0; color: #95a5a6;">Currently idle.</div>');
+            detailsContainer.append('<div style="font-size:8pt; color:#7f8c8d; margin-top:2px;">Currently: <i>' + ms.currentProject.title + '</i> (' + Math.ceil(ms.currentProject.weeksRemaining) + 'w)</div>');
         }
 
-        var btnContainer = $('<div style="margin-top: 8px; display: flex; flex-direction: column; gap: 5px;"></div>');
+        var actions = _ae(detailsContainer, '<div style="display:flex; gap:4px; margin-top:10px;"></div>');
+        var tradeRow = actions; 
+        var cost = Math.floor(ms.valuation * 0.11), yield = Math.floor(ms.valuation * 0.09);
+        
+        var buyBtn = _ae(tradeRow, '<div class="selectorButton greenButton" style="flex:1; padding:4px 0; font-size:8pt; text-align:center;">BUY 10%<br>-$'+UI.getShortNumberString(cost)+'</div>');
+        buyBtn.click(function(){ 
+            if (GameManager.company.cash < cost) return csNotify('Need $'+UI.getShortNumberString(cost));
+            Sound.click(); GameManager.company.adjustCash(-cost, 'Share Buy: ' + ms.name);
+            ms.sharesOwned = (ms.sharesOwned || 0) + 10; routeModMenu("film_subs", "media");
+        });
+
+        var sellBtn = _ae(tradeRow, '<div class="selectorButton deleteButton" style="flex:1; padding:4px 0; font-size:8pt; text-align:center;">SELL 10%<br>+$'+UI.getShortNumberString(yield)+'</div>');
+        sellBtn.click(function(){
+            if ((ms.sharesOwned || 0) < 10) return;
+            Sound.click(); GameManager.company.adjustCash(yield, 'Share Sell: ' + ms.name);
+            ms.sharesOwned -= 10; routeModMenu("film_subs", "media");
+        });
 
         var isLicensed = (store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === ms.id && GameManager.company.currentWeek < d.endWeek; });
-        var hasInbound = (store.data.pendingInboundDeal && store.data.pendingInboundDeal.studioId === ms.id && GameManager.company.currentWeek <= store.data.pendingInboundDeal.expires);
-        var inCooldown = (ms.negotiationCooldown && GameManager.company.currentWeek < ms.negotiationCooldown);
-
-        var btnText = "Negotiate Catalogue Deal";
-        if (isLicensed) btnText = "Catalogue Active [DEAL]";
-        else if (hasInbound) btnText = "Review Inbound Offer!";
-        else if (inCooldown) btnText = "Studio Refusing Offers";
-
-        var dealBtn = $('<button class="selectorButton whiteBoardButton" style="width: 100%; font-size: 10pt;">' + btnText + '</button>');
-        if (hasInbound) dealBtn.css({ "background": "#f39c12", "color": "white", "border-color": "#e67e22" });
-        else if (inCooldown) dealBtn.css({ "background": "#eee", "color": "#bdc3c7", "cursor": "not-allowed" });
-
-        dealBtn.click(function () {
-            if (isLicensed || inCooldown) return;
-            Sound.click();
-            store.data.activeCatalogueNegotiation = ms.id;
-            routeModMenu("catalogue_negotiation", "media");
+        var hasInbound = (store.data.pendingInboundDeal && store.data.pendingInboundDeal.studioId === ms.id);
+        
+        var nBtn = _ae(detailsContainer, '<div class="selectorButton ' + (hasInbound ? 'orangeButton' : 'whiteBoardButton') + '" style="margin-top:6px; padding:6px 0; font-size:9pt; font-weight:bold; text-align:center; width:100%; box-sizing:border-box;">' + (isLicensed ? 'CATALOGUE ACTIVE' : (hasInbound ? 'REVIEW OFFER' : 'NEGOTIATE')) + '</div>');
+        nBtn.click(function(){
+            if (isLicensed) return;
+            Sound.click(); store.data.activeCatalogueNegotiation = ms.id; routeModMenu("catalogue_negotiation", "media"); 
         });
-        detailsContainer.append(dealBtn);
 
-        var actionRow = $('<div style="display: flex; gap: 6px; align-items: center;"></div>');
-        var chunkCost = Math.floor((ms.valuation * 0.1) * 1.15);
-        var chunkYield = Math.floor((ms.valuation * 0.1) * 0.85);
-
-        if (ms.sharesOwned > 0) {
-            var sellBtn = $('<button class="selectorButton deleteButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Sell 10%</button>');
-            sellBtn.click(function () {
-                Sound.click();
-                GameManager.company.adjustCash(chunkYield, "Sold 10% of " + ms.name);
-                ms.sharesOwned -= 10;
-                routeModMenu("film_subs", "media");
-            });
-            actionRow.append(sellBtn);
-        } else {
-            actionRow.append($('<div style="flex: 1;"></div>'));
-        }
-
-        actionRow.append('<div style="flex: 1; text-align: center; color: #7f8c8d; font-size: 9pt;">10% Yield: $' + UI.getShortNumberString(chunkYield) + '</div>');
-
-        if (ms.sharesOwned < 100) {
-            var buyBtn = $('<button class="selectorButton greenButton" style="flex: 1; font-size: 10pt; padding: 4px 6px;">Buy 10%</button>');
-            buyBtn.click(function () {
-                Sound.click();
-                if (GameManager.company.cash >= chunkCost) {
-                    GameManager.company.adjustCash(-chunkCost, "Purchased 10% of " + ms.name);
-                    ms.sharesOwned += 10;
-                    routeModMenu("film_subs", "media");
-                } else csNotify("Not enough funds.");
-            });
-            actionRow.append(buyBtn);
-        } else {
-            actionRow.append($('<div style="flex: 1;"></div>'));
-        }
-        btnContainer.append(actionRow);
-
-        if (ms.sharesOwned === 100) {
-            var absorbBtn = $('<button class="selectorButton deleteButton" style="width: 100%; font-size: 10pt; padding: 6px 0;">Absorb Takeover</button>');
-            absorbBtn.click(function () {
-                if (confirm("Absorb " + ms.name + "?")) {
-                    Sound.click();
-                    var rpGained = Math.floor(ms.valuation / 200000) + 1;
-                    GameManager.company.researchPoints += rpGained;
-                    store.data.movieStudios = store.data.movieStudios.filter(function (s) { return s.id !== ms.id; });
-                    _n("Takeover!", "Absorbed " + ms.name + "!");
-                    routeModMenu("film_subs", "media");
-                }
-            });
-            btnContainer.append(absorbBtn);
-        } else if (ms.sharesOwned >= 50) {
-            var lpBtn = $('<button class="selectorButton orangeButton" style="width: 100%; font-size: 10pt; padding: 6px 0;">License Game IP (Adaptation)</button>');
-            lpBtn.click(function () { Sound.click(); csShowGameLicensingModal(ms); });
-            btnContainer.append(lpBtn);
-        }
-
-        detailsContainer.append(btnContainer);
-        item.append(detailsContainer);
         return item;
     }
 
     function csRenderFilmSubsTab(c) {
-        c.empty(); var ms = store.data.movieStudios || []; _ae(c, '<h3 style="color:#d35400;">Film Subsidiaries</h3>');
-        if (!ms.length) return _ae(c, '<div style="text-align:center;padding:40px;">None found.</div>');
-        var s = _ae(c, '<select style="margin-bottom:15px;"><option value="val">Valuation</option><option value="shares">Shares</option></select>');
-        s.change(function () { refresh() }); ms.forEach(function (m) { c.append(buildMediaStudioCard(m)) });
+        c.empty(); 
+        var ms = store.data.movieStudios || []; 
+        _ae(c, csRenderSectionHeader('Film Subsidiaries'));
+        if (!ms.length) return _ae(c, csRenderEmptyState('No movie studios discovered yet. Focus on media production to attract industry talent.'));
+        
+        var grid = _ae(c, '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"></div>');
+        if (typeof Game === 'undefined' || !Game.isModern) grid.css('display', 'block'); // Fallback for old layouts
+
+        ms.forEach(function (m) { 
+            var wrapper = _ae(grid, '<div></div>');
+            wrapper.append(buildMediaStudioCard(m));
+        });
     }
 
     function csRenderLicensingReview(c) {
@@ -5671,139 +5535,86 @@
     }
 
     function csRenderCatalogueNegotiation(container) {
+        var msId = store.data.activeCatalogueNegotiation, ms = store.data.movieStudios.filter(function(x){return x.id===msId;})[0];
+        if (!ms) { routeModMenu("film_subs", "media"); return; }
+
         container.empty();
+        var h = _ae(container, '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"></div>');
+        _ae(h, '<div style="font-size:14pt; font-weight:bold; color:#2c3e50;">' + ms.name + ' Catalogue</div>');
+        _ae(h, '<div class="selectorButton" style="padding:5px 15px;">&lt; BACK</div>').click(function(){ routeModMenu("film_subs", "media"); });
 
-        var msId = store.data.activeCatalogueNegotiation;
-        var ms = null;
-        if (msId && store.data.movieStudios) {
-            for (var si = 0; si < store.data.movieStudios.length; si++) {
-                if (store.data.movieStudios[si].id === msId) { ms = store.data.movieStudios[si]; break; }
-            }
-        }
-        if (!ms) {
-            container.append('<div style="text-align: center; color: #7f8c8d; font-style: italic; margin-top: 50px;">Nothing to display yet!</div>');
-            return;
-        }
+        var main = _ae(container, '<div style="display:flex; gap:20px;"></div>');
+        
+        // Left Column: Studio Info
+        var left = _ae(main, '<div style="flex:1; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:15px; border-radius:6px;"></div>');
+        _ae(left, csRenderSectionHeader('Studio Reputation'));
+        var stars = ""; for(var i=0; i<5; i++) stars += (i < (ms.reputation || 1) ? '★' : '☆');
+        _ae(left, '<div style="font-size:24pt; color:#f39c12; text-align:center; margin:10px 0;">' + stars + '</div>');
+        _ae(left, '<div style="font-size:10pt; color:#555; text-align:center;">Valuation: <b>$' + UI.getShortNumberString(ms.valuation) + '</b></div>');
+        
+        var grid = store.data.gridService;
+        var subPower = Math.min(1.0, (grid.subscriberBase || 0) / 10000000);
+        _ae(left, csRenderSectionHeader('Your Grid Reach'));
+        _ae(left, '<div style="text-align:center; margin-top:10px;">' + csRenderMiniBar(subPower*100, '#2980b9', 150) + '</div>');
+        _ae(left, '<div style="font-size:8pt; color:#7f8c8d; text-align:center; margin-top:4px;">' + UI.getShortNumberString(grid.subscriberBase) + ' Subscribers</div>');
 
-        container.append('<div class="selectorButton whiteBoardButton" style="margin-bottom: 15px; display: inline-block; cursor: pointer; padding: 5px 15px;">&lt; Back to Studios</div>').children().last().click(function () {
-            store.data.activeCatalogueNegotiation = null;
-            routeModMenu("film_subs", "media");
-        });
-
-        container.append('<h2 style="color: #f39c12; margin-top: 0; font-size: 16pt; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px;">Catalogue Negotiation: ' + ms.name + '</h2>');
-
-        if (!store.data.gridService || !store.data.gridService.isActive) {
-            container.append('<div style="text-align: center; color: #c0392b; font-weight: bold; margin-top: 10px; padding: 10px; border: 2px dashed #c0392b;">Grid Service Required to Negotiate</div>');
-            return;
-        }
-
+        // Right Column: Negotiation
+        var right = _ae(main, '<div style="flex:1.5;"></div>');
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         var hasInbound = (store.data.pendingInboundDeal && store.data.pendingInboundDeal.studioId === ms.id && currentWeek <= store.data.pendingInboundDeal.expires);
 
-        var termsBox = $('<div style="background: #eee; border: 2px solid #555; border-radius: 0px; padding: 15px; margin-bottom: 20px;"></div>');
-
-        var signStudioId = ms.id;
-        var signStudioName = ms.name;
-
         if (hasInbound) {
-            termsBox.css({ "border": "2px solid #f39c12", "background": "#ddd" });
-            termsBox.append('<h3 style="color: #d35400; margin-top: 0;">Inbound Licensing Offer</h3>');
-            termsBox.append('<p style="font-size: 11pt; color: #2c3e50;">This studio contacted us and wants to license their entire film catalogue to Grid for 2 years (104 weeks).</p>');
-
-            var offerPrice = store.data.pendingInboundDeal.price;
-            termsBox.append('<div style="font-size: 14pt; font-weight: bold; color: #27ae60; margin: 15px 0;">Requested Upfront Flat Fee: $' + UI.getShortNumberString(offerPrice) + '</div>');
-
-            var actionRow = $('<div style="display: flex; gap: 10px; margin-top: 15px;"></div>');
-            var acceptBtn = $('<div class="selectorButton greenButton" style="flex: 1; padding: 12px; font-size: 12pt; text-align: center;">Accept Offer</div>');
-            acceptBtn.click(function () {
-                if (GameManager.company.cash < offerPrice) { Sound.click(); csNotify("Insufficient funds!"); return; }
-                Sound.click();
-                GameManager.company.adjustCash(-offerPrice, "Inbound Catalogue Deal: " + signStudioName);
+            var inBox = _ae(right, '<div style="background:#fffbf0; border:2px solid #f1c40f; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>');
+            _ae(inBox, '<div style="font-weight:bold; color:#d35400; font-size:12pt; margin-bottom:10px;">Inbound Offer Received</div>');
+            _ae(inBox, '<div style="font-size:11pt; color:#2c3e50; line-height:1.4;">They are offering their entire library for a 104-week exclusive license on The Grid.</div>');
+            var price = store.data.pendingInboundDeal.price;
+            _ae(inBox, '<div style="font-size:18pt; font-weight:bold; color:#27ae60; text-align:center; margin:20px 0;">Flat Fee: $' + UI.getShortNumberString(price) + '</div>');
+            
+            var aBtn = _ae(inBox, '<div class="selectorButton greenButton" style="width:100%; padding:12px 0; text-align:center; font-weight:bold; font-size:12pt;">ACCEPT TERMS</div>');
+            aBtn.click(function(){
+                if (GameManager.company.cash < price) return csNotify('Insufficient funds.');
+                Sound.click(); GameManager.company.adjustCash(-price, 'Catalogue Deal: ' + ms.name);
                 store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
-                store.data.activeCatalogueDeals.push({ studioId: signStudioId, studioName: signStudioName, startWeek: Math.floor(GameManager.company.currentWeek), endWeek: Math.floor(GameManager.company.currentWeek) + 104 });
-                store.data.activeCatalogueNegotiation = null;
-                store.data.pendingInboundDeal = null;
-                try { csAutoRouteMediaCatalog(); } catch (e) { }
-                _n("Deal Signed!", signStudioName + " movies available on Grid.");
-                routeModMenu("film_subs", "media");
+                store.data.activeCatalogueDeals.push({ studioId: ms.id, studioName: ms.name, endWeek: currentWeek + 104 });
+                store.data.activeCatalogueNegotiation = null; store.data.pendingInboundDeal = null;
+                csAutoRouteMediaCatalog(); routeModMenu("film_subs", "media"); 
             });
-            var declineBtn = $('<div class="selectorButton deleteButton" style="flex: 1; padding: 12px; font-size: 12pt; text-align: center;">Decline</div>');
-            declineBtn.click(function () {
-                Sound.click();
-                store.data.pendingInboundDeal = null;
-                routeModMenu("film_subs", "media");
-            });
-            actionRow.append(acceptBtn).append(declineBtn);
-            termsBox.append(actionRow);
-            container.append(termsBox);
         } else {
-            termsBox.append('<h3 style="margin-top: 0;">Outbound Deal Bidding</h3>');
-            termsBox.append('<p style="font-size: 10pt; color: #2c3e50; margin-bottom: 15px;">You are approaching this studio to secure their catalogue for 2 years. They will evaluate your offer based on their reputation and Valuation ($' + UI.getShortNumberString(ms.valuation) + ') against your Grid platform\'s size and reach.</p>');
+            var outBox = _ae(right, '<div style="background:#f8f9fa; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:20px; border-radius:8px;"></div>');
+            _ae(outBox, csRenderSectionHeader('Propose Catalogue Bid'));
+            
+            var baseBenefit = ms.valuation * 0.12, repM = 1.0 + ((ms.reputation||1)*0.15), reachM = 1.0 - (subPower*0.4);
+            var minBid = Math.floor(baseBenefit * repM * reachM), maxBid = Math.floor(minBid * 1.6);
+            
+            _ae(outBox, '<div style="font-size:10pt; color:#2c3e50; margin-bottom:15px; line-height:1.4;">Secure their vault for 104 weeks. Based on market conditions, they expect a bid between:</div>');
+            _ae(outBox, '<div style="text-align:center; font-size:12pt; font-weight:bold; color:#34495e; margin-bottom:15px;">$' + UI.getShortNumberString(minBid) + ' - $' + UI.getShortNumberString(maxBid) + '</div>');
+            
+            var bidInp = _ae(outBox, '<input type="number" value="' + minBid + '" style="width:100% !important; font-size:16pt; padding:10px; border:1px solid #bdc3c7; margin-bottom:15px; border-radius:4px;">');
+            var chanceDisp = _ae(outBox, '<div style="font-weight:bold; text-align:center; margin-bottom:15px; font-size:11pt;">Acceptance Chance: <span style="color:#2980b9;">50%</span></div>');
+            
+            var updateChance = function(){
+                var val = parseInt(bidInp.val()) || 0, ratio = val/minBid, c = 0;
+                if (ratio <= 0.6) c = 0; else if (ratio >= 1.6) c = 100; else c = Math.floor((ratio - 0.6) * 100);
+                chanceDisp.find('span').text(c + '%').css('color', c > 70 ? '#27ae60' : (c > 30 ? '#f39c12' : '#e74c3c'));
+            };
+            bidInp.on('input', updateChance); updateChance();
 
-            var grid = store.data.gridService;
-            var subPower = Math.min(1.0, (grid.subscribers || 0) / 10000000);
-            var baseValue = ms.valuation * 0.10;
-            var repMultiplier = 1.0 + ((ms.reputation || 1) * 0.1);
-            var discountMultiplier = 1.0 - (subPower * 0.5);
-            var minThreshold = Math.floor(baseValue * repMultiplier * discountMultiplier);
-            var maxThreshold = Math.floor(minThreshold * 1.5);
-
-            var isMajorityOwner = ms.sharesOwned >= 50;
-
-            if (isMajorityOwner) {
-                termsBox.append('<div style="background: #e8f8f5; border-left: 4px solid #27ae60; padding: 10px; margin-bottom: 15px; font-size: 10pt; color: #145a32;">' +
-                    '<b>Ownership Benefit:</b> As majority owner of ' + ms.name + ', you can sign this catalogue deal for <b>FREE</b>.' +
-                    '</div>');
-            } else {
-                termsBox.append('<div style="background: #fff; border-left: 4px solid #3498db; padding: 10px; margin-bottom: 15px; font-size: 10pt; color: #34495e;">' +
-                    '<b>Market Analysis:</b> Based on ' + ms.name + '\'s reputation and your Grid reach, a bid between <b>$' + minThreshold.toLocaleString() + '</b> (Uncertain) and <b>$' + maxThreshold.toLocaleString() + '</b> (Guaranteed) is recommended.' +
-                    '</div>');
-            }
-
-            termsBox.append('<div style="margin-bottom: 15px;">');
-            termsBox.append('<label style="font-weight: bold; color: #2c3e50; display: block; margin-bottom: 5px;">Your Cash Offer ($):</label>');
-            var initialBid = isMajorityOwner ? 0 : Math.floor(minThreshold);
-            termsBox.append('<input type="number" id="cs_catalogue_bid" value="' + initialBid + '" ' + (isMajorityOwner ? 'disabled' : '') + ' style="font-size: 14pt; padding: 8px; width: 100%; box-sizing: border-box; border: 2px solid #555; border-radius: 0px; background: ' + (isMajorityOwner ? '#f1f1f1' : '#fff') + ';">');
-            termsBox.append('</div>');
-
-            var btnText = isMajorityOwner ? "Finalize Free Deal" : "Submit Offer";
-            var bidBtn = $('<div class="selectorButton orangeButton" style="width: 100%; padding: 12px; font-size: 12pt; font-weight: bold; text-align: center;">' + btnText + '</div>');
-            bidBtn.click(function () {
-                Sound.click();
-                var offer = isMajorityOwner ? 0 : parseInt($('#cs_catalogue_bid').val(), 10);
-                if (!isMajorityOwner && (isNaN(offer) || offer <= 0)) { csNotify("Enter a valid offer."); return; }
-                if (GameManager.company.cash < offer) { csNotify("You don't have enough cash."); return; }
-
-                var ratio = offer / minThreshold;
-                var chance = 0;
-
-                csLog("Bidding: Offer=" + offer + ", Min=" + minThreshold + ", Max=" + maxThreshold + ", Ratio=" + ratio);
-
-                if (isMajorityOwner || offer >= maxThreshold) {
-                    chance = 1.0;
-                } else {
-                    if (ratio <= 0.5) chance = 0.0;
-                    else chance = ratio - 0.5;
-                }
-
-                csLog("Bidding Result: Chance=" + (chance * 100).toFixed(1) + "%");
-
-                if (Math.random() <= chance) {
-                    GameManager.company.adjustCash(-offer, "Catalogue Deal Bidding: " + signStudioName);
+            var bBtn = _ae(outBox, '<div class="selectorButton orangeButton" style="width:100%; padding:14px 0; text-align:center; font-weight:bold; font-size:12pt;">SUBMIT OFFER</div>');
+            bBtn.click(function(){
+                var val = parseInt(bidInp.val()) || 0;
+                if (GameManager.company.cash < val) return csNotify('Insufficient cash for this bid.');
+                Sound.click(); var ratio = val/minBid, c = (ratio <= 0.6) ? 0 : (ratio >= 1.6 ? 1 : ratio - 0.6);
+                if (Math.random() <= c) {
+                    GameManager.company.adjustCash(-val, 'Catalogue Bid: ' + ms.name);
                     store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
-                    store.data.activeCatalogueDeals.push({ studioId: signStudioId, studioName: signStudioName, startWeek: Math.floor(GameManager.company.currentWeek), endWeek: Math.floor(GameManager.company.currentWeek) + 104 });
-                    store.data.activeCatalogueNegotiation = null;
-                    try { csAutoRouteMediaCatalog(); } catch (e) { }
-                    csNotify("Success! " + signStudioName + " accepted your offer of $" + UI.getShortNumberString(offer) + ".");
-                    routeModMenu("film_subs", "media");
+                    store.data.activeCatalogueDeals.push({ studioId: ms.id, studioName: ms.name, endWeek: currentWeek + 104 });
+                    _n('Deal Secured!', ms.name + ' movies are now on Grid.');
+                    csAutoRouteMediaCatalog(); routeModMenu("film_subs", "media"); 
                 } else {
-                    ms.negotiationCooldown = Math.floor(GameManager.company.currentWeek) + 4;
-                    csNotify("Refused! " + signStudioName + " found your offer insulting. They will refuse to negotiate for 4 weeks.");
-                    routeModMenu("film_subs", "media");
+                    csNotify('Offer Rejected! Studio is offended.'); 
+                    ms.negotiationCooldown = currentWeek + 4; routeModMenu("film_subs", "media");
                 }
             });
-            termsBox.append(bidBtn);
-            container.append(termsBox);
         }
     }
 
@@ -5829,47 +5640,40 @@
 
     function csRenderFilmMarketTab(container) {
         container.empty();
+        _ae(container, csRenderSectionHeader('Global Film Marketplace'));
 
         if (!store.data.gridService || !store.data.gridService.isActive) {
-            container.append('<div style="color: #c0392b; font-weight: bold; text-align: center; margin-top: 20px;">You must launch the Grid streaming platform before acquiring film licenses!</div>');
+            _ae(container, csRenderEmptyState('You must launch "The Grid" platform before acquiring distribution licenses.'));
             return;
         }
 
-        var rHist = store.data.releaseHistory || [];
-        var films = rHist.filter(function (r) { return r.platformIds && r.platformIds.indexOf("movie") !== -1; });
+        var films = (store.data.releaseHistory || []).filter(function (r) { return r.platformIds && r.platformIds.indexOf("movie") !== -1; });
+        if (films.length === 0) return _ae(container, csRenderEmptyState('No past releases available for license. Check back as other studios release projects.'));
 
-        if (films.length === 0) {
-            container.append('<div style="color: #7f8c8d; font-style: italic; text-align: center; margin-top: 30px;">There are no past film releases available to license on the open market. Wait for unowned studios to produce films.</div>');
-            return;
-        }
-
+        var grid = _ae(container, '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"></div>');
+        
         films.forEach(function (f) {
-            var row = $('<div style="background: #fff; border: 2px solid #555; border-radius: 0px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: none;"></div>');
-
-            var info = $('<div></div>');
-            info.append('<div style="font-weight: bold; font-size: 13pt; color: #2c3e50;">' + f.title + '</div>');
-            info.append('<div style="font-size: 10pt; color: #7f8c8d;">Originated by: ' + f.studioName + ' | Metacritic: <span style="color: #e67e22; font-weight: bold;">' + f.score + '/10</span></div>');
-            row.append(info);
-
-            var baseCost = 2000000 + (f.score * 500000);
-            var wCost = 10000 + (f.score * 5000);
-
-            var btn = $('<div class="selectorButton greenButton" style="padding: 6px 15px; font-size: 10pt; text-align: center;">License<br><span style="font-size: 8pt; font-weight: normal;">$' + UI.getShortNumberString(baseCost) + ' (50 wks)</span></div>');
-            btn.click(function () {
-                Sound.click();
-                if (GameManager.company.cash >= baseCost) {
-                    GameManager.company.adjustCash(-baseCost, "Licensed Film: " + f.title);
-                    csLicenseExternalToGrid(f, wCost, 50);
-
-                    var actualIdx = store.data.releaseHistory.indexOf(f);
-                    if (actualIdx > -1) store.data.releaseHistory.splice(actualIdx, 1);
-
-                    routeModMenu("film_market", "media");
-                } else csNotify("Not enough cash to acquire this license!");
+            var card = _ae(grid, '<div style="background:#fff; border:2px solid #bdc3c7; border-left: 4px solid #555; padding:12px; display:flex; justify-content:space-between; align-items:center;"></div>');
+            var info = _ae(card, '<div></div>');
+            
+            // Studio color dot
+            var hash = 0; for(var i=0; i<f.studioName.length; i++) hash = f.studioName.charCodeAt(i) + ((hash << 5) - hash);
+            var dotColor = 'hsl(' + (Math.abs(hash) % 360) + ', 70%, 50%)';
+            
+            _ae(info, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + f.title + '</div>');
+            _ae(info, '<div style="font-size:9pt; color:#7f8c8d; display:flex; align-items:center; gap:6px; margin-top:4px;"><span style="width:8px; height:8px; border-radius:50%; background:'+dotColor+';"></span>' + f.studioName + ' | ' + csRenderScoreBadge(f.score) + '</div>');
+            
+            var cost = 1000000 + (f.score * 500000);
+            var mBtn = _ae(card, '<div class="selectorButton greenButton" style="padding:10px 16px; font-weight:bold;">LICENSE<br><span style="font-size:8pt; font-weight:normal;">$'+UI.getShortNumberString(cost)+'</span></div>');
+            mBtn.click(function () {
+                if (GameManager.company.cash < cost) return csNotify('Insufficient funds.');
+                Sound.click(); GameManager.company.adjustCash(-cost, 'License: ' + f.title);
+                csLicenseExternalToGrid(f, 10000 + (f.score * 5000), 52);
+                
+                var idx = store.data.releaseHistory.indexOf(f);
+                if (idx > -1) store.data.releaseHistory.splice(idx, 1);
+                refresh();
             });
-
-            row.append(btn);
-            container.append(row);
         });
     }
 
