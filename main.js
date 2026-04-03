@@ -1,20 +1,4 @@
 (function () {
-    console.log("Concurrent Studios mod loaded.");
-
-
-    window.onerror = function (msg, url, line, col, err) {
-        var e = "[GLOBAL_ERROR] " + msg + " at " + url + ":" + line + ":" + col + (err && err.stack ? "\nStack: " + err.stack : "");
-        console.error(e);
-        try { require('fs').appendFileSync("/home/deck/gdt-mod/cs_debug.log", "[" + new Date().toLocaleTimeString() + "] " + e + "\n"); } catch (x) { }
-        return false;
-    };
-    if (!window.onunhandledrejection) {
-        window.onunhandledrejection = function (ev) {
-            var e = "[UNHANDLED_PROMISE] " + (ev.reason || "unknown"); console.error(e);
-            try { require('fs').appendFileSync("/home/deck/gdt-mod/cs_debug.log", "[" + new Date().toLocaleTimeString() + "] " + e + "\n"); } catch (x) { }
-        };
-    }
-
     (function injectModStyles() {
         if (document.getElementById('cs-mod-styles')) return;
         var css = document.createElement('style');
@@ -180,7 +164,7 @@
             ['activeAIGames', []], ['coDevScrubMap', {}], ['activeCampaigns', []],
             ['franchises', []], ['mediaProjects', []], ['movieStudios', generateMovieStudios()],
             ['aiAcquisitionOffers', []], ['activeAILicenses', []], ['aiLicensingOffers', []],
-            ['activeCatalogueDeals', []], ['debugLogs', []], ['theaterReleases', []], ['pendingDistribution', []]
+            ['activeCatalogueDeals', []], ['theaterReleases', []], ['pendingDistribution', []]
         ].forEach(function (x) { _d(store.data, x[0], x[1]); });
 
         _d(store.data, 'lastCrossoverWeek', -100);
@@ -266,7 +250,6 @@
                 c.prevDesignPoints = c.designBaseline = c.lastDesignPoints = lg.designPoints;
                 c.prevTechnologyPoints = c.technologyBaseline = c.lastTechPoints = lg.technologyPoints;
             }
-            if (rep > 0) console.log("[CS] Baseline Repair: scrubbed " + rep + " points.");
         }
     }
 
@@ -275,7 +258,6 @@
         _ae(d, '<h2 style="color:#d35400;margin:0 0 15px;border-bottom:2px solid #e67e22;">Concurrent Studios</h2><div style="margin:20px 0;">' + m + '</div>'); _ae(d, '<div class="selectorButton orangeButton" style="width:120px;display:inline-block;">OK</div>').click(function () { o.remove() });
     }
     function csNotify(m) { csShowAlert(m); }
-    function csLog(m) { if (!store || !store.data) return; _da(store.data, 'debugLogs'); var w = (typeof GameManager !== 'undefined' && GameManager.company) ? Math.floor(GameManager.company.currentWeek) : 0, f = '[' + w + '] ' + m; store.data.debugLogs.unshift(f); if (store.data.debugLogs.length > 100) store.data.debugLogs.pop(); console.log(f); }
 
 
 
@@ -1553,7 +1535,7 @@
             var r = store.data.releaseHistory[i];
             if (r.studioName === ms.name && (r.platformIds && r.platformIds.indexOf("movie") !== -1)) {
                 if (!r.title || typeof r.title !== "string") {
-                    csLog("csAutoRouteMediaCatalog: Skipping entry with invalid title from " + ms.name);
+                    // Skipping entry with invalid title
                     continue;
                 }
                 grid.contentLibrary.push(csCreateGridEntry({
@@ -1570,7 +1552,7 @@
         }
 
         if (transferred > 0) {
-            csLog("csAutoRouteMediaCatalog: Transferred " + transferred + " titles from " + ms.name + " to Grid library.");
+            // Transferred titles to Grid library
             _n("Catalog Acquired", transferred + " titles from " + ms.name + " have been permanently transferred to your Grid library as originals!");
         }
     }
@@ -1587,7 +1569,7 @@
                 if (ms.currentProject.weeksRemaining <= 0) {
                     var proj = ms.currentProject;
                     ms.currentProject = null;
-                    csLog("csProcessMediaStudios: Tick release for " + ms.name + " - Title: " + proj.title + ", PlayerFunded: " + proj.isPlayerFunded);
+                    // Tick release info
 
                     if (proj.isPlayerFunded) {
 
@@ -1634,7 +1616,7 @@
                         var catDeal = (store.data.activeCatalogueDeals || []).filter(function (d) { return d.studioId === ms.id && currentWk < d.endWeek; })[0];
                         if (catDeal && store.data.gridService && store.data.gridService.isActive) {
                             var pseudoMovie = { title: proj.title, score: proj.score, studioName: ms.name };
-                            csLog("csProcessMediaStudios: Catalogue Deal Active for " + ms.name + ". Routing " + proj.title + " to Grid.");
+                            // Catalogue Deal routing to Grid
                             csLicenseExternalToGrid(pseudoMovie, 0, 104);
                         } else {
                             if (!store.data.releaseHistory) store.data.releaseHistory = [];
@@ -3074,31 +3056,7 @@
         routeModMenu(activeTab, menuType);
     }
 
-    function renderDebugTab(container) {
-        container.empty();
-        container.append('<h2 style="color: #c0392b; font-size: 14pt; margin: 0 0 10px 0; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px;">Mod Debug Logs</h2>');
-
-        var btnRow = $('<div style="margin-bottom: 15px;"></div>');
-        var clearBtn = $('<div class="selectorButton redButton" style="display: inline-block; padding: 5px 15px; cursor: pointer;">Clear Logs</div>');
-        clearBtn.click(function () {
-            store.data.debugLogs = [];
-            csLog("Logs cleared.");
-            renderDebugTab(container);
-        });
-        btnRow.append(clearBtn);
-        container.append(btnRow);
-
-        var logList = $('<div style="background: #1a1a1a; color: #2ecc71; font-family: monospace; font-size: 9pt; padding: 10px; border-radius: 0px; border: 1px solid #333; overflow-y: auto; max-height: 450px;"></div>');
-        var logs = store.data.debugLogs || [];
-        if (logs.length === 0) {
-            logList.append('<div style="color: #7f8c8d; font-style: italic;">No logs yet. Try performing actions like signing a deal.</div>');
-        } else {
-            logs.forEach(function (l) {
-                logList.append('<div style="margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px;">' + l + '</div>');
-            });
-        }
-        container.append(logList);
-    } function routeModMenu(activeTab, menuType) {
+    function routeModMenu(activeTab, menuType) {
         menuType = menuType || $('#modUI').data('menuType') || "studios";
         var header = $('#modUI_header'), contentArea = $('#modUI_content');
         if (header.length === 0 || contentArea.length === 0) return;
@@ -3122,8 +3080,7 @@
             marketing: { label: "Marketing", type: "studios", render: renderMarketingTab },
             settings: { label: "Settings", type: "studios", render: renderSettingsTab },
             grid_dashboard: { label: "Grid", type: "media", render: csRenderGridDashboard, condition: function () { return store.data.gridService && store.data.gridService.isActive; } },
-            distribution_offers: { label: "Offers", type: "media", render: csRenderDistributionOffers, hidden: true },
-            debug: { label: "Debug", type: "studios", render: renderDebugTab, hidden: true }
+            distribution_offers: { label: "Offers", type: "media", render: csRenderDistributionOffers, hidden: true }
         };
 
         Object.keys(TABS).forEach(function (id) {
@@ -3140,11 +3097,9 @@
             });
         });
 
-        csLog("[ROUTE] tab=" + activeTab + " type=" + menuType);
-
         if (TABS[activeTab]) {
             try { TABS[activeTab].render(contentArea); }
-            catch (err) { csLog("[ROUTE-ERR] " + activeTab + " THREW: " + err.message); }
+            catch (err) { }
         }
 
         setTimeout(function () {
