@@ -1,11 +1,11 @@
 {
-  "id": "cbb0f5e7-2b0f-4886-9dc4-8f0a0a52df24",
-  "name": "concurrent-studios",
-  "version": "1.0.0",
-  "author": "Cinnamon",
-  "description": "Introduces rival studios, stock market, subsidiaries, founding studios, publising your own publication offers and a DLC system.",
-  "main": "./main.js",
-  "dependencies": {
-    "gdt-modAPI": "0.1.x"
-  }
+    "id": "cbb0f5e7-2b0f-4886-9dc4-8f0a0a52df24",
+    "name": "concurrent-studios",
+    "version": "1.0.0-beta",
+    "author": "Cinnamon",
+    "description": "Features: Rival Media Studios, Global Stock Market, Subsidiary Management, 'The Grid' Streaming Platform, Movie & Series Production, Theatrical & Streaming Distribution Deals, Franchise Marketing, and a complete DLC System.",
+    "main": "./main.js",
+    "dependencies": {
+        "gdt-modAPI": "0.1.x"
+    }
 }

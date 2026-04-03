@@ -1110,10 +1110,11 @@
         if (!store.data.modGridMigrationV3 && store.data.gridService && store.data.gridService.isActive) {
             store.data.modGridMigrationV3 = true; var gr = store.data.gridService; _da(gr, 'contentLibrary');
             (store.data.mediaProjects || []).forEach(function (p) { if (p.distributionStatus !== 'pending' && !gr.contentLibrary.some(function (e) { return e.mediaProjectId === p.id })) gr.contentLibrary.push(csCreateGridEntry({ mediaProjectId: p.id, title: p.title, type: p.type, score: p.score, isOriginal: true, addedWeek: w, freshness: 0.5 })) });
-            if (w % 4 === 0) {
-                var av = (store.data.movieStudios || []).filter(function (s) { return !(store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === s.id && w < d.endWeek }) });
-                if (av.length && Math.random() < Math.min(0.4, 0.05 + gr.subscribers / 5e7)) { var s = av[~~(Math.random() * av.length)], pr = ~~(s.valuation * 0.1 * (0.8 + Math.random() * 0.4)); store.data.pendingInboundDeal = { studioId: s.id, price: pr, expires: w + 8 }; _n('Inbound Deal', s.name + ' offer: $' + UI.getShortNumberString(pr)); }
-            }
+        }
+        if (store.data.gridService && store.data.gridService.isActive && w % 4 === 0) {
+            var gr = store.data.gridService;
+            var av = (store.data.movieStudios || []).filter(function (s) { return !(store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === s.id && w < d.endWeek }) });
+            if (av.length && Math.random() < Math.min(0.4, 0.05 + gr.subscribers / 5e7)) { var s = av[~~(Math.random() * av.length)], pr = ~~(s.valuation * 0.1 * (0.8 + Math.random() * 0.4)); store.data.pendingInboundDeal = { studioId: s.id, price: pr, expires: w + 8 }; _n('Inbound Deal', s.name + ' offer: $' + UI.getShortNumberString(pr)); }
         }
         var pg = (GameManager.company || {}).currentGame; if (pg && store.data.disableOverloadMalus) pg.featureOverload = pg.featureOverloadScore = pg.featureOverloadPoints = 0;
         if (pg && !pg.modProcessedCreation) {
@@ -1130,7 +1131,7 @@
             if (pg.modEntryType === 'expansion') { _d(store.data, 'dlcData', {}); _d(store.data.dlcData, pg.id, { count: 0, activeDLCs: [] }); var rev = 5000; if (pg.sequelTo) { var b = GameManager.company.getGameById(pg.sequelTo); if (b && b.totalSalesCash) rev = Math.max(5000, ~~(b.totalSalesCash / 80)) } store.data.dlcData[pg.id].count++; store.data.dlcData[pg.id].activeDLCs.push({ activeWeeksLeft: 20, weeklyRevenue: rev }); }
             if (pg.title) pg.title = pg.title.replace(/\s*\(id\d+\)$/i, '');
         }
-        [processCompetitors, csProcessMediaStudios, processDLCs, processAISales, processPublishingProjects, processCampaigns, processFranchisePassiveIncome, processMediaProjects, csProcessStreamingContracts, csProcessTheaterReleases, csProcessGridService, csUpdateAILicensingSystem].forEach(function (fn) { try { fn() } catch (e) { } });
+        [processCompetitors, csProcessMediaStudios, processDLCs, processAISales, processAIFranchises, processPublishingProjects, processCampaigns, processFranchisePassiveIncome, processMediaProjects, csProcessStreamingContracts, csProcessTheaterReleases, csProcessGridService, csUpdateAILicensingSystem].forEach(function (fn) { try { fn() } catch (e) { } });
         var mapping = store.data.playerProjectMapping || {};
         Object.keys(mapping).forEach(function (id) {
             var pm = mapping[id]; if (pm.processed) return; var g = GameManager.company.gameLog.find(function (x) { return x.id === id && x.score > 0 });
@@ -3472,9 +3473,9 @@
                     if (f.isListedByPlayer) sellBtn.addClass('disabled');
                     sellBtn.click(function () {
                         if (f.isListedByPlayer) return;
-                        showConfirmSellModal(f, container, refresh, function () {
+                        showConfirmSellModal(f, refresh, function () {
                             f.isListedByPlayer = true; f.playerSalePrice = sellPrice; f.saleWeekRemaining = 8 + Math.floor(Math.random() * 9);
-                            Sound.click(); refresh();
+                            Sound.click();
                         });
                     });
                     var histBtn = _ae(card, '<div style="text-align:center; font-size:9pt; color:#3498db; cursor:pointer; margin-top:10px; text-decoration:underline;">View History</div>');
@@ -4327,7 +4328,7 @@
 
         hist.forEach(function (r) {
             var item = $('<div class="cs-stagger-item" style="border: 2px solid #555; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 0px; box-shadow: none;"></div>');
-            var header = $('<h3 style="margin: 0; font-size: 12pt; color: #d35400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + r.gameName + ' <span style="font-size:10pt;color:#7f8c8d;">by ' + r.studioName + '</span></h3>');
+            var header = $('<h3 style="margin: 0; font-size: 12pt; color: #d35400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + (r.gameName || r.title || 'Unknown') + ' <span style="font-size:10pt;color:#7f8c8d;">by ' + r.studioName + '</span></h3>');
             item.append(header);
 
             var wText = "Week " + r.week;
@@ -4484,23 +4485,22 @@
             // Header
             var head = _ae(card, '<div style="display:flex; justify-content:space-between; align-items:baseline;"></div>');
             _ae(head, '<div class="cs-fran-name" style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + f.name + '</div>');
-            _ae(head, '<div style="font-size:8pt; color:#7f8c8d;">Level ' + (f.level || 1) + '</div>');
+            _ae(head, '<div style="font-size:8pt; color:#7f8c8d;">Tier ' + (f.tier || 1) + '</div>');
             
-            _ae(card, '<div style="font-size:9pt; color:#555;">Fans: <b style="color:#2980b9;">' + UI.getShortNumberString(f.fans || 0) + '</b></div>');
+            _ae(card, '<div style="font-size:9pt; color:#555;">Fanbase: <b style="color:#2980b9;">' + Math.floor(f.fanbaseScore || 0) + '/100</b></div>');
             
             // Progress Bar
-            var expPct = Math.min(100, ((f.experience || 0) / (f.nextLevelExp || 1000)) * 100);
-            _ae(card, csRenderMiniBar(expPct, '#8e44ad', '100%'));
+            _ae(card, csRenderMiniBar(f.fanbaseScore || 0, '#8e44ad', '100%'));
             
             // Action
             var mBtn = _ae(card, '<div class="selectorButton whiteBoardButton" style="margin-top:auto; padding:6px 0; font-size:9pt; font-weight:bold; text-align:center;">LAUNCH CAMPAIGN</div>');
             mBtn.click(function () {
-                var cost = (f.level || 1) * 250000;
+                var cost = (f.tier || 1) * 250000;
                 if (GameManager.company.cash < cost) return csNotify('Insufficient funds ($' + UI.getShortNumberString(cost) + ')');
                 Sound.click(); GameManager.company.adjustCash(-cost, 'Marketing: ' + f.name);
-                f.fans = (f.fans || 0) + Math.floor(Math.random() * 50000 * (f.level || 1));
-                f.experience = (f.experience || 0) + 100;
-                csNotify('Marketing campaign successful for ' + f.name); renderMarketingTab(container);
+                f.fanbaseScore = Math.min(100, (f.fanbaseScore || 0) + Math.floor(5 + Math.random() * 10 * (f.tier || 1)));
+                _n('Marketing Success', f.name + ' gained fans! Fanbase: ' + Math.floor(f.fanbaseScore) + '/100');
+                renderMarketingTab(container);
             });
         });
     }
@@ -5431,7 +5431,7 @@
         _ae(markCol, '<div style="font-weight:bold; font-size:8pt; text-transform:uppercase; margin-bottom:4px; color:#555;">Monthly Marketing</div>');
         var mS = _ae(markCol, '<select style="width:100% !important; font-size:11pt; padding:6px; font-weight:bold;"></select>');
         [0, 50000, 250000, 1000000, 5000000].forEach(function (v) { mS.append('<option value="' + v + '" ' + (g.monthlyMarketing === v ? 'selected' : '') + '>$' + UI.getShortNumberString(v) + ' / mo</option>'); });
-        mS.change(function () { g.monthlyMarketing = parseInt($(this).val()); Sound.click(); csRenderGridDashboard(contentArea); });
+        mS.change(function () { g.monthlyMarketing = parseInt($(this).val()); g.marketingBudgetWeekly = Math.floor(g.monthlyMarketing / 4); Sound.click(); csRenderGridDashboard(contentArea); });
 
         // Metric Tiles (GDT Stats Style)
         var statsRow = _ae(contentArea, '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;"></div>');
@@ -5444,7 +5444,7 @@
 
         var subs = g.subscribers || 0;
         var rev = (subs * (g.pricePerMonth || 9.99)) / 4;
-        var exp = (g.monthlyMarketing || 0) + ( (g.licensedContent || []).length * 25000 );
+        var exp = (g.marketingBudgetWeekly || 0) + ( (g.licensedContent || []).length * 25000 );
 
         addTile('Subscribers', UI.getShortNumberString(subs), '#2980b9');
         addTile('Est. Revenue', '+$' + UI.getShortNumberString(rev), '#27ae60');
@@ -5539,7 +5539,7 @@
         off.forEach(function (o) {
             var r = _ae(c, '<div style="background:white;padding:15px;margin-bottom:10px;border:1px solid #ccc;"></div>');
             _ae(r, '<b>' + o.studioName + '</b>: ' + o.franchiseName + ' (' + o.entryType + ')<br>Fee: $' + UI.getShortNumberString(o.licenseFee));
-            _ae(r, '<div class="selectorButton greenButton">Accept</div>').click(function () { acceptLicensingOffer(o); routeModMenu("franchises", "media"); });
+            _ae(r, '<div class="selectorButton greenButton">Accept</div>').click(function () { csHandleAILicensingResponse(o, true); routeModMenu("film_subs", "media"); });
         });
     }
 
@@ -5562,10 +5562,10 @@
         _ae(left, '<div style="font-size:10pt; color:#555; text-align:center;">Valuation: <b>$' + UI.getShortNumberString(ms.valuation) + '</b></div>');
         
         var grid = store.data.gridService;
-        var subPower = Math.min(1.0, (grid.subscriberBase || 0) / 10000000);
+        var subPower = Math.min(1.0, (grid.subscribers || 0) / 10000000);
         _ae(left, csRenderSectionHeader('Your Grid Reach'));
         _ae(left, '<div style="text-align:center; margin-top:10px;">' + csRenderMiniBar(subPower*100, '#2980b9', 150) + '</div>');
-        _ae(left, '<div style="font-size:8pt; color:#7f8c8d; text-align:center; margin-top:4px;">' + UI.getShortNumberString(grid.subscriberBase) + ' Subscribers</div>');
+        _ae(left, '<div style="font-size:8pt; color:#7f8c8d; text-align:center; margin-top:4px;">' + UI.getShortNumberString(grid.subscribers) + ' Subscribers</div>');
 
         // Right Column: Negotiation
         var right = _ae(main, '<div style="flex:1.5;"></div>');
@@ -5584,7 +5584,8 @@
                 if (GameManager.company.cash < price) return csNotify('Insufficient funds.');
                 Sound.click(); GameManager.company.adjustCash(-price, 'Catalogue Deal: ' + ms.name);
                 store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
-                store.data.activeCatalogueDeals.push({ studioId: ms.id, studioName: ms.name, endWeek: currentWeek + 104 });
+                var catMaintFee = Math.floor(ms.valuation * 0.005);
+                store.data.activeCatalogueDeals.push({ studioId: ms.id, studioName: ms.name, endWeek: currentWeek + 104, weeklyMaintenance: catMaintFee });
                 store.data.activeCatalogueNegotiation = null; store.data.pendingInboundDeal = null;
                 csAutoRouteMediaCatalog(ms); routeModMenu("film_subs", "media"); 
             });
@@ -5616,7 +5617,8 @@
                 if (Math.random() <= c) {
                     GameManager.company.adjustCash(-val, 'Catalogue Bid: ' + ms.name);
                     store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
-                    store.data.activeCatalogueDeals.push({ studioId: ms.id, studioName: ms.name, endWeek: currentWeek + 104 });
+                    var catMaintFee = Math.floor(ms.valuation * 0.005);
+                    store.data.activeCatalogueDeals.push({ studioId: ms.id, studioName: ms.name, endWeek: currentWeek + 104, weeklyMaintenance: catMaintFee });
                     _n('Deal Secured!', ms.name + ' movies are now on Grid.');
                     csAutoRouteMediaCatalog(ms); routeModMenu("film_subs", "media"); 
                 } else {
