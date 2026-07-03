@@ -756,13 +756,13 @@
         if (!isSubsidiary) {
             if (type === "sequel" && weeksSinceLast < 12) return { ok: false, reason: "Too soon for a sequel (needs 12 weeks cooldown)." };
             if (type === "remaster") {
-                var origin = franchise.installments[0];
-                if (!origin || (currentWeek - origin.releaseWeek < 60)) return { ok: false, reason: "Original game must be at least 60 weeks old for a remaster." };
+                var originRemaster = franchise.installments[0];
+                if (!originRemaster || (currentWeek - originRemaster.releaseWeek < 60)) return { ok: false, reason: "Original game must be at least 60 weeks old for a remaster." };
             }
             if (type === "remake") {
-                var origin = franchise.installments[0];
+                var originRemake = franchise.installments[0];
                 if (franchise.tier < 2) return { ok: false, reason: "Requires Franchise Tier 2." };
-                if (!origin || (currentWeek - origin.releaseWeek < 80)) return { ok: false, reason: "Original game must be at least 80 weeks old for a remake." };
+                if (!originRemake || (currentWeek - originRemake.releaseWeek < 80)) return { ok: false, reason: "Original game must be at least 80 weeks old for a remake." };
             }
             if (type === "reboot") {
                 if (franchise.tier < 2) return { ok: false, reason: "Requires Franchise Tier 2." };
@@ -1113,7 +1113,7 @@
             if (pg.modEntryType === 'expansion') { _d(store.data, 'dlcData', {}); _d(store.data.dlcData, pg.id, { count: 0, activeDLCs: [] }); var rev = 5000; if (pg.sequelTo) { var b = GameManager.company.getGameById(pg.sequelTo); if (b && b.totalSalesCash) rev = Math.max(5000, ~~(b.totalSalesCash / 80)) } store.data.dlcData[pg.id].count++; store.data.dlcData[pg.id].activeDLCs.push({ activeWeeksLeft: 20, weeklyRevenue: rev }); }
             if (pg.title) pg.title = pg.title.replace(/\s*\(id\d+\)$/i, '');
         }
-        [processCompetitors, csProcessMediaStudios, processDLCs, processAISales, processAIFranchises, processPublishingProjects, processCampaigns, processFranchisePassiveIncome, processMediaProjects, csProcessStreamingContracts, csProcessTheaterReleases, csProcessGridService, csUpdateAILicensingSystem].forEach(function (fn) { try { fn() } catch (e) { } });
+        [processCompetitors, csProcessMediaStudios, processDLCs, processAISales, processAIFranchises, processPublishingProjects, processCampaigns, processFranchisePassiveIncome, processMediaProjects, csProcessStreamingContracts, csProcessTheaterReleases, csProcessGridService, csUpdateAILicensingSystem].forEach(function (fn) { try { fn(); } catch (e) { console.error("[CS] Error in " + (fn.name || "anonymous") + ":", e); } });
         var mapping = store.data.playerProjectMapping || {};
         Object.keys(mapping).forEach(function (id) {
             var pm = mapping[id]; if (pm.processed) return; var g = GameManager.company.gameLog.find(function (x) { return x.id === id && x.score > 0 });
@@ -1676,18 +1676,18 @@
                                 isPlayerFunded: false,
                                 modLicenseId: licToUse.id
                             };
-                            return;
+                            continue;
                         }
                     }
 
                     if (Math.random() < 0.10) {
-                        var pBudget = ms.valuation * 0.05;
+                        var indieBudget = ms.valuation * 0.05;
                         ms.currentProject = {
                             title: csGenerateMovieTitle(),
                             type: ["movie", "tvSeries", "animatedShow"][Math.floor(Math.random() * 3)],
                             weeksTotal: 24,
                             weeksRemaining: 24,
-                            budget: pBudget,
+                            budget: indieBudget,
                             score: Math.floor(Math.random() * 5) + 5,
                             isPlayerFunded: false
                         };
@@ -2636,8 +2636,8 @@
             return;
         }
 
+        var f = proj.isFranchiseEntry ? getFranchiseById(proj.franchiseId) : null;
         if (proj.isFranchiseEntry) {
-            var f = getFranchiseById(proj.franchiseId);
             if (f) {
                 var entry = {
                     id: "FE_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
@@ -2993,7 +2993,7 @@
         var boost = 1.0;
         if (!store.data.activeCampaigns) return 1.0;
         for (var i = 0; i < store.data.activeCampaigns.length; i++) {
-            if (store.data.activeCampaigns[i].targetId == targetId) {
+            if (store.data.activeCampaigns[i].targetId === targetId) {
                 boost *= store.data.activeCampaigns[i].boostFactor;
             }
         }
@@ -3099,7 +3099,7 @@
 
         if (TABS[activeTab]) {
             try { TABS[activeTab].render(contentArea); }
-            catch (err) { }
+            catch (err) { console.error("[CS] Error rendering tab '" + activeTab + "':", err); }
         }
 
         setTimeout(function () {
@@ -4314,9 +4314,9 @@
                     (function (game) {
                         if (term && game.title.toLowerCase().indexOf(term) === -1) return;
 
-                        var currentWk = GameManager.company.currentWeek;
-                        var age = currentWk - game.releaseWeek;
-                        if (age >= 480) return;
+                        var dlcCurrentWk = GameManager.company.currentWeek;
+                        var dlcAge = dlcCurrentWk - game.releaseWeek;
+                        if (dlcAge >= 480) return;
 
 
                         var item = $('<div class="dlcItem" style="border: 2px solid #555; background-color: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 0px; box-shadow: none;"></div>');
@@ -4324,8 +4324,8 @@
                         var rawDlcInfo = store.data.dlcData[game.id] || {};
                         var dlcCount = rawDlcInfo.count || 0;
                         var activeDLCs = rawDlcInfo.activeDLCs || [];
-                        var currentWk = GameManager.company.currentWeek;
-                        var age = currentWk - game.releaseWeek;
+                        var currentWk = dlcCurrentWk;
+                        var age = dlcAge;
 
                         item.append('<div style="font-size: 10pt; color: #7f8c8d;">Released: Week ' + game.releaseWeek + ' (Age: ' + Math.floor(age / 48) + 'y) | DLCs: ' + dlcCount + '/5</div>');
 
@@ -5061,7 +5061,7 @@
                         p.activeDeals = p.activeDeals.filter(function (x) { return x.mediaProjectId !== d.mediaProjectId; });
                         var proj = csGetMediaProjectById(d.mediaProjectId);
                         if (proj) {
-                            proj.distributionStatus = null;
+                            proj.distributionStatus = "pending";
                             _da(store.data, 'pendingDistribution');
                             store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: currentWeek + 4 });
                         }
@@ -5101,7 +5101,7 @@
                         tr.status = "abandoned";
                         var proj = csGetMediaProjectById(tr.mediaProjectId);
                         if (proj) {
-                            proj.distributionStatus = null;
+                            proj.distributionStatus = "pending";
                             _da(store.data, 'pendingDistribution');
                             store.data.pendingDistribution.push({ mediaProjectId: proj.id, decisionDeadlineWeek: currentWeek + 4 });
                         }
@@ -5334,22 +5334,21 @@
             });
         }
 
-        // Licensed Content
+        // Licensed Content (non-original entries in contentLibrary)
         _ae(container, csRenderSectionHeader('Licensed External Catalog'));
-        var licensed = store.data.gridService.licensedContent || [];
+        var licensed = (g.contentLibrary || []).filter(function (c) { return c.isOriginal === false; });
         if (licensed.length === 0) {
             _ae(container, csRenderEmptyState('No licensed movies in your catalog. Browse the Content Market to expand your library.'));
         } else {
             var lTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:2px solid #555;">' +
-                '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Title</th><th>Studio</th><th>Score</th><th>Weekly Cost</th><th>Expires</th></tr></table>');
+                '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Title</th><th>Score</th><th>Weekly Cost</th><th>Expires</th></tr></table>');
             licensed.forEach(function (c, idx) {
                 var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
                 var r = _ae(lTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
                 _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + c.title + '</td>');
-                _ae(r, '<td style="font-size:8pt;">' + (c.studioName || 'Indie') + '</td>');
                 _ae(r, '<td style="text-align:center;">' + csRenderScoreBadge(c.score) + '</td>');
-                _ae(r, '<td style="text-align:center; color:#e74c3c; font-weight:bold;">-$' + UI.getShortNumberString(c.weeklyCost) + '</td>');
-                _ae(r, '<td style="text-align:center;">' + (c.weeksRemaining || 0) + 'w</td>');
+                _ae(r, '<td style="text-align:center; color:#e74c3c; font-weight:bold;">-$' + UI.getShortNumberString(c.licenseCostWeekly || 0) + '</td>');
+                _ae(r, '<td style="text-align:center;">' + (c.licenseWeeksRemaining || 0) + 'w</td>');
             });
         }
     }
@@ -5367,7 +5366,16 @@
                 if (GameManager.company.cash < 25e6) return csNotify('Insufficient funds ($25M required).');
                 Sound.click();
                 GameManager.company.adjustCash(-25e6, 'Grid Launch');
-                store.data.gridService = { isActive: true, subscribers: 100000, pricePerMonth: 9.99, monthlyMarketing: 50000, licensedContent: [] };
+                // Merge launch properties into the existing default object rather than replacing it,
+                // so all fields set by csCreateDefaultGrid and csRepairGrid are preserved.
+                var existing = store.data.gridService || csCreateDefaultGrid();
+                existing.isActive = true;
+                existing.launchWeek = Math.floor(GameManager.company.currentWeek);
+                if (!existing.subscribers || existing.subscribers < 100000) existing.subscribers = 100000;
+                if (!existing.pricePerMonth) existing.pricePerMonth = 9.99;
+                if (!existing.monthlyMarketing) existing.monthlyMarketing = 50000;
+                if (!Array.isArray(existing.contentLibrary)) existing.contentLibrary = [];
+                store.data.gridService = existing;
                 csRenderGridDashboard(contentArea);
             });
             return;
