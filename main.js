@@ -1,4 +1,65 @@
 (function () {
+    var polyfillFind = function(predicate) {
+        if (this == null) throw new TypeError('"this" is null or not defined');
+        var o = Object(this), len = o.length >>> 0;
+        if (typeof predicate !== 'function') throw new TypeError('predicate must be a function');
+        var thisArg = arguments[1], k = 0;
+        while (k < len) {
+            var kValue = o[k];
+            if (predicate.call(thisArg, kValue, k, o)) return kValue;
+            k++;
+        }
+        return undefined;
+    };
+    var polyfillFindIndex = function(predicate) {
+        if (this == null) throw new TypeError('"this" is null or not defined');
+        var o = Object(this), len = o.length >>> 0;
+        if (typeof predicate !== 'function') throw new TypeError('predicate must be a function');
+        var thisArg = arguments[1], k = 0;
+        while (k < len) {
+            var kValue = o[k];
+            if (predicate.call(thisArg, kValue, k, o)) return k;
+            k++;
+        }
+        return -1;
+    };
+    var polyfillIncludes = function(searchElement, fromIndex) {
+        if (this == null) throw new TypeError('"this" is null or not defined');
+        var o = Object(this), len = o.length >>> 0;
+        if (len === 0) return false;
+        var n = fromIndex | 0, k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+        while (k < len) {
+            if (o[k] === searchElement || (typeof o[k] === 'number' && typeof searchElement === 'number' && isNaN(o[k]) && isNaN(searchElement))) return true;
+            k++;
+        }
+        return false;
+    };
+
+    function safeDefine(proto, name, fn) {
+        if (!proto) return;
+        try {
+            var desc = Object.getOwnPropertyDescriptor(proto, name);
+            if (!desc || desc.enumerable || !desc.value) {
+                Object.defineProperty(proto, name, { value: fn, configurable: true, writable: true, enumerable: false });
+            }
+        } catch(e) {}
+    }
+
+    function applyPolyfills(proto) {
+        safeDefine(proto, 'find', polyfillFind);
+        safeDefine(proto, 'findIndex', polyfillFindIndex);
+        safeDefine(proto, 'includes', polyfillIncludes);
+    }
+
+    if (typeof window !== 'undefined' && window.Array) applyPolyfills(window.Array.prototype);
+    if (typeof global !== 'undefined' && global.Array) applyPolyfills(global.Array.prototype);
+    if (typeof Array !== 'undefined') applyPolyfills(Array.prototype);
+    
+    if (typeof GDT !== 'undefined' && GDT.on && GDT.eventKeys) {
+        GDT.on(GDT.eventKeys.ui.contextMenuShowing, function(e) {
+            if (e && e.items && e.items.constructor) applyPolyfills(e.items.constructor.prototype);
+        });
+    }
     (function injectModStyles() {
         if (document.getElementById('cs-mod-styles')) return;
         var css = document.createElement('style');
@@ -158,6 +219,53 @@
     }
 
     function initData() {
+        if (typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.gameLog) {
+            var gp = GameManager.company.gameLog.constructor.prototype;
+            var polyfills = {
+                'find': function(predicate) {
+                    if (this == null) throw new TypeError('"this" is null or not defined');
+                    var o = Object(this), len = o.length >>> 0;
+                    if (typeof predicate !== 'function') throw new TypeError('predicate must be a function');
+                    var thisArg = arguments[1], k = 0;
+                    while (k < len) { var kValue = o[k]; if (predicate.call(thisArg, kValue, k, o)) return kValue; k++; }
+                    return undefined;
+                },
+                'findIndex': function(predicate) {
+                    if (this == null) throw new TypeError('"this" is null or not defined');
+                    var o = Object(this), len = o.length >>> 0;
+                    if (typeof predicate !== 'function') throw new TypeError('predicate must be a function');
+                    var thisArg = arguments[1], k = 0;
+                    while (k < len) { var kValue = o[k]; if (predicate.call(thisArg, kValue, k, o)) return k; k++; }
+                    return -1;
+                },
+                'includes': function(searchElement, fromIndex) {
+                    if (this == null) throw new TypeError('"this" is null or not defined');
+                    var o = Object(this), len = o.length >>> 0;
+                    if (len === 0) return false;
+                    var n = fromIndex | 0, k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+                    while (k < len) { if (o[k] === searchElement || (typeof o[k] === 'number' && typeof searchElement === 'number' && isNaN(o[k]) && isNaN(searchElement))) return true; k++; }
+                    return false;
+                }
+            };
+            for (var fn in polyfills) {
+                if (!gp[fn]) Object.defineProperty(gp, fn, { value: polyfills[fn], configurable: true, writable: true, enumerable: false });
+                if (typeof global !== 'undefined' && global.Array && !global.Array.prototype[fn]) Object.defineProperty(global.Array.prototype, fn, { value: polyfills[fn], configurable: true, writable: true, enumerable: false });
+            }
+        }
+
+        if (!store.data) store.data = {};
+        _d(store.data, 'studios', []);
+        _d(store.data, 'franchises', []);
+        _d(store.data, 'dlcData', {});
+        _d(store.data, 'activeAILicenses', []);
+        _d(store.data, 'movieStudios', []);
+        _d(store.data, 'activeCatalogueDeals', []);
+        _d(store.data, 'mediaProjects', []);
+        _d(store.data, 'theaterReleases', []);
+        _d(store.data, 'streamingContracts', []);
+        _d(store.data, 'activeCatalogueNegotiation', null);
+        _d(store.data, 'lastCrossoverWeek', -100);
+
         [
             ['studios', generateInitialStudios()], ['playerProjectMapping', {}], ['dlcData', {}],
             ['globalSequelHistory', []], ['releaseHistory', []], ['publishingOffers', []],
@@ -1079,9 +1187,12 @@
 
 
     setInterval(function () {
-
         if (typeof GameManager === 'undefined' || typeof UI === 'undefined' || !GameManager.company) {
             return;
+        }
+
+        if (GameManager.company.gameLog && !GameManager.company.gameLog.find && typeof applyPolyfills === 'function') {
+            try { applyPolyfills(GameManager.company.gameLog.constructor.prototype); } catch(e) {}
         }
 
         tickEconomy();
@@ -1102,7 +1213,7 @@
         if (pg && !pg.modProcessedCreation) {
             pg.modProcessedCreation = true; var m = store.data.activePlayerFranchiseProject, fId = null;
             if (m) { fId = m.franchiseId; pg.modEntryType = m.entryType; pg.modRemakeTargetId = m.remakeTargetId; pg.modBundleBaseScore = m.bundleBaseScore; pg.modBundledIds = m.bundledIds; store.data.activePlayerFranchiseProject = null; }
-            else { var mid = (pg.title || '').match(/\(id(\d+)\)$/i); if (mid) { var frFound = (store.data.franchises || []).find(function (f) { return f.numId === parseInt(mid[1]) }); if (frFound) fId = frFound.id; } }
+            else { var mid = (pg.title || '').match(/\(id(\d+)\)$/i); if (mid) { var frFound = (store.data.franchises || []).filter(function (f) { return f.numId === parseInt(mid[1]) })[0]; if (frFound) fId = frFound.id; } }
             if (fId) {
                 pg.modFranchiseId = fId; _d(store.data, 'playerProjectMapping', {}); store.data.playerProjectMapping[pg.id] = { franchiseId: fId, entryType: pg.modEntryType, remakeTargetId: pg.modRemakeTargetId, bundledIds: pg.modBundledIds };
                 var fr = getFranchiseById(fId); if (fr) {
@@ -1116,7 +1227,7 @@
         [processCompetitors, csProcessMediaStudios, processDLCs, processAISales, processAIFranchises, processPublishingProjects, processCampaigns, processFranchisePassiveIncome, processMediaProjects, csProcessStreamingContracts, csProcessTheaterReleases, csProcessGridService, csUpdateAILicensingSystem].forEach(function (fn) { try { fn(); } catch (e) { console.error("[CS] Error in " + (fn.name || "anonymous") + ":", e); } });
         var mapping = store.data.playerProjectMapping || {};
         Object.keys(mapping).forEach(function (id) {
-            var pm = mapping[id]; if (pm.processed) return; var g = GameManager.company.gameLog.find(function (x) { return x.id === id && x.score > 0 });
+            var pm = mapping[id]; if (pm.processed) return; var g = GameManager.company.gameLog.filter(function (x) { return x.id === id && x.score > 0 })[0];
             if (g) {
                 pm.processed = true; var f = getFranchiseById(pm.franchiseId); if (f) onFranchiseEntryComplete(f, { id: 'FE_' + Date.now(), gameId: g.id, title: g.title, score: g.score, type: pm.entryType, releaseWeek: w, revenue: g.totalSalesCash || 0, remakeTargetId: pm.remakeTargetId }, g.score, g.totalSalesCash || 0);
                 delete mapping[id]; store.data.activePlayerFranchiseProject = null;
@@ -3257,7 +3368,7 @@
             es = _ae(bod, '<div style="background:#eee; padding:10px; border-radius:5px; margin-bottom:15px;">Cost: $<b>0</b> | Score: <b>0-0</b></div>');
         var upE = function () {
             var n = (ty === 'bundle' ? bs.length : 1), cs = getEntryTypeCost(ty, sz, f, n); es.find('b:first').text('$' + UI.getShortNumberString(cs));
-            var r = (ty === 'bundle' && bs.length > 0) ? (bs.reduce(function (a, v) { var i = f.installments.find(function (x) { return x.id === v }); return a + (i ? i.score : 5) }, 0) / bs.length) : estimateFranchiseEntryScore(f, ty, sz, rem).min;
+            var r = (ty === 'bundle' && bs.length > 0) ? (bs.reduce(function (a, v) { var i = f.installments.filter(function (x) { return x.id === v })[0]; return a + (i ? i.score : 5) }, 0) / bs.length) : estimateFranchiseEntryScore(f, ty, sz, rem).min;
             es.find('b:last').text((r - 1).toFixed(1) + ' - ' + (r + 1).toFixed(1));
         };
         ['sequel', 'remaster', 'remake', 'reboot', 'spinoff', 'prequel', 'expansion', 'bundle'].forEach(function (t) {
@@ -3288,7 +3399,7 @@
             ava.forEach(function (s) { sl.append('<option value="' + s.id + '">' + s.name + '</option>') });
             makeSelectSearchable(sl);
             _ae(su, '<div class="selectorButton greenButton" style="text-align:center; padding:5px 0; margin-top:5px;">Assign</div>').click(function () {
-                startSubsidiaryFranchiseProject(ava.find(function (x) { return x.id === sl.val() }), f, ty, sz, bs, 0); b();
+                startSubsidiaryFranchiseProject(ava.filter(function (x) { return x.id === sl.val() })[0], f, ty, sz, bs, 0); b();
             });
         }
         _ae(bod, '<div class="selectorButton blueButton" style="width:100%; text-align:center; padding:10px 0; margin-top:10px;">Publishing Offer</div>').click(function () { routeModMenu('publishing') });
@@ -3309,7 +3420,7 @@
         var zSl = _ae(m, '<select style="width:100%; padding:10px; margin-bottom:20px;"></select>');
         ['Small', 'Medium', 'Large', 'AAA'].forEach(function (s) { zSl.append('<option value="' + s + '">' + s + '</option>') });
         _ae(m, '<div class="selectorButton greenButton" style="text-align:center; padding:10px 0;">Assign to Studio</div>').click(function () {
-            var s = subs.find(function (x) { return x.id === sSl.val() }), ty = tSl.val(), sz = zSl.val(), fee = [5000, 12500, 25000, 50000, 125000][f.tier - 1] || 125000;
+            var s = subs.filter(function (x) { return x.id === sSl.val() })[0], ty = tSl.val(), sz = zSl.val(), fee = [5000, 12500, 25000, 50000, 125000][f.tier - 1] || 125000;
             if (GameManager.company.cash < fee) return csNotify('No cash!'); if (s.currentProject && !confirm('Studio busy. Reset?')) return;
             GameManager.company.adjustCash(-fee, 'License Fee: ' + f.name); startSubsidiaryFranchiseProject(s, f, ty, sz, bs, 0, rem); b();
         });
