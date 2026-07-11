@@ -1,0 +1,37 @@
+
+1. Rival Studios & The Global Stock Market
+Dynamic Competitor Landscape: Compete with a roster of rival studios who dynamically release games, gain fans, and grow their valuations.
+Stock Market Investment: Buy and sell shares in rival studios in 10% increments. Keep an eye on sucessfull releases to make profit.
+Passive Revenue: Earn weekly dividends proportional to your ownership percentage whenever your rivals release a successful title.
+
+2. Subsidiary Management & Co-Development
+Hostile Takeovers: Once you acquire a 50% or greater controlling stake in any rival studio, they become your subsidiary! You can also found a brand-new subsidiary from scratch for $5,000,000.
+Direct Staff Control: Manage your subsidiary's workforce. Hire and fire staff across 5 different tiers (from 1-Star interns to 5 star employees), balance a deeper workfoce system still in development top add more complexity.
+Assign Tasks: Direct your subsidiary to develop games by choosing their Topic, Genre, Game Size (Small to AAA), and Platforms.
+Specializations: Configure your subsidiary to specialize in General projects, DLCs, Co-Development, or Game Releases.
+Free Co-Development Support: Leverage your subsidiary to co-develop with your main studio, injecting massive Design and Technology points into your active projects for free based on their team quality.
+Now a complete remake system with enhnaced features, new dlc system and more.
+
+3. The Franchise
+Register Franchises: Turn your best releases into franchises.
+Massive Expansion Options: Spin off your franchises into Prequels, Sequels, Remakes, Remasters, Reboots, Spinoffs, Expansions, or Bundles. Develop them internally or delegate them to your subsidiaries for faster but maybe sloppier results.
+Corporate Acquisitions: Buy listed competitor franchises.
+Licensing Proposals: Receive licensing offers from external studios, negotiating upfront fees and royalty rates to secure extra cash.
+Legendary Crossovers: Merge two of your Tier 5 franchises in a massive $3,000,000 Crossover Event to combine their fanbases and create record-breaking revenue!
+
+4. Robust DLC System
+Extend the Lifecycle: Keep your games relevant and profitable. You can release up to 5 DLCs for any game under 10 years old.
+Internal Development: Pay 10% of the original development cost to create a DLC internally over 10 weeks, boosting your weekly cash flow.
+Subsidiary Delegation: Save your main team's time and assign a subsidiary to develop the DLC for free over 18 weeks.
+Steady Revenue: Released DLCs generate weekly sales revenue (1.5% of the base game's lifetime sales) for 20 weeks.
+
+5. 'The Grid' expansion: Streaming Platform & Media Production
+Launch your own streaming platform, "The Grid", for an initial investment of $25,000,000.
+Subscribers & Market Share: Manage subscription pricing and monthly marketing budgets to capture market share from other rival companies.
+Co-Production Pitching: Pitch movie, TV series, animated show, or comic book adaptations of your Tier 3+ franchises to external movie studios. Share the budgets (40-50% player contribution) and split the revenues.
+Content Library Management: Fill your platform with your own original creations or license from other studios to get more subscribers.
+Theatrical & Streaming Deals: Negotiate box office deals for feature films or streaming licensing packages.
+
+6. Advanced Settings (Experimental)
+Disable Engine Overload Penalty: Toggle the engine overload limit to freely stack features without scoring penalties, and automatically clean 80% of project bugs.
+Baseline Calibration: An admin calibration tool to reset design and technology baselines, ensuring your game remains balanced regardless of playstyle.
