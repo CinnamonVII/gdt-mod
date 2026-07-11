@@ -291,16 +291,22 @@
         function parseGameWeek(dateVal) {
             if (!dateVal) return 0;
             if (typeof dateVal === 'number') return dateVal;
-            if (typeof General !== 'undefined' && General.getWeekFromDateString) return General.getWeekFromDateString(dateVal);
             var parts = dateVal.split('/');
-            if (parts.length === 3) return (parseInt(parts[0]) - 1) * 48 + (parseInt(parts[1]) - 1) * 4 + parseInt(parts[2]);
+            if (parts.length === 3) {
+                var y = parseInt(parts[0], 10) || 1;
+                var m = parseInt(parts[1], 10) || 1;
+                var w = parseInt(parts[2], 10) || 1;
+                return (y - 1) * 48 + (m - 1) * 4 + w;
+            }
             return 0;
         }
-
         var myPlats = Platforms.allPlatforms.filter(function (p) {
             var pubWk = parseGameWeek(p.published);
-            var retWk = p.retireDate ? parseGameWeek(p.retireDate) : Infinity;
-            return (pubWk <= currentWk) && (retWk > currentWk);
+            var retWk = p.retiring ? parseGameWeek(p.retiring) : 999999;
+            var isReleased = pubWk <= currentWk;
+            var isNotRetired = retWk > currentWk;
+            var isCustom = (p.isCustom === true && p.owner === GameManager.company.id);
+            return (isReleased && isNotRetired) || isCustom;
         });
         if (myPlats.length === 0) myPlats = [Platforms.allPlatforms[0]];
 

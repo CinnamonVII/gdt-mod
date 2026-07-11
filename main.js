@@ -335,6 +335,7 @@
 
         if (!store.data.gridService) store.data.gridService = csCreateDefaultGrid();
         csRepairGrid(store.data.gridService);
+        csRepairDLCData(store.data);
 
         store.data.pendingDistribution.forEach(function (p) {
             _d(p, 'mediaProjectId', null); _dn(p, 'decisionDeadlineWeek', 0); _d(p, 'notified', false);
@@ -403,6 +404,58 @@
             _dn(e, 'licenseWeeksRemaining', 0); _d(e, 'franchiseId', null);
             if (typeof e.freshness !== "number" || isNaN(e.freshness) || e.freshness <= 0) e.freshness = 0.5;
         });
+    }
+
+    function csRepairDLCData(data) {
+        if (!data) return;
+        
+        if (!data.dlcData) {
+            data.dlcData = { games: {}, dlcs: {} };
+            return;
+        }
+
+        if (Array.isArray(data.dlcData) || !data.dlcData.games || !data.dlcData.dlcs) {
+            var oldData = data.dlcData;
+            data.dlcData = { games: {}, dlcs: {} };
+            
+            if (Array.isArray(oldData)) {
+                oldData.forEach(function(oldDLC, idx) {
+                    var dlcId = oldDLC.id || ("DLC_LEGACY_" + Date.now() + "_" + idx);
+                    var gameId = oldDLC.gameId || oldDLC.baseGameId || "UNKNOWN_GAME";
+                    
+                    data.dlcData.dlcs[dlcId] = {
+                        id: dlcId,
+                        baseGameId: gameId,
+                        title: oldDLC.title || ("Expansion " + (idx+1)),
+                        theme: "Legacy Expansion",
+                        type: "Expansion Pack",
+                        scale: "Medium",
+                        allocation: { story: 25, gameplay: 25, graphics: 25, audio: 25 },
+                        price: 9.99,
+                        marketingStrategy: "None",
+                        releaseTiming: "Immediate",
+                        devStats: { cost: 500000, marketingCost: 0, weeksInDev: 12, bugs: 0 },
+                        marketStats: { 
+                            score: 7.0, 
+                            totalSales: oldDLC.sales || 0, 
+                            totalRevenue: oldDLC.revenue || 0, 
+                            baseGameUnitsAtLaunch: 100000 
+                        },
+                        status: "released",
+                        releaseWeek: oldDLC.releaseWeek || 0,
+                        history: {
+                            salesOverTime: [],
+                            priceHistory: []
+                        }
+                    };
+                    
+                    if (!data.dlcData.games[gameId]) {
+                        data.dlcData.games[gameId] = { activeSeasonPass: null, dlcList: [] };
+                    }
+                    data.dlcData.games[gameId].dlcList.push(dlcId);
+                });
+            }
+        }
     }
 
     function csCreateGridEntry(opts) {
@@ -753,12 +806,22 @@
         var grid = store.data.gridService;
         if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
 
-
         for (var i = 0; i < grid.contentLibrary.length; i++) {
             if (grid.contentLibrary[i].mediaProjectId === mediaProject.id) {
                 csNotify("Already in Grid Library."); return;
             }
         }
+
+        var gridLevel = grid.contentLibrary.length;
+        var baseCost = 500000;
+        var upgradeCost = Math.floor(baseCost * Math.pow(1.65, gridLevel));
+        
+        if (GameManager.company.cash < upgradeCost) {
+            csNotify("Insufficient funds to expand The Grid. Need $" + UI.getShortNumberString(upgradeCost));
+            return;
+        }
+        
+        GameManager.company.adjustCash(-upgradeCost, "Grid Expansion Cost: " + mediaProject.title);
 
         var entry = csCreateGridEntry({
             mediaProjectId: mediaProject.id,
@@ -1220,7 +1283,16 @@
         if (store.data.gridService && store.data.gridService.isActive && w % 4 === 0) {
             var gr = store.data.gridService;
             var av = (store.data.movieStudios || []).filter(function (s) { return !(store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === s.id && w < d.endWeek }) });
-            if (av.length && Math.random() < Math.min(0.4, 0.05 + gr.subscribers / 5e7)) { var s = av[~~(Math.random() * av.length)], pr = ~~(s.valuation * 0.1 * (0.8 + Math.random() * 0.4)); store.data.pendingInboundDeal = { studioId: s.id, price: pr, expires: w + 8 }; _n('Inbound Deal', s.name + ' offer: $' + UI.getShortNumberString(pr)); }
+            if (av.length && Math.random() < Math.min(0.4, 0.05 + gr.subscribers / 5e7)) { 
+                var s = av[~~(Math.random() * av.length)];
+                var pr = ~~(s.valuation * 0.1 * (0.8 + Math.random() * 0.4)); 
+                store.data.pendingInboundDeal = { studioId: s.id, price: pr, expires: w + 8 }; 
+                if (typeof csShowInboundDealModal === 'function') {
+                    csShowInboundDealModal(s, pr);
+                } else {
+                    _n('Inbound Deal', s.name + ' offer: $' + UI.getShortNumberString(pr));
+                }
+            }
         }
         var pg = (GameManager.company || {}).currentGame; if (pg && store.data.disableOverloadMalus) pg.featureOverload = pg.featureOverloadScore = pg.featureOverloadPoints = 0;
         if (pg && !pg.modProcessedCreation) {
@@ -1434,8 +1506,8 @@
         _t(terms, 'Studio Rep', (studio.reputation || 1).toFixed(1) + '/5', '#e67e22');
 
         var actions = _ae(modalContent, '<div style="display: flex; gap: 10px; margin-top: 5px;"></div>');
-        _ae(actions, '<div class="selectorButton greenButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center;">ACCEPT DEAL</div>').click(function () { csHandleAILicensingResponse(offer, true); $.modal.close(); });
-        _ae(actions, '<div class="selectorButton redButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center;">DECLINE</div>').click(function () { csHandleAILicensingResponse(offer, false); $.modal.close(); });
+        _ae(actions, '<div class="selectorButton greenButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center;">ACCEPT DEAL</div>').click(function () { csHandleAILicensingResponse('accept', offer); });
+        _ae(actions, '<button id="declineOffer" data-action="decline" class="selectorButton redButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center; border: none; font-family: inherit; font-size: inherit; cursor: pointer;">Refuse</button>').click(function () { csHandleAILicensingResponse('decline', offer); });
 
         $.modal(modalContent, { 
             overlayClose: true, 
@@ -1445,15 +1517,24 @@
         });
     }
 
-    function csHandleAILicensingResponse(offer, accepted) {
-        if (accepted) {
-            GameManager.company.adjustCash(offer.upfront, "IP Licensing Upfront: " + offer.franchiseName);
+    function csHandleAILicensingResponse(response, offerData) {
+        if (!offerData) return;
+
+        if (response === 'decline' || response === false) {
+            if (typeof UI !== 'undefined' && UI.closeModal) UI.closeModal();
+            else if (typeof $ !== 'undefined' && $.modal) $.modal.close();
+            if (typeof GameManager !== 'undefined' && GameManager.resume) GameManager.resume(true);
+            return;
+        }
+
+        if (response === 'accept' || response === true) {
+            GameManager.company.adjustCash(offerData.upfront, "IP Licensing Upfront: " + offerData.franchiseName);
             store.data.activeAILicenses.push({
                 id: "AL_" + Date.now(),
-                studioId: offer.studioId,
-                franchiseId: offer.franchiseId,
-                filmsRemaining: offer.filmsCount,
-                royaltyRate: offer.royaltyRate,
+                studioId: offerData.studioId,
+                franchiseId: offerData.franchiseId,
+                filmsRemaining: offerData.filmsCount,
+                royaltyRate: offerData.royaltyRate,
                 totalRoyaltiesEarned: 0
             });
             Sound.click();
@@ -1461,12 +1542,16 @@
 
         var idx = -1;
         for (var i = 0; i < store.data.aiLicensingOffers.length; i++) {
-            if (store.data.aiLicensingOffers[i].id === offer.id) {
+            if (store.data.aiLicensingOffers[i].id === offerData.id) {
                 idx = i;
                 break;
             }
         }
         if (idx > -1) store.data.aiLicensingOffers.splice(idx, 1);
+
+        if (typeof UI !== 'undefined' && UI.closeModal) UI.closeModal();
+        else if (typeof $ !== 'undefined' && $.modal) $.modal.close();
+        if (typeof GameManager !== 'undefined' && GameManager.resume) GameManager.resume(true);
     }
 
 
@@ -2003,6 +2088,22 @@
         } else if (grid.contentLibrary.length < 5) {
             churnMultiplier = 1.5;
         }
+        var servers = grid.rentedServers || 1;
+        var capacity = servers * 1000000;
+        
+        if ((grid.subscribers || 0) > capacity) {
+            grid.overloadTicks = (grid.overloadTicks || 0) + 1;
+            churnMultiplier += 5.0; 
+        } else {
+            grid.overloadTicks = 0;
+        }
+
+        if (grid.overloadTicks > 4) {
+            _n("Grid Crashed!", "Your servers overloaded for too long! The Grid went offline and users unsubscribed en masse. PR Disaster!");
+            grid.subscribers = Math.floor(grid.subscribers * 0.10);
+            grid.overloadTicks = 0;
+        }
+
         var churnedSubs = Math.floor((grid.subscribers || 0) * baseChurn * churnMultiplier);
         if (isNaN(churnedSubs)) churnedSubs = 0;
 
@@ -2021,16 +2122,10 @@
             if (isNaN(grid.totalRevenue)) grid.totalRevenue = weeklySubRevenue;
         }
 
+        var costPerServer = Math.max(50000, 150000 - (servers * 500));
+        var serverRent = servers * costPerServer;
 
-        var baseUpkeep = 5000;
-        var varUpkeep = 0;
-        var subs = grid.subscribers || 0;
-        if (subs < 100000) varUpkeep = subs * 0.50;
-        else if (subs < 1000000) varUpkeep = (100000 * 0.50) + (subs - 100000) * 0.35;
-        else if (subs < 10000000) varUpkeep = (100000 * 0.50) + (900000 * 0.35) + (subs - 1000000) * 0.20;
-        else varUpkeep = (100000 * 0.50) + (900000 * 0.35) + (9000000 * 0.20) + (subs - 10000000) * 0.10;
-
-        grid.weeklyUpkeep = Math.floor(baseUpkeep + varUpkeep);
+        grid.weeklyUpkeep = serverRent + 5000;
         if (isNaN(grid.weeklyUpkeep)) grid.weeklyUpkeep = baseUpkeep;
         grid.pendingUpkeep = (grid.pendingUpkeep || 0) + grid.weeklyUpkeep;
 
@@ -2316,26 +2411,51 @@
                     var currentWk = GameManager.company.currentWeek;
 
                     if (spec === "DLC") {
-
                         var games = (GameManager.company.gameLog || []).filter(function (g) {
                             var age = currentWk - g.releaseWeek;
-                            var dlcInfo = store.data.dlcData[g.id] || { count: 0 };
-                            return age < 480 && dlcInfo.count < 5;
+                            var dlcInfo = (store.data.dlcData && store.data.dlcData.games) ? store.data.dlcData.games[g.id] : null;
+                            var count = dlcInfo ? dlcInfo.dlcList.length : 0;
+                            return age < 480 && count < 5;
                         });
 
                         if (games.length > 0) {
                             games.sort(function (a, b) { return (b.totalSalesCash || 0) - (a.totalSalesCash || 0); });
                             var target = games[0];
+                            
+                            var estRev = Math.floor((target.totalSalesCash || 1500000) * 0.015);
+                            var dlcId = "DLC_SUB_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+                            
+                            var newDLC = {
+                                id: dlcId,
+                                baseGameId: target.id,
+                                title: target.title,
+                                subtitle: "Expansion",
+                                theme: "Historical",
+                                type: "Expansion Pack",
+                                scale: "Medium",
+                                allocation: { story: 20, gameplay: 30, graphics: 20, audio: 30 },
+                                price: 9.99,
+                                marketingStrategy: "None",
+                                releaseTiming: "Immediate",
+                                devStats: { cost: 500000, marketingCost: 0, weeksInDev: 0, bugs: 0, progress: 0, requiredProgress: 3000 },
+                                marketStats: { score: 0, totalSales: 0, totalRevenue: 0, baseGameUnitsAtLaunch: target.unitsSold || 500000 },
+                                status: "subsidiary_development",
+                                history: { salesOverTime: [], priceHistory: [] }
+                            };
+                            
+                            if (store.data.dlcData && store.data.dlcData.dlcs) {
+                                store.data.dlcData.dlcs[dlcId] = newDLC;
+                                if (!store.data.dlcData.games[target.id]) store.data.dlcData.games[target.id] = { activeSeasonPass: null, dlcList: [] };
+                                store.data.dlcData.games[target.id].dlcList.push(dlcId);
+                            }
+                            
                             studio.currentProject = {
                                 name: target.title + " DLC",
                                 isDLC: true,
                                 gameId: target.id,
-                                weeklyRevenue: Math.floor((target.totalSalesCash || 1500000) * 0.015),
+                                dlcId: dlcId,
                                 weeksRemaining: 18
                             };
-
-                            if (!store.data.dlcData[target.id]) store.data.dlcData[target.id] = { count: 0, activeDLCs: [] };
-                            store.data.dlcData[target.id].count++;
                             continue;
                         }
                     } else if (spec === "CoDev" && GameManager.company && GameManager.company.currentGame) {
@@ -2486,16 +2606,22 @@
         function parseGameWeek(dateVal) {
             if (!dateVal) return 0;
             if (typeof dateVal === 'number') return dateVal;
-            if (typeof General !== 'undefined' && General.getWeekFromDateString) return General.getWeekFromDateString(dateVal);
             var parts = dateVal.split('/');
-            if (parts.length === 3) return (parseInt(parts[0]) - 1) * 48 + (parseInt(parts[1]) - 1) * 4 + parseInt(parts[2]);
+            if (parts.length === 3) {
+                var y = parseInt(parts[0], 10) || 1;
+                var m = parseInt(parts[1], 10) || 1;
+                var w = parseInt(parts[2], 10) || 1;
+                return (y - 1) * 48 + (m - 1) * 4 + w;
+            }
             return 0;
         }
-
         var activePlats = Platforms.allPlatforms.filter(function (p) {
             var pubWk = parseGameWeek(p.published);
-            var retWk = p.retireDate ? parseGameWeek(p.retireDate) : Infinity;
-            return (pubWk <= currentWk) && (retWk > currentWk);
+            var retWk = p.retiring ? parseGameWeek(p.retiring) : 999999;
+            var isReleased = pubWk <= currentWk;
+            var isNotRetired = retWk > currentWk;
+            var isCustom = (p.isCustom === true && p.owner === GameManager.company.id);
+            return (isReleased && isNotRetired) || isCustom;
         });
 
         if (activePlats.length === 0) return [Platforms.allPlatforms[0].name];
@@ -2505,6 +2631,8 @@
             var scoreA = a.marketShare || 0;
             var scoreB = b.marketShare || 0;
 
+            if (a.isCustom === true && a.owner === GameManager.company.id) scoreA += 100000;
+            if (b.isCustom === true && b.owner === GameManager.company.id) scoreB += 100000;
 
             var genreIndexMap = { "Action": 0, "Adventure": 1, "RPG": 2, "Simulation": 3, "Strategy": 4, "Casual": 5 };
             var gIdx = genreIndexMap[genreName];
@@ -2767,17 +2895,16 @@
         if (proj.size === "AAA") price = 40;
 
         if (proj.isDLC) {
-            if (!store.data.dlcData[proj.gameId] || typeof store.data.dlcData[proj.gameId].count === 'undefined') {
-                store.data.dlcData[proj.gameId] = { count: 0, activeDLCs: [] };
+            if (proj.dlcId && store.data.dlcData && store.data.dlcData.dlcs[proj.dlcId]) {
+                var dlc = store.data.dlcData.dlcs[proj.dlcId];
+                dlc.devStats.progress = dlc.devStats.requiredProgress;
+                DLCSystem.releaseDLC(dlc);
+                _n("Subsidiary DLC Released", studio.name + " finished developing " + dlc.title + "! Review Score: " + dlc.marketStats.score.toFixed(1) + "/10");
+            } else {
+                if (!store.data.dlcData[proj.gameId]) store.data.dlcData[proj.gameId] = { count: 0, activeDLCs: [] };
+                store.data.dlcData[proj.gameId].activeDLCs.push({ activeWeeksLeft: 20, weeklyRevenue: proj.weeklyRevenue });
+                _n("Subsidiary DLC Released", studio.name + " finished developing " + proj.name + "! It is now generating revenue.");
             }
-
-
-            store.data.dlcData[proj.gameId].activeDLCs.push({
-                activeWeeksLeft: 20,
-                weeklyRevenue: proj.weeklyRevenue
-            });
-
-            _n("Subsidiary DLC Released", studio.name + " finished developing " + proj.name + " (#" + store.data.dlcData[proj.gameId].count + ")! It is now generating revenue.");
             return;
         }
 
@@ -2978,6 +3105,26 @@
 
     function processDLCs() {
         if (!store.data.dlcData) store.data.dlcData = {};
+
+        // Run the new DLC pipeline logic
+        if (typeof DLCSystem !== 'undefined' && DLCSystem.processWeekly) {
+            DLCSystem.processWeekly();
+        }
+
+        if (store.data.activeMajorExpansion) {
+            var exp = store.data.activeMajorExpansion;
+            if (exp.weeksRemaining > 0) {
+                exp.weeksRemaining--;
+                if (exp.weeksRemaining <= 0) {
+                    var surge = Math.floor((exp.totalSalesCash || 1500000) * 1.5);
+                    if (surge < 5000000) surge = 5000000;
+                    GameManager.company.adjustCash(surge, "Expansion Sales: " + exp.gameTitle);
+                    _n("Expansion Released!", "Your Major Expansion for " + exp.gameTitle + " has been released to critical acclaim! It generated $" + UI.getShortNumberString(surge) + " in sales!");
+                    store.data.activeMajorExpansion = null;
+                }
+            }
+        }
+
         var activeGames = GameManager.company.gameLog || [];
         var dlcKeys = Object.keys(store.data.dlcData);
         for (var i = 0; i < dlcKeys.length; i++) {
@@ -4361,16 +4508,22 @@
         function parseGameWeek(dateVal) {
             if (!dateVal) return 0;
             if (typeof dateVal === 'number') return dateVal;
-            if (typeof General !== 'undefined' && General.getWeekFromDateString) return General.getWeekFromDateString(dateVal);
             var parts = dateVal.split('/');
-            if (parts.length === 3) return (parseInt(parts[0]) - 1) * 48 + (parseInt(parts[1]) - 1) * 4 + parseInt(parts[2]);
+            if (parts.length === 3) {
+                var y = parseInt(parts[0], 10) || 1;
+                var m = parseInt(parts[1], 10) || 1;
+                var w = parseInt(parts[2], 10) || 1;
+                return (y - 1) * 48 + (m - 1) * 4 + w;
+            }
             return 0;
         }
-
         var myPlats = Platforms.allPlatforms.filter(function (p) {
             var pubWk = parseGameWeek(p.published);
-            var retWk = p.retireDate ? parseGameWeek(p.retireDate) : Infinity;
-            return (pubWk <= currentWk) && (retWk > currentWk);
+            var retWk = p.retiring ? parseGameWeek(p.retiring) : 999999;
+            var isReleased = pubWk <= currentWk;
+            var isNotRetired = retWk > currentWk;
+            var isCustom = (p.isCustom === true && p.owner === GameManager.company.id);
+            return (isReleased && isNotRetired) || isCustom;
         });
         if (myPlats.length === 0) myPlats = [Platforms.allPlatforms[0]];
 
@@ -4524,21 +4677,12 @@
                             var dlcCost = Math.floor((game.costs || 100000) * 0.1);
                             if (dlcCost < 20000) dlcCost = 20000;
 
-                            var dlcBtn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt;">Develop DLC ($' + UI.getShortNumberString(dlcCost) + ')</div>');
+                            var dlcBtn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt;">EXPANSION OPTIONS...</div>');
                             dlcBtn.click(function () {
-                                if (GameManager.company.cash >= dlcCost) {
-                                    Sound.click();
-                                    GameManager.company.adjustCash(-dlcCost, "DLC Development: " + game.title);
-                                    if (!store.data.dlcData[game.id]) store.data.dlcData[game.id] = { count: 0, activeDLCs: [] };
-                                    store.data.dlcData[game.id].activeDLCs.push({
-                                        pendingPlayerDev: 10,
-                                        gameTitle: game.title,
-                                        weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.015)
-                                    });
-                                    store.data.dlcData[game.id].count++;
-                                    $.modal.close();
+                                if (typeof DLCWizard !== "undefined") {
+                                    DLCWizard.show(game.id);
                                 } else {
-                                    csNotify("Not enough funds!");
+                                    csShowExpansionOptionsModal(game, dlcCost, dlcCount, age);
                                 }
                             });
                             dlcControls.append(dlcBtn);
@@ -4548,15 +4692,36 @@
                                     var subBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; font-size: 10pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Assign: ' + store.data.studios[s].name + '</div>');
                                     (function (studio) {
                                         subBtn.click(function () {
+                                            var dlcId = "DLC_SUB_" + Date.now();
+                                            var newDLC = {
+                                                id: dlcId,
+                                                baseGameId: game.id,
+                                                title: game.title,
+                                                subtitle: "Expansion",
+                                                theme: "Expansion",
+                                                type: "Expansion Pack",
+                                                scale: "Medium",
+                                                allocation: { story: 20, gameplay: 30, graphics: 20, audio: 30 },
+                                                price: 9.99,
+                                                marketingStrategy: "None",
+                                                releaseTiming: "Immediate",
+                                                devStats: { cost: 500000, marketingCost: 0, weeksInDev: 0, bugs: 0, progress: 0, requiredProgress: 3000 },
+                                                marketStats: { score: 0, totalSales: 0, totalRevenue: 0, baseGameUnitsAtLaunch: game.unitsSold || 500000 },
+                                                status: "subsidiary_development",
+                                                history: { salesOverTime: [], priceHistory: [] }
+                                            };
+                                            if (store.data.dlcData && store.data.dlcData.dlcs) {
+                                                store.data.dlcData.dlcs[dlcId] = newDLC;
+                                                if (!store.data.dlcData.games[game.id]) store.data.dlcData.games[game.id] = { activeSeasonPass: null, dlcList: [] };
+                                                store.data.dlcData.games[game.id].dlcList.push(dlcId);
+                                            }
                                             studio.currentProject = {
                                                 name: game.title + " DLC",
                                                 isDLC: true,
                                                 gameId: game.id,
-                                                weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.015),
+                                                dlcId: dlcId,
                                                 weeksRemaining: 18
                                             };
-                                            if (!store.data.dlcData[game.id]) store.data.dlcData[game.id] = { count: 0, activeDLCs: [] };
-                                            store.data.dlcData[game.id].count++;
                                             routeModMenu("dlc");
                                         });
                                     })(store.data.studios[s]);
@@ -4874,9 +5039,21 @@
         contentArea.empty();
 
         var currentWkInst = Math.floor(GameManager.company.currentWeek);
+        function parseGameWeek(dateVal) {
+            if (!dateVal) return 0;
+            if (typeof dateVal === 'number') return dateVal;
+            var parts = dateVal.split('/');
+            if (parts.length === 3) {
+                var y = parseInt(parts[0], 10) || 1;
+                var m = parseInt(parts[1], 10) || 1;
+                var w = parseInt(parts[2], 10) || 1;
+                return (y - 1) * 48 + (m - 1) * 4 + w;
+            }
+            return 0;
+        }
         var myPlats = Platforms.allPlatforms.filter(function (p) {
-            var pubWk = (typeof p.published === 'number') ? p.published : 0;
-            var retWk = p.retireDate ? (typeof p.retireDate === 'number' ? p.retireDate : Infinity) : Infinity;
+            var pubWk = parseGameWeek(p.published);
+            var retWk = p.retiring ? parseGameWeek(p.retiring) : (p.retireDate ? parseGameWeek(p.retireDate) : 999999);
             return (pubWk <= currentWkInst) && (retWk > currentWkInst);
         });
         if (myPlats.length === 0) myPlats = [Platforms.allPlatforms[0]];
@@ -5152,6 +5329,117 @@
         }, 10);
     }
 
+    function csShowExpansionOptionsModal(game, dlcCost, dlcCount, age) {
+        var modalContent = $('<div style="padding: 15px; display: flex; flex-direction: column; background:#eee;"></div>');
+        _ae(modalContent, '<h2 style="margin-top: 0; color: #111; border-bottom: 2px solid #444; padding-bottom:5px;">Expansion Options: ' + game.title + '</h2>');
+        
+        var optionsContainer = _ae(modalContent, '<div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;"></div>');
+
+        var opt1 = _ae(optionsContainer, '<div class="selectorButton whiteBoardButton" style="text-align: left; padding: 10px;"></div>');
+        if (dlcCount >= 5) opt1.css('opacity', 0.5);
+        else {
+            opt1.click(function() {
+                if (GameManager.company.cash >= dlcCost) {
+                    Sound.click();
+                    GameManager.company.adjustCash(-dlcCost, "DLC Development: " + game.title);
+                    if (!store.data.dlcData[game.id]) store.data.dlcData[game.id] = { count: 0, activeDLCs: [] };
+                    store.data.dlcData[game.id].activeDLCs.push({
+                        pendingPlayerDev: 10,
+                        gameTitle: game.title,
+                        weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.015)
+                    });
+                    store.data.dlcData[game.id].count++;
+                    _n("DLC Development Started", "Your team has started developing a standard DLC for " + game.title + ". It will take about 10 weeks to complete.");
+                    $.modal.close();
+                    if (typeof routeModMenu === 'function') routeModMenu("dlc");
+                } else csNotify("Not enough funds!");
+            });
+        }
+        _ae(opt1, '<div style="font-weight: bold; font-size: 11pt; color: #2980b9;">Standard DLC (-$' + UI.getShortNumberString(dlcCost) + ')</div>');
+        _ae(opt1, '<div style="font-size: 9pt; color: #555;">Quickly develop a small content drop. (Max 5 per game, currently: ' + dlcCount + '/5)</div>');
+
+        var expCost = Math.floor((game.costs || 100000) * 1.5);
+        if (expCost < 2000000) expCost = 2000000;
+        var hasActiveExp = store.data.activeMajorExpansion && store.data.activeMajorExpansion.weeksRemaining > 0;
+        var opt2 = _ae(optionsContainer, '<div class="selectorButton whiteBoardButton" style="text-align: left; padding: 10px;"></div>');
+        if (hasActiveExp) opt2.css('opacity', 0.5);
+        else {
+            opt2.click(function() {
+                if (GameManager.company.cash >= expCost) {
+                    Sound.click();
+                    GameManager.company.adjustCash(-expCost, "Major Expansion: " + game.title);
+                    store.data.activeMajorExpansion = {
+                        gameId: game.id,
+                        gameTitle: game.title,
+                        weeksRemaining: 12,
+                        totalSalesCash: game.totalSalesCash || 1500000
+                    };
+                    _n("Major Expansion Started", "A massive expansion for " + game.title + " is now in development! It will lock up core team resources for 12 weeks.");
+                    $.modal.close();
+                    if (typeof routeModMenu === 'function') routeModMenu("dlc");
+                } else csNotify("Not enough funds!");
+            });
+        }
+        _ae(opt2, '<div style="font-weight: bold; font-size: 11pt; color: #8e44ad;">Major Expansion Pack (-$' + UI.getShortNumberString(expCost) + ')</div>');
+        _ae(opt2, '<div style="font-size: 9pt; color: #555;">Develop a massive expansion. Locks up staff for 12 weeks, provides a massive sales surge.' + (hasActiveExp ? ' (Busy)' : '') + '</div>');
+
+        var remCost = Math.floor((game.costs || 100000) * 2.5);
+        if (remCost < 5000000) remCost = 5000000;
+        var isRemaster = game.title.indexOf("Remastered") !== -1;
+        var opt3 = _ae(optionsContainer, '<div class="selectorButton whiteBoardButton" style="text-align: left; padding: 10px;"></div>');
+        if (age < 48 * 5 || isRemaster) opt3.css('opacity', 0.5); 
+        else {
+            opt3.click(function() {
+                if (GameManager.company.cash >= remCost) {
+                    Sound.click();
+                    GameManager.company.adjustCash(-remCost, "Remaster: " + game.title);
+                    
+                    var clonedGame = JSON.parse(JSON.stringify(game));
+                    clonedGame.id = "remaster_" + Date.now();
+                    clonedGame.title = game.title + " Remastered";
+                    clonedGame.releaseWeek = Math.floor(GameManager.company.currentWeek);
+                    clonedGame.totalSalesCash = 0;
+                    clonedGame.unitsSold = 0;
+                    clonedGame.costs = remCost;
+                    clonedGame.score = Math.min(10, (game.score || 5) + 1.0); 
+                    GameManager.company.gameLog.push(clonedGame);
+
+                    _n("Remaster Released!", clonedGame.title + " has been rebuilt for modern audiences and is back on the charts!");
+                    $.modal.close();
+                    if (typeof routeModMenu === 'function') routeModMenu("dlc");
+                } else csNotify("Not enough funds!");
+            });
+        }
+        _ae(opt3, '<div style="font-weight: bold; font-size: 11pt; color: #d35400;">Remaster / Director\'s Cut (-$' + UI.getShortNumberString(remCost) + ')</div>');
+        _ae(opt3, '<div style="font-size: 9pt; color: #555;">Re-release this game for modern audiences at full price. Requires game to be >5 years old.</div>');
+
+        var portCost = Math.floor((game.costs || 100000) * 0.5);
+        if (portCost < 500000) portCost = 500000;
+        var opt4 = _ae(optionsContainer, '<div class="selectorButton whiteBoardButton" style="text-align: left; padding: 10px;"></div>');
+        opt4.click(function() {
+            if (GameManager.company.cash >= portCost) {
+                Sound.click();
+                GameManager.company.adjustCash(-portCost, "Platform Port: " + game.title);
+                
+                var salesSurge = Math.floor((game.totalSalesCash || 1500000) * 0.25);
+                GameManager.company.adjustCash(salesSurge, "Port Sales: " + game.title);
+                _n("Platform Port Complete", game.title + " was ported to new platforms and earned $" + UI.getShortNumberString(salesSurge) + "!");
+                $.modal.close();
+                if (typeof routeModMenu === 'function') routeModMenu("dlc");
+            } else csNotify("Not enough funds!");
+        });
+        _ae(opt4, '<div style="font-weight: bold; font-size: 11pt; color: #27ae60;">Platform Port (-$' + UI.getShortNumberString(portCost) + ')</div>');
+        _ae(opt4, '<div style="font-size: 9pt; color: #555;">Port the game to modern consoles for a quick, guaranteed 25% lifetime sales surge.</div>');
+
+        _ae(modalContent, '<div class="selectorButton" style="margin-top: 15px; text-align: center; font-weight: bold; padding: 10px;">CANCEL</div>').click(function() { $.modal.close(); });
+
+        $.modal(modalContent, { 
+            overlayClose: true, 
+            opacity: 80, 
+            overlayCss: { backgroundColor: "#000" }, 
+            containerCss: { width: "500px", backgroundColor: "#eee", border: "4px solid #333", padding: "0" } 
+        });
+    }
 
 
     // ========== 18_ui_distribution.js ==========
@@ -5302,10 +5590,15 @@
             _ae(container, csRenderSectionHeader('Internal Distribution'));
             var gridScoreEst = project.score || 5;
             var estBoost = Math.floor(gridScoreEst * 500 * (gridScoreEst >= 8 ? 3 : (gridScoreEst >= 6 ? 1.5 : 1)));
+            
+            var gridLevel = store.data.gridService.contentLibrary ? store.data.gridService.contentLibrary.length : 0;
+            var upgradeCost = Math.floor(500000 * Math.pow(1.65, gridLevel));
+
             var gCard = _ae(container, '<div style="background:#fffbf0; border:2px solid #f39c12; padding:12px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;"></div>');
             var gL = _ae(gCard, '<div><div style="font-weight:bold; font-size:12pt; color:#d35400;">Grid Exclusive</div>' +
-                '<div style="font-size:9pt; color:#555; margin-top:2px;">Est. +' + UI.getShortNumberString(estBoost) + ' subscribers | Content Power: ' + (project.score*10) + '</div></div>');
-            var gBtn = _ae(gCard, '<div class="selectorButton orangeButton" style="padding:10px 20px; font-weight:bold;">ADD TO GRID</div>');
+                '<div style="font-size:9pt; color:#555; margin-top:2px;">Est. +' + UI.getShortNumberString(estBoost) + ' subscribers | Content Power: ' + (project.score*10) + '</div>' +
+                '<div style="font-size:9pt; color:#c0392b; font-weight:bold; margin-top:2px;">Server Upgrade Cost: -$' + UI.getShortNumberString(upgradeCost) + '</div></div>');
+            var gBtn = _ae(gCard, '<div class="selectorButton orangeButton" style="padding:10px 20px; font-weight:bold;">ADD</div>');
             gBtn.click(function() { csAddToGrid(project); routeModMenu("media", "media"); });
         }
 
@@ -5586,6 +5879,52 @@
         addTile('Est. Expenses', '-$' + UI.getShortNumberString(exp), '#e74c3c');
         addTile('Net Profit', '$' + UI.getShortNumberString(rev - exp), (rev >= exp ? '#27ae60' : '#e74c3c'));
 
+        // Infrastructure
+        var infraRow = _ae(contentArea, '<div style="display:flex; justify-content:space-between; align-items:center; background:#f4f4f4; padding:15px; border:2px solid #555; margin-bottom:20px; border-radius:6px;"></div>');
+        var servers = g.rentedServers || 1;
+        var capacity = servers * 1000000;
+        var usagePct = Math.min(100, Math.floor(((g.subscribers || 0) / capacity) * 100));
+        
+        function getServerUpkeepCost(numServers) {
+            var costPer = Math.max(50000, 150000 - (numServers * 500));
+            return numServers * costPer;
+        }
+
+        var infraInfo = _ae(infraRow, '<div style="flex:2; padding-right:15px;"></div>');
+        _ae(infraInfo, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">Server Infrastructure (Tier ' + servers + ')</div>');
+        _ae(infraInfo, '<div style="font-size:9pt; color:#555; margin:4px 0;">Capacity: ' + UI.getShortNumberString(g.subscribers || 0) + ' / ' + UI.getShortNumberString(capacity) + ' (' + usagePct + '%)</div>');
+        _ae(infraInfo, csRenderMiniBar(usagePct, (usagePct > 95 ? '#e74c3c' : (usagePct > 75 ? '#f39c12' : '#27ae60')), 200));
+        
+        if ((g.overloadTicks || 0) > 0) {
+            _ae(infraInfo, '<div style="color:#e74c3c; font-weight:bold; font-size:9pt; margin-top:5px;">⚠️ OVERLOAD WARNING: Servers crashing!</div>');
+        }
+
+        var btnCol = _ae(infraRow, '<div style="display:flex; gap:6px;"></div>');
+        
+        var cost1 = getServerUpkeepCost(servers + 1) - getServerUpkeepCost(servers);
+        var btn1 = _ae(btnCol, '<div class="selectorButton lightBlueButton" style="padding:8px 12px; font-weight:bold; font-size:8.5pt; text-align:center; min-width:75px; border-radius:0;">+1 SERVER<br><span style="font-size:7pt; font-weight:normal;">+$'+UI.getShortNumberString(cost1)+'/wk</span></div>');
+        btn1.click(function() {
+            Sound.click();
+            g.rentedServers = (g.rentedServers || 1) + 1;
+            csRenderGridDashboard(contentArea);
+        });
+
+        var cost5 = getServerUpkeepCost(servers + 5) - getServerUpkeepCost(servers);
+        var btn5 = _ae(btnCol, '<div class="selectorButton lightBlueButton" style="padding:8px 12px; font-weight:bold; font-size:8.5pt; text-align:center; min-width:75px; border-radius:0;">+5 SERVERS<br><span style="font-size:7pt; font-weight:normal;">+$'+UI.getShortNumberString(cost5)+'/wk</span></div>');
+        btn5.click(function() {
+            Sound.click();
+            g.rentedServers = (g.rentedServers || 1) + 5;
+            csRenderGridDashboard(contentArea);
+        });
+
+        var cost10 = getServerUpkeepCost(servers + 10) - getServerUpkeepCost(servers);
+        var btn10 = _ae(btnCol, '<div class="selectorButton lightBlueButton" style="padding:8px 12px; font-weight:bold; font-size:8.5pt; text-align:center; min-width:75px; border-radius:0;">+10 SERVERS<br><span style="font-size:7pt; font-weight:normal;">+$'+UI.getShortNumberString(cost10)+'/wk</span></div>');
+        btn10.click(function() {
+            Sound.click();
+            g.rentedServers = (g.rentedServers || 1) + 10;
+            csRenderGridDashboard(contentArea);
+        });
+
         // Leaderboard (Simple Table)
         _ae(contentArea, csRenderSectionHeader('Market Share Leaderboard'));
         var lbTable = _ae(contentArea, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; border-radius:6px; overflow:hidden;">' +
@@ -5823,6 +6162,462 @@
         });
     }
 
+    window.csShowInboundDealModal = function(studio, price) {
+        GameManager.pause(true);
+        var modalContent = $('<div style="padding: 15px; display: flex; flex-direction: column; background:#eee;"></div>');
+        _ae(modalContent, '<h2 style="margin-top: 0; color: #111; border-bottom: 2px solid #444; padding-bottom:5px;">Inbound Deal</h2>');
+        _ae(modalContent, '<div style="font-size: 14pt; margin: 15px 0;">' + studio.name + ' has reached out with an exclusive licensing offer for their catalogue.</div>');
+        _ae(modalContent, '<div style="font-size: 18pt; color: #27ae60; font-weight: bold; text-align: center; margin-bottom: 20px;">Flat Fee: $' + UI.getShortNumberString(price) + '</div>');
+        
+        var actions = _ae(modalContent, '<div style="display: flex; gap: 10px; margin-top: 10px;"></div>');
+        var aBtn = _ae(actions, '<div class="selectorButton greenButton" style="flex: 1; padding: 15px; text-align: center; font-weight: bold;">ACCEPT</div>');
+        aBtn.click(function() {
+            if (GameManager.company.cash < price) return csNotify('Insufficient funds.');
+            Sound.click(); GameManager.company.adjustCash(-price, 'Catalogue Deal: ' + studio.name);
+            store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
+            var catMaintFee = Math.floor(studio.valuation * 0.005);
+            store.data.activeCatalogueDeals.push({ studioId: studio.id, studioName: studio.name, endWeek: Math.floor(GameManager.company.currentWeek) + 104, weeklyMaintenance: catMaintFee });
+            store.data.activeCatalogueNegotiation = null; store.data.pendingInboundDeal = null;
+            $.modal.close();
+            GameManager.resume(true);
+            csAutoRouteMediaCatalog(studio); 
+        });
+
+        var rBtn = _ae(actions, '<div class="selectorButton orangeButton" style="flex: 1; padding: 15px; text-align: center; font-weight: bold;">REFUSE</div>');
+        rBtn.click(function() {
+            Sound.click();
+            store.data.pendingInboundDeal = null;
+            $.modal.close();
+            GameManager.resume(true);
+        });
+
+        $.modal(modalContent, {
+            overlayClose: false,
+            opacity: 80,
+            overlayCss: { backgroundColor: "#000" },
+            containerCss: { width: "500px", backgroundColor: "#eee", border: "4px solid #333", padding: "0" }
+        });
+    };
+
+
+    // ========== 19_dlc.js ==========
+(function () {
+    // Game Dev Tycoon Mod - DLC System Core Logic
+
+    window.DLCSystem = {};
+
+    DLCSystem.Scales = {
+        "Tiny": { costBase: 500000, timeBase: 6, optimalPrice: 2.99, maxBugs: 2, marketBase: 0.1 },
+        "Small": { costBase: 1000000, timeBase: 12, optimalPrice: 4.99, maxBugs: 5, marketBase: 0.2 },
+        "Medium": { costBase: 2500000, timeBase: 20, optimalPrice: 9.99, maxBugs: 10, marketBase: 0.4 },
+        "Large": { costBase: 5000000, timeBase: 35, optimalPrice: 19.99, maxBugs: 20, marketBase: 0.7 },
+        "Massive": { costBase: 10000000, timeBase: 50, optimalPrice: 29.99, maxBugs: 35, marketBase: 1.0 },
+        "Standalone": { costBase: 25000000, timeBase: 80, optimalPrice: 39.99, maxBugs: 50, marketBase: 1.5 }
+    };
+
+    DLCSystem.Types = {
+        "Story Expansion": { costMult: 1.5, reviewMult: 1.2, attachCap: 0.4, minScale: "Medium" },
+        "Character Pack": { costMult: 0.8, reviewMult: 1.0, attachCap: 0.25, minScale: "Tiny" },
+        "Expansion Pack": { costMult: 1.2, reviewMult: 1.1, attachCap: 0.35, minScale: "Medium" },
+        "Map Pack": { costMult: 0.7, reviewMult: 0.9, attachCap: 0.2, minScale: "Small" },
+        "Weapon Pack": { costMult: 0.4, reviewMult: 0.8, attachCap: 0.15, minScale: "Tiny" },
+        "Cosmetic Pack": { costMult: 0.3, reviewMult: 0.7, attachCap: 0.1, minScale: "Tiny" },
+        "Gameplay Expansion": { costMult: 1.3, reviewMult: 1.1, attachCap: 0.3, minScale: "Medium" },
+        "Season Pass": { costMult: 0, reviewMult: 1.0, attachCap: 0.5, minScale: "Medium" } // Special case
+    };
+
+    DLCSystem.Themes = [
+        "Dark Story", "Final Chapter", "Winter Expansion", "Origins", "Epilogue", 
+        "Retro", "Sci-Fi", "Fantasy", "Historical", "Experimental"
+    ];
+
+    DLCSystem.Allocations = [
+        "Story", "Gameplay", "Characters", "World", "Graphics", "Audio", "Replayability", 
+        "Technical Improvements", "Online Features", "Quality of Life", "Balance", "AI Improvements", "Side Quests", "Voice Acting"
+    ];
+
+    DLCSystem.calculateDevelopmentCost = function(scale, type, allocationPoints) {
+        var scaleData = DLCSystem.Scales[scale];
+        var typeData = DLCSystem.Types[type];
+        if (!scaleData || !typeData) return 500000;
+        
+        var sum = 0;
+        for (var k in allocationPoints) { sum += allocationPoints[k]; }
+        var allocationMult = sum / 100.0;
+
+        return Math.floor(scaleData.costBase * typeData.costMult * allocationMult);
+    };
+
+    DLCSystem.calculateRequiredProgress = function(scale, type) {
+        var scaleData = DLCSystem.Scales[scale];
+        var typeData = DLCSystem.Types[type];
+        if (!scaleData || !typeData) return 1000;
+
+        return Math.floor(scaleData.timeBase * typeData.costMult * 150); // 150 work units per week roughly
+    };
+
+    DLCSystem.calculateReviewScore = function(dlc, baseGameScore, studioStats) {
+        var scaleData = DLCSystem.Scales[dlc.scale];
+        var expectedBugs = scaleData.maxBugs;
+        
+        // 1. Base Score calculation (1 to 10)
+        var intrinsicQuality = 5 + (Math.random() * 3); // Placeholder for actual skill-based quality
+        
+        // 2. Base Game Synergy (30%)
+        var synergy = baseGameScore * 0.3;
+
+        // 3. Price Fairness (20%)
+        var optPrice = scaleData.optimalPrice;
+        var priceRatio = optPrice / dlc.price; // if > 1, good. if < 1, bad.
+        var priceFairness = Math.min(1.5, Math.max(0.5, priceRatio)) * 10 * 0.2; // Max 3 points, min 1 point
+
+        var finalScore = (intrinsicQuality * 0.5) + synergy + priceFairness;
+
+        // 4. Bug Penalties
+        if (dlc.devStats.bugs > expectedBugs) {
+            finalScore -= ((dlc.devStats.bugs - expectedBugs) * 0.1);
+        }
+
+        return Math.min(10, Math.max(1, finalScore));
+    };
+
+    DLCSystem.calculateWeeklySales = function(dlc, previousWeekSales) {
+        var decayRate = 0.65;
+        if (dlc.marketStats.score > 8) decayRate += 0.10;
+        if (dlc.marketStats.score < 5) decayRate -= 0.10;
+
+        var scaleData = DLCSystem.Scales[dlc.scale];
+        if (dlc.price > scaleData.optimalPrice * 1.2) decayRate -= 0.15;
+
+        return Math.floor(previousWeekSales * decayRate);
+    };
+
+    DLCSystem.processWeekly = function() {
+        if (!store.data.dlcData || !store.data.dlcData.dlcs) return;
+        
+        var dlcs = store.data.dlcData.dlcs;
+        for (var dlcId in dlcs) {
+            var dlc = dlcs[dlcId];
+            
+            if (dlc.status === "development") {
+                // Development progress
+                var staffCount = GameManager.company.staff ? GameManager.company.staff.length : 1;
+                var progressPerWeek = staffCount * 15; // placeholder
+                
+                dlc.devStats.weeksInDev++;
+                dlc.devStats.progress += progressPerWeek;
+                
+                // Add bugs randomly based on scale
+                var scaleData = DLCSystem.Scales[dlc.scale];
+                if (Math.random() < 0.3) {
+                    dlc.devStats.bugs += Math.floor(Math.random() * (scaleData.maxBugs / 5) + 1);
+                }
+
+                // Finish condition
+                if (dlc.devStats.progress >= dlc.devStats.requiredProgress) {
+                    DLCSystem.releaseDLC(dlc);
+                }
+            } else if (dlc.status === "released") {
+                // Sales logic
+                var currentWeek = Math.floor(GameManager.company.currentWeek);
+                var weeksSinceRelease = currentWeek - dlc.releaseWeek;
+                
+                var prevSales = dlc.history.salesOverTime.length > 0 ? dlc.history.salesOverTime[dlc.history.salesOverTime.length - 1] : 0;
+                
+                if (weeksSinceRelease === 1) {
+                    // Launch week sales
+                    var baseGame = GameManager.company.getGameById(dlc.baseGameId);
+                    var attachRate = DLCSystem.Types[dlc.type] ? DLCSystem.Types[dlc.type].attachCap : 0.2;
+                    if (dlc.marketStats.score < 5) attachRate *= 0.5;
+                    var baseSales = baseGame ? (baseGame.totalSalesUnits || baseGame.unitsSold || 500000) : 500000;
+                    
+                    prevSales = Math.floor(baseSales * attachRate);
+                }
+                
+                var weeklySales = DLCSystem.calculateWeeklySales(dlc, prevSales);
+                if (weeklySales < 10) weeklySales = 0; // stop generating noise
+                
+                var weeklyRevenue = weeklySales * dlc.price;
+                
+                dlc.history.salesOverTime.push(weeklySales);
+                dlc.marketStats.totalSales += weeklySales;
+                dlc.marketStats.totalRevenue += weeklyRevenue;
+                
+                if (weeklyRevenue > 0) {
+                    GameManager.company.adjustCash(weeklyRevenue, "DLC Sales: " + dlc.title);
+                }
+                
+                // Compact history to prevent memory leak (keep last 52 weeks max)
+                if (dlc.history.salesOverTime.length > 52) {
+                    dlc.history.salesOverTime.shift();
+                }
+            }
+        }
+    };
+
+    DLCSystem.releaseDLC = function(dlc) {
+        dlc.status = "released";
+        dlc.releaseWeek = Math.floor(GameManager.company.currentWeek);
+        
+        var baseGame = GameManager.company.getGameById(dlc.baseGameId);
+        var baseGameScore = baseGame ? baseGame.score : 7;
+        
+        dlc.marketStats.score = DLCSystem.calculateReviewScore(dlc, baseGameScore, null);
+        
+        _n("DLC Released!", "Your DLC '" + dlc.title + "' has been released to the public! Review Score: " + dlc.marketStats.score.toFixed(1) + "/10");
+        
+        // Improve franchise fanbase if good
+        if (dlc.marketStats.score > 8 && baseGame && baseGame.modFranchiseId) {
+            var fran = getFranchiseById(baseGame.modFranchiseId);
+            if (fran) fran.fanbaseScore = Math.min(100, fran.fanbaseScore + 5);
+        }
+    };
+
+})();
+
+
+    // ========== 20_ui_dlc.js ==========
+(function () {
+    // Game Dev Tycoon Mod - DLC Wizard UI
+
+    var DLCWizard = {
+        currentPage: 1,
+        maxPages: 7,
+        currentData: {}
+    };
+
+    DLCWizard.show = function(baseGameId) {
+        DLCWizard.currentPage = 1;
+        DLCWizard.currentData = {
+            baseGameId: baseGameId,
+            title: "",
+            subtitle: "",
+            theme: "Story Expansion",
+            type: "Story Expansion",
+            scale: "Medium",
+            allocation: {},
+            price: 9.99,
+            marketing: "None",
+            releaseStrategy: "Immediate"
+        };
+        
+        // Initialize allocation to 0
+        DLCSystem.Allocations.forEach(function(a) { DLCWizard.currentData.allocation[a] = 0; });
+
+        var modal = UI.createModal("DLC Wizard", "dlc-wizard-modal");
+        
+        var content = $('<div id="dlc-wizard-content" style="height:400px; overflow-y:auto; padding:10px;"></div>');
+        modal.append(content);
+
+        var footer = $('<div style="display:flex; justify-content:space-between; margin-top:20px;"></div>');
+        var btnPrev = UI.createButton("Previous", function() { DLCWizard.navigate(-1); }).attr('id', 'dlc-btn-prev').hide();
+        var btnNext = UI.createButton("Next", function() { DLCWizard.navigate(1); }).attr('id', 'dlc-btn-next');
+        
+        footer.append(btnPrev).append(btnNext);
+        modal.append(footer);
+        
+        $('body').append(modal);
+        UI.showModal(modal);
+        
+        DLCWizard.renderPage();
+    };
+
+    DLCWizard.navigate = function(dir) {
+        DLCWizard.saveCurrentPage();
+        DLCWizard.currentPage += dir;
+        
+        if (DLCWizard.currentPage > DLCWizard.maxPages) {
+            DLCWizard.finish();
+            return;
+        }
+        
+        if (DLCWizard.currentPage < 1) DLCWizard.currentPage = 1;
+        
+        DLCWizard.renderPage();
+    };
+
+    DLCWizard.saveCurrentPage = function() {
+        var page = DLCWizard.currentPage;
+        if (page === 1) {
+            DLCWizard.currentData.title = $('#dlc-input-title').val() || "Expansion";
+            DLCWizard.currentData.subtitle = $('#dlc-input-subtitle').val() || "";
+            DLCWizard.currentData.theme = $('#dlc-select-theme').val();
+        } else if (page === 2) {
+            DLCWizard.currentData.type = $('#dlc-select-type').val();
+        } else if (page === 3) {
+            DLCWizard.currentData.scale = $('#dlc-select-scale').val();
+            // Auto-update price when scale changes
+            DLCWizard.currentData.price = DLCSystem.Scales[DLCWizard.currentData.scale].optimalPrice;
+        } else if (page === 4) {
+            DLCSystem.Allocations.forEach(function(a) {
+                var val = parseInt($('#dlc-alloc-' + a.replace(/\s+/g, '-')).val()) || 0;
+                DLCWizard.currentData.allocation[a] = val;
+            });
+        } else if (page === 5) {
+            DLCWizard.currentData.price = parseFloat($('#dlc-input-price').val()) || 9.99;
+        } else if (page === 6) {
+            DLCWizard.currentData.marketing = $('#dlc-select-marketing').val();
+        } else if (page === 7) {
+            DLCWizard.currentData.releaseStrategy = $('#dlc-select-release').val();
+        }
+    };
+
+    DLCWizard.renderPage = function() {
+        var page = DLCWizard.currentPage;
+        var content = $('#dlc-wizard-content');
+        content.empty();
+        
+        $('#dlc-btn-prev').toggle(page > 1);
+        var btnNext = $('#dlc-btn-next');
+        btnNext.text(page === DLCWizard.maxPages ? "Start Development" : "Next");
+
+        if (page === 1) {
+            content.append('<h3>Page 1: Identity & Theme</h3>');
+            content.append('<label>Title: <input id="dlc-input-title" type="text" value="'+DLCWizard.currentData.title+'"></label><br><br>');
+            content.append('<label>Subtitle: <input id="dlc-input-subtitle" type="text" value="'+DLCWizard.currentData.subtitle+'"></label><br><br>');
+            
+            var themeSel = $('<select id="dlc-select-theme"></select>');
+            DLCSystem.Themes.forEach(function(t) {
+                themeSel.append('<option value="'+t+'">'+t+'</option>');
+            });
+            themeSel.val(DLCWizard.currentData.theme);
+            content.append('<label>Theme: </label>').append(themeSel);
+            
+        } else if (page === 2) {
+            content.append('<h3>Page 2: DLC Type</h3>');
+            var typeSel = $('<select id="dlc-select-type"></select>');
+            Object.keys(DLCSystem.Types).forEach(function(t) {
+                typeSel.append('<option value="'+t+'">'+t+'</option>');
+            });
+            typeSel.val(DLCWizard.currentData.type);
+            content.append('<label>Type: </label>').append(typeSel);
+            content.append('<p style="margin-top:20px; color:#666;">Different types have unique review impacts, fan expectations, and baseline costs.</p>');
+            
+        } else if (page === 3) {
+            content.append('<h3>Page 3: Content Scale</h3>');
+            var scaleSel = $('<select id="dlc-select-scale"></select>');
+            Object.keys(DLCSystem.Scales).forEach(function(s) {
+                scaleSel.append('<option value="'+s+'">'+s+'</option>');
+            });
+            scaleSel.val(DLCWizard.currentData.scale);
+            content.append('<label>Scale: </label>').append(scaleSel);
+            content.append('<p style="margin-top:20px; color:#666;">Scale strictly dictates development time, cost, marketing effectiveness, and price expectations.</p>');
+            
+        } else if (page === 4) {
+            content.append('<h3>Page 4: Content Allocation (100 Points)</h3>');
+            content.append('<div style="margin-bottom:10px;">Total Points: <span id="dlc-alloc-total" style="font-weight:bold;">0</span> / 100</div>');
+            
+            var grid = $('<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>');
+            DLCSystem.Allocations.forEach(function(a) {
+                var safeId = a.replace(/\s+/g, '-');
+                var val = DLCWizard.currentData.allocation[a];
+                var row = $('<div><label style="display:inline-block; width:150px;">'+a+'</label> <input type="number" min="0" max="100" class="dlc-alloc-input" id="dlc-alloc-'+safeId+'" value="'+val+'" style="width:60px;"></div>');
+                grid.append(row);
+            });
+            content.append(grid);
+            
+            content.on('input', '.dlc-alloc-input', function() {
+                var sum = 0;
+                $('.dlc-alloc-input').each(function() { sum += parseInt($(this).val()) || 0; });
+                var totalEl = $('#dlc-alloc-total');
+                totalEl.text(sum);
+                totalEl.css('color', sum === 100 ? 'green' : (sum > 100 ? 'red' : 'black'));
+                $('#dlc-btn-next').prop('disabled', sum !== 100);
+            });
+            // Trigger calculation
+            $('.dlc-alloc-input').first().trigger('input');
+            
+        } else if (page === 5) {
+            content.append('<h3>Page 5: Pricing System</h3>');
+            content.append('<label>Price ($): <input id="dlc-input-price" type="number" step="0.01" value="'+DLCWizard.currentData.price+'"></label><br><br>');
+            var opt = DLCSystem.Scales[DLCWizard.currentData.scale].optimalPrice;
+            content.append('<p style="color:#666;">Recommended optimal price for <b>' + DLCWizard.currentData.scale + '</b> scale is <b>$' + opt + '</b>. Deviating from this impacts review scores and sales.</p>');
+            
+        } else if (page === 6) {
+            content.append('<h3>Page 6: Marketing Campaign</h3>');
+            var mktSel = $('<select id="dlc-select-marketing"></select>');
+            ['None', 'Social Media', 'Magazine', 'TV', 'Worldwide Campaign', 'Convention', 'Influencer Campaign', 'Beta Access'].forEach(function(m) {
+                mktSel.append('<option value="'+m+'">'+m+'</option>');
+            });
+            mktSel.val(DLCWizard.currentData.marketing);
+            content.append('<label>Campaign: </label>').append(mktSel);
+            
+        } else if (page === 7) {
+            content.append('<h3>Page 7: Release Strategy & Timing</h3>');
+            var relSel = $('<select id="dlc-select-release"></select>');
+            ['Immediate', 'Holiday', 'Anniversary', 'Franchise Event', 'Platform Launch', 'Publisher Showcase'].forEach(function(r) {
+                relSel.append('<option value="'+r+'">'+r+'</option>');
+            });
+            relSel.val(DLCWizard.currentData.releaseStrategy);
+            content.append('<label>Release Window: </label>').append(relSel);
+            
+            content.append('<hr style="margin-top:20px;">');
+            content.append('<h4>Summary</h4>');
+            content.append('<p><b>Title:</b> ' + DLCWizard.currentData.title + ' ' + DLCWizard.currentData.subtitle + '</p>');
+            content.append('<p><b>Type:</b> ' + DLCWizard.currentData.scale + ' ' + DLCWizard.currentData.type + '</p>');
+            var estCost = DLCSystem.calculateDevelopmentCost(DLCWizard.currentData.scale, DLCWizard.currentData.type, DLCWizard.currentData.allocation);
+            content.append('<p><b>Estimated Base Cost:</b> $' + UI.getShortNumberString(estCost) + '</p>');
+        }
+    };
+
+    DLCWizard.finish = function() {
+        UI.closeModal();
+        
+        var currentWeek = Math.floor(GameManager.company.currentWeek);
+        var dlcId = "DLC_" + Date.now();
+        var gameId = DLCWizard.currentData.baseGameId;
+        
+        var estCost = DLCSystem.calculateDevelopmentCost(DLCWizard.currentData.scale, DLCWizard.currentData.type, DLCWizard.currentData.allocation);
+        
+        // Start development
+        var newDLC = {
+            id: dlcId,
+            baseGameId: gameId,
+            title: DLCWizard.currentData.title,
+            subtitle: DLCWizard.currentData.subtitle,
+            theme: DLCWizard.currentData.theme,
+            type: DLCWizard.currentData.type,
+            scale: DLCWizard.currentData.scale,
+            allocation: DLCWizard.currentData.allocation,
+            price: DLCWizard.currentData.price,
+            marketingStrategy: DLCWizard.currentData.marketing,
+            releaseTiming: DLCWizard.currentData.releaseStrategy,
+            
+            devStats: { 
+                cost: estCost, 
+                marketingCost: 0, // Placeholder
+                weeksInDev: 0, 
+                bugs: 0,
+                progress: 0,
+                requiredProgress: DLCSystem.calculateRequiredProgress(DLCWizard.currentData.scale, DLCWizard.currentData.type)
+            },
+            marketStats: { 
+                score: 0, 
+                totalSales: 0, 
+                totalRevenue: 0, 
+                baseGameUnitsAtLaunch: 0 
+            },
+            status: "development",
+            history: {
+                salesOverTime: [],
+                priceHistory: []
+            }
+        };
+        
+        store.data.dlcData.dlcs[dlcId] = newDLC;
+        if (!store.data.dlcData.games[gameId]) {
+            store.data.dlcData.games[gameId] = { activeSeasonPass: null, dlcList: [] };
+        }
+        store.data.dlcData.games[gameId].dlcList.push(dlcId);
+        
+        // Take upfront cash
+        GameManager.company.adjustCash(-estCost, "DLC Development: " + newDLC.title);
+        
+        _n("DLC Production Started", "Development on " + newDLC.title + " has begun.");
+    };
+
+    window.DLCWizard = DLCWizard;
+})();
 
 
 })();

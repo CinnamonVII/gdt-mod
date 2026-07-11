@@ -172,8 +172,8 @@
         _t(terms, 'Studio Rep', (studio.reputation || 1).toFixed(1) + '/5', '#e67e22');
 
         var actions = _ae(modalContent, '<div style="display: flex; gap: 10px; margin-top: 5px;"></div>');
-        _ae(actions, '<div class="selectorButton greenButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center;">ACCEPT DEAL</div>').click(function () { csHandleAILicensingResponse(offer, true); $.modal.close(); });
-        _ae(actions, '<div class="selectorButton redButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center;">DECLINE</div>').click(function () { csHandleAILicensingResponse(offer, false); $.modal.close(); });
+        _ae(actions, '<div class="selectorButton greenButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center;">ACCEPT DEAL</div>').click(function () { csHandleAILicensingResponse('accept', offer); });
+        _ae(actions, '<button id="declineOffer" data-action="decline" class="selectorButton redButton" style="flex: 1; padding: 10px; font-weight: bold; text-align: center; border: none; font-family: inherit; font-size: inherit; cursor: pointer;">Refuse</button>').click(function () { csHandleAILicensingResponse('decline', offer); });
 
         $.modal(modalContent, { 
             overlayClose: true, 
@@ -183,15 +183,24 @@
         });
     }
 
-    function csHandleAILicensingResponse(offer, accepted) {
-        if (accepted) {
-            GameManager.company.adjustCash(offer.upfront, "IP Licensing Upfront: " + offer.franchiseName);
+    function csHandleAILicensingResponse(response, offerData) {
+        if (!offerData) return;
+
+        if (response === 'decline' || response === false) {
+            if (typeof UI !== 'undefined' && UI.closeModal) UI.closeModal();
+            else if (typeof $ !== 'undefined' && $.modal) $.modal.close();
+            if (typeof GameManager !== 'undefined' && GameManager.resume) GameManager.resume(true);
+            return;
+        }
+
+        if (response === 'accept' || response === true) {
+            GameManager.company.adjustCash(offerData.upfront, "IP Licensing Upfront: " + offerData.franchiseName);
             store.data.activeAILicenses.push({
                 id: "AL_" + Date.now(),
-                studioId: offer.studioId,
-                franchiseId: offer.franchiseId,
-                filmsRemaining: offer.filmsCount,
-                royaltyRate: offer.royaltyRate,
+                studioId: offerData.studioId,
+                franchiseId: offerData.franchiseId,
+                filmsRemaining: offerData.filmsCount,
+                royaltyRate: offerData.royaltyRate,
                 totalRoyaltiesEarned: 0
             });
             Sound.click();
@@ -199,11 +208,15 @@
 
         var idx = -1;
         for (var i = 0; i < store.data.aiLicensingOffers.length; i++) {
-            if (store.data.aiLicensingOffers[i].id === offer.id) {
+            if (store.data.aiLicensingOffers[i].id === offerData.id) {
                 idx = i;
                 break;
             }
         }
         if (idx > -1) store.data.aiLicensingOffers.splice(idx, 1);
+
+        if (typeof UI !== 'undefined' && UI.closeModal) UI.closeModal();
+        else if (typeof $ !== 'undefined' && $.modal) $.modal.close();
+        if (typeof GameManager !== 'undefined' && GameManager.resume) GameManager.resume(true);
     }
 

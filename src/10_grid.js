@@ -51,6 +51,22 @@
         } else if (grid.contentLibrary.length < 5) {
             churnMultiplier = 1.5;
         }
+        var servers = grid.rentedServers || 1;
+        var capacity = servers * 1000000;
+        
+        if ((grid.subscribers || 0) > capacity) {
+            grid.overloadTicks = (grid.overloadTicks || 0) + 1;
+            churnMultiplier += 5.0; 
+        } else {
+            grid.overloadTicks = 0;
+        }
+
+        if (grid.overloadTicks > 4) {
+            _n("Grid Crashed!", "Your servers overloaded for too long! The Grid went offline and users unsubscribed en masse. PR Disaster!");
+            grid.subscribers = Math.floor(grid.subscribers * 0.10);
+            grid.overloadTicks = 0;
+        }
+
         var churnedSubs = Math.floor((grid.subscribers || 0) * baseChurn * churnMultiplier);
         if (isNaN(churnedSubs)) churnedSubs = 0;
 
@@ -69,16 +85,10 @@
             if (isNaN(grid.totalRevenue)) grid.totalRevenue = weeklySubRevenue;
         }
 
+        var costPerServer = Math.max(50000, 150000 - (servers * 500));
+        var serverRent = servers * costPerServer;
 
-        var baseUpkeep = 5000;
-        var varUpkeep = 0;
-        var subs = grid.subscribers || 0;
-        if (subs < 100000) varUpkeep = subs * 0.50;
-        else if (subs < 1000000) varUpkeep = (100000 * 0.50) + (subs - 100000) * 0.35;
-        else if (subs < 10000000) varUpkeep = (100000 * 0.50) + (900000 * 0.35) + (subs - 1000000) * 0.20;
-        else varUpkeep = (100000 * 0.50) + (900000 * 0.35) + (9000000 * 0.20) + (subs - 10000000) * 0.10;
-
-        grid.weeklyUpkeep = Math.floor(baseUpkeep + varUpkeep);
+        grid.weeklyUpkeep = serverRent + 5000;
         if (isNaN(grid.weeklyUpkeep)) grid.weeklyUpkeep = baseUpkeep;
         grid.pendingUpkeep = (grid.pendingUpkeep || 0) + grid.weeklyUpkeep;
 

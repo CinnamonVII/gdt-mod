@@ -19,7 +19,16 @@
         if (store.data.gridService && store.data.gridService.isActive && w % 4 === 0) {
             var gr = store.data.gridService;
             var av = (store.data.movieStudios || []).filter(function (s) { return !(store.data.activeCatalogueDeals || []).some(function (d) { return d.studioId === s.id && w < d.endWeek }) });
-            if (av.length && Math.random() < Math.min(0.4, 0.05 + gr.subscribers / 5e7)) { var s = av[~~(Math.random() * av.length)], pr = ~~(s.valuation * 0.1 * (0.8 + Math.random() * 0.4)); store.data.pendingInboundDeal = { studioId: s.id, price: pr, expires: w + 8 }; _n('Inbound Deal', s.name + ' offer: $' + UI.getShortNumberString(pr)); }
+            if (av.length && Math.random() < Math.min(0.4, 0.05 + gr.subscribers / 5e7)) { 
+                var s = av[~~(Math.random() * av.length)];
+                var pr = ~~(s.valuation * 0.1 * (0.8 + Math.random() * 0.4)); 
+                store.data.pendingInboundDeal = { studioId: s.id, price: pr, expires: w + 8 }; 
+                if (typeof csShowInboundDealModal === 'function') {
+                    csShowInboundDealModal(s, pr);
+                } else {
+                    _n('Inbound Deal', s.name + ' offer: $' + UI.getShortNumberString(pr));
+                }
+            }
         }
         var pg = (GameManager.company || {}).currentGame; if (pg && store.data.disableOverloadMalus) pg.featureOverload = pg.featureOverloadScore = pg.featureOverloadPoints = 0;
         if (pg && !pg.modProcessedCreation) {

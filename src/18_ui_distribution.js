@@ -145,10 +145,15 @@
             _ae(container, csRenderSectionHeader('Internal Distribution'));
             var gridScoreEst = project.score || 5;
             var estBoost = Math.floor(gridScoreEst * 500 * (gridScoreEst >= 8 ? 3 : (gridScoreEst >= 6 ? 1.5 : 1)));
+            
+            var gridLevel = store.data.gridService.contentLibrary ? store.data.gridService.contentLibrary.length : 0;
+            var upgradeCost = Math.floor(500000 * Math.pow(1.65, gridLevel));
+
             var gCard = _ae(container, '<div style="background:#fffbf0; border:2px solid #f39c12; padding:12px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;"></div>');
             var gL = _ae(gCard, '<div><div style="font-weight:bold; font-size:12pt; color:#d35400;">Grid Exclusive</div>' +
-                '<div style="font-size:9pt; color:#555; margin-top:2px;">Est. +' + UI.getShortNumberString(estBoost) + ' subscribers | Content Power: ' + (project.score*10) + '</div></div>');
-            var gBtn = _ae(gCard, '<div class="selectorButton orangeButton" style="padding:10px 20px; font-weight:bold;">ADD TO GRID</div>');
+                '<div style="font-size:9pt; color:#555; margin-top:2px;">Est. +' + UI.getShortNumberString(estBoost) + ' subscribers | Content Power: ' + (project.score*10) + '</div>' +
+                '<div style="font-size:9pt; color:#c0392b; font-weight:bold; margin-top:2px;">Server Upgrade Cost: -$' + UI.getShortNumberString(upgradeCost) + '</div></div>');
+            var gBtn = _ae(gCard, '<div class="selectorButton orangeButton" style="padding:10px 20px; font-weight:bold;">ADD</div>');
             gBtn.click(function() { csAddToGrid(project); routeModMenu("media", "media"); });
         }
 
@@ -429,6 +434,52 @@
         addTile('Est. Expenses', '-$' + UI.getShortNumberString(exp), '#e74c3c');
         addTile('Net Profit', '$' + UI.getShortNumberString(rev - exp), (rev >= exp ? '#27ae60' : '#e74c3c'));
 
+        // Infrastructure
+        var infraRow = _ae(contentArea, '<div style="display:flex; justify-content:space-between; align-items:center; background:#f4f4f4; padding:15px; border:2px solid #555; margin-bottom:20px; border-radius:6px;"></div>');
+        var servers = g.rentedServers || 1;
+        var capacity = servers * 1000000;
+        var usagePct = Math.min(100, Math.floor(((g.subscribers || 0) / capacity) * 100));
+        
+        function getServerUpkeepCost(numServers) {
+            var costPer = Math.max(50000, 150000 - (numServers * 500));
+            return numServers * costPer;
+        }
+
+        var infraInfo = _ae(infraRow, '<div style="flex:2; padding-right:15px;"></div>');
+        _ae(infraInfo, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">Server Infrastructure (Tier ' + servers + ')</div>');
+        _ae(infraInfo, '<div style="font-size:9pt; color:#555; margin:4px 0;">Capacity: ' + UI.getShortNumberString(g.subscribers || 0) + ' / ' + UI.getShortNumberString(capacity) + ' (' + usagePct + '%)</div>');
+        _ae(infraInfo, csRenderMiniBar(usagePct, (usagePct > 95 ? '#e74c3c' : (usagePct > 75 ? '#f39c12' : '#27ae60')), 200));
+        
+        if ((g.overloadTicks || 0) > 0) {
+            _ae(infraInfo, '<div style="color:#e74c3c; font-weight:bold; font-size:9pt; margin-top:5px;">⚠️ OVERLOAD WARNING: Servers crashing!</div>');
+        }
+
+        var btnCol = _ae(infraRow, '<div style="display:flex; gap:6px;"></div>');
+        
+        var cost1 = getServerUpkeepCost(servers + 1) - getServerUpkeepCost(servers);
+        var btn1 = _ae(btnCol, '<div class="selectorButton lightBlueButton" style="padding:8px 12px; font-weight:bold; font-size:8.5pt; text-align:center; min-width:75px; border-radius:0;">+1 SERVER<br><span style="font-size:7pt; font-weight:normal;">+$'+UI.getShortNumberString(cost1)+'/wk</span></div>');
+        btn1.click(function() {
+            Sound.click();
+            g.rentedServers = (g.rentedServers || 1) + 1;
+            csRenderGridDashboard(contentArea);
+        });
+
+        var cost5 = getServerUpkeepCost(servers + 5) - getServerUpkeepCost(servers);
+        var btn5 = _ae(btnCol, '<div class="selectorButton lightBlueButton" style="padding:8px 12px; font-weight:bold; font-size:8.5pt; text-align:center; min-width:75px; border-radius:0;">+5 SERVERS<br><span style="font-size:7pt; font-weight:normal;">+$'+UI.getShortNumberString(cost5)+'/wk</span></div>');
+        btn5.click(function() {
+            Sound.click();
+            g.rentedServers = (g.rentedServers || 1) + 5;
+            csRenderGridDashboard(contentArea);
+        });
+
+        var cost10 = getServerUpkeepCost(servers + 10) - getServerUpkeepCost(servers);
+        var btn10 = _ae(btnCol, '<div class="selectorButton lightBlueButton" style="padding:8px 12px; font-weight:bold; font-size:8.5pt; text-align:center; min-width:75px; border-radius:0;">+10 SERVERS<br><span style="font-size:7pt; font-weight:normal;">+$'+UI.getShortNumberString(cost10)+'/wk</span></div>');
+        btn10.click(function() {
+            Sound.click();
+            g.rentedServers = (g.rentedServers || 1) + 10;
+            csRenderGridDashboard(contentArea);
+        });
+
         // Leaderboard (Simple Table)
         _ae(contentArea, csRenderSectionHeader('Market Share Leaderboard'));
         var lbTable = _ae(contentArea, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; border-radius:6px; overflow:hidden;">' +
@@ -666,3 +717,39 @@
         });
     }
 
+    window.csShowInboundDealModal = function(studio, price) {
+        GameManager.pause(true);
+        var modalContent = $('<div style="padding: 15px; display: flex; flex-direction: column; background:#eee;"></div>');
+        _ae(modalContent, '<h2 style="margin-top: 0; color: #111; border-bottom: 2px solid #444; padding-bottom:5px;">Inbound Deal</h2>');
+        _ae(modalContent, '<div style="font-size: 14pt; margin: 15px 0;">' + studio.name + ' has reached out with an exclusive licensing offer for their catalogue.</div>');
+        _ae(modalContent, '<div style="font-size: 18pt; color: #27ae60; font-weight: bold; text-align: center; margin-bottom: 20px;">Flat Fee: $' + UI.getShortNumberString(price) + '</div>');
+        
+        var actions = _ae(modalContent, '<div style="display: flex; gap: 10px; margin-top: 10px;"></div>');
+        var aBtn = _ae(actions, '<div class="selectorButton greenButton" style="flex: 1; padding: 15px; text-align: center; font-weight: bold;">ACCEPT</div>');
+        aBtn.click(function() {
+            if (GameManager.company.cash < price) return csNotify('Insufficient funds.');
+            Sound.click(); GameManager.company.adjustCash(-price, 'Catalogue Deal: ' + studio.name);
+            store.data.activeCatalogueDeals = store.data.activeCatalogueDeals || [];
+            var catMaintFee = Math.floor(studio.valuation * 0.005);
+            store.data.activeCatalogueDeals.push({ studioId: studio.id, studioName: studio.name, endWeek: Math.floor(GameManager.company.currentWeek) + 104, weeklyMaintenance: catMaintFee });
+            store.data.activeCatalogueNegotiation = null; store.data.pendingInboundDeal = null;
+            $.modal.close();
+            GameManager.resume(true);
+            csAutoRouteMediaCatalog(studio); 
+        });
+
+        var rBtn = _ae(actions, '<div class="selectorButton orangeButton" style="flex: 1; padding: 15px; text-align: center; font-weight: bold;">REFUSE</div>');
+        rBtn.click(function() {
+            Sound.click();
+            store.data.pendingInboundDeal = null;
+            $.modal.close();
+            GameManager.resume(true);
+        });
+
+        $.modal(modalContent, {
+            overlayClose: false,
+            opacity: 80,
+            overlayCss: { backgroundColor: "#000" },
+            containerCss: { width: "500px", backgroundColor: "#eee", border: "4px solid #333", padding: "0" }
+        });
+    };

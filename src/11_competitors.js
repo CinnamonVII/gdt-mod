@@ -59,26 +59,51 @@
                     var currentWk = GameManager.company.currentWeek;
 
                     if (spec === "DLC") {
-
                         var games = (GameManager.company.gameLog || []).filter(function (g) {
                             var age = currentWk - g.releaseWeek;
-                            var dlcInfo = store.data.dlcData[g.id] || { count: 0 };
-                            return age < 480 && dlcInfo.count < 5;
+                            var dlcInfo = (store.data.dlcData && store.data.dlcData.games) ? store.data.dlcData.games[g.id] : null;
+                            var count = dlcInfo ? dlcInfo.dlcList.length : 0;
+                            return age < 480 && count < 5;
                         });
 
                         if (games.length > 0) {
                             games.sort(function (a, b) { return (b.totalSalesCash || 0) - (a.totalSalesCash || 0); });
                             var target = games[0];
+                            
+                            var estRev = Math.floor((target.totalSalesCash || 1500000) * 0.015);
+                            var dlcId = "DLC_SUB_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+                            
+                            var newDLC = {
+                                id: dlcId,
+                                baseGameId: target.id,
+                                title: target.title,
+                                subtitle: "Expansion",
+                                theme: "Historical",
+                                type: "Expansion Pack",
+                                scale: "Medium",
+                                allocation: { story: 20, gameplay: 30, graphics: 20, audio: 30 },
+                                price: 9.99,
+                                marketingStrategy: "None",
+                                releaseTiming: "Immediate",
+                                devStats: { cost: 500000, marketingCost: 0, weeksInDev: 0, bugs: 0, progress: 0, requiredProgress: 3000 },
+                                marketStats: { score: 0, totalSales: 0, totalRevenue: 0, baseGameUnitsAtLaunch: target.unitsSold || 500000 },
+                                status: "subsidiary_development",
+                                history: { salesOverTime: [], priceHistory: [] }
+                            };
+                            
+                            if (store.data.dlcData && store.data.dlcData.dlcs) {
+                                store.data.dlcData.dlcs[dlcId] = newDLC;
+                                if (!store.data.dlcData.games[target.id]) store.data.dlcData.games[target.id] = { activeSeasonPass: null, dlcList: [] };
+                                store.data.dlcData.games[target.id].dlcList.push(dlcId);
+                            }
+                            
                             studio.currentProject = {
                                 name: target.title + " DLC",
                                 isDLC: true,
                                 gameId: target.id,
-                                weeklyRevenue: Math.floor((target.totalSalesCash || 1500000) * 0.015),
+                                dlcId: dlcId,
                                 weeksRemaining: 18
                             };
-
-                            if (!store.data.dlcData[target.id]) store.data.dlcData[target.id] = { count: 0, activeDLCs: [] };
-                            store.data.dlcData[target.id].count++;
                             continue;
                         }
                     } else if (spec === "CoDev" && GameManager.company && GameManager.company.currentGame) {
@@ -229,16 +254,22 @@
         function parseGameWeek(dateVal) {
             if (!dateVal) return 0;
             if (typeof dateVal === 'number') return dateVal;
-            if (typeof General !== 'undefined' && General.getWeekFromDateString) return General.getWeekFromDateString(dateVal);
             var parts = dateVal.split('/');
-            if (parts.length === 3) return (parseInt(parts[0]) - 1) * 48 + (parseInt(parts[1]) - 1) * 4 + parseInt(parts[2]);
+            if (parts.length === 3) {
+                var y = parseInt(parts[0], 10) || 1;
+                var m = parseInt(parts[1], 10) || 1;
+                var w = parseInt(parts[2], 10) || 1;
+                return (y - 1) * 48 + (m - 1) * 4 + w;
+            }
             return 0;
         }
-
         var activePlats = Platforms.allPlatforms.filter(function (p) {
             var pubWk = parseGameWeek(p.published);
-            var retWk = p.retireDate ? parseGameWeek(p.retireDate) : Infinity;
-            return (pubWk <= currentWk) && (retWk > currentWk);
+            var retWk = p.retiring ? parseGameWeek(p.retiring) : 999999;
+            var isReleased = pubWk <= currentWk;
+            var isNotRetired = retWk > currentWk;
+            var isCustom = (p.isCustom === true && p.owner === GameManager.company.id);
+            return (isReleased && isNotRetired) || isCustom;
         });
 
         if (activePlats.length === 0) return [Platforms.allPlatforms[0].name];
@@ -248,6 +279,8 @@
             var scoreA = a.marketShare || 0;
             var scoreB = b.marketShare || 0;
 
+            if (a.isCustom === true && a.owner === GameManager.company.id) scoreA += 100000;
+            if (b.isCustom === true && b.owner === GameManager.company.id) scoreB += 100000;
 
             var genreIndexMap = { "Action": 0, "Adventure": 1, "RPG": 2, "Simulation": 3, "Strategy": 4, "Casual": 5 };
             var gIdx = genreIndexMap[genreName];
@@ -510,17 +543,16 @@
         if (proj.size === "AAA") price = 40;
 
         if (proj.isDLC) {
-            if (!store.data.dlcData[proj.gameId] || typeof store.data.dlcData[proj.gameId].count === 'undefined') {
-                store.data.dlcData[proj.gameId] = { count: 0, activeDLCs: [] };
+            if (proj.dlcId && store.data.dlcData && store.data.dlcData.dlcs[proj.dlcId]) {
+                var dlc = store.data.dlcData.dlcs[proj.dlcId];
+                dlc.devStats.progress = dlc.devStats.requiredProgress;
+                DLCSystem.releaseDLC(dlc);
+                _n("Subsidiary DLC Released", studio.name + " finished developing " + dlc.title + "! Review Score: " + dlc.marketStats.score.toFixed(1) + "/10");
+            } else {
+                if (!store.data.dlcData[proj.gameId]) store.data.dlcData[proj.gameId] = { count: 0, activeDLCs: [] };
+                store.data.dlcData[proj.gameId].activeDLCs.push({ activeWeeksLeft: 20, weeklyRevenue: proj.weeklyRevenue });
+                _n("Subsidiary DLC Released", studio.name + " finished developing " + proj.name + "! It is now generating revenue.");
             }
-
-
-            store.data.dlcData[proj.gameId].activeDLCs.push({
-                activeWeeksLeft: 20,
-                weeklyRevenue: proj.weeklyRevenue
-            });
-
-            _n("Subsidiary DLC Released", studio.name + " finished developing " + proj.name + " (#" + store.data.dlcData[proj.gameId].count + ")! It is now generating revenue.");
             return;
         }
 
@@ -721,6 +753,26 @@
 
     function processDLCs() {
         if (!store.data.dlcData) store.data.dlcData = {};
+
+        // Run the new DLC pipeline logic
+        if (typeof DLCSystem !== 'undefined' && DLCSystem.processWeekly) {
+            DLCSystem.processWeekly();
+        }
+
+        if (store.data.activeMajorExpansion) {
+            var exp = store.data.activeMajorExpansion;
+            if (exp.weeksRemaining > 0) {
+                exp.weeksRemaining--;
+                if (exp.weeksRemaining <= 0) {
+                    var surge = Math.floor((exp.totalSalesCash || 1500000) * 1.5);
+                    if (surge < 5000000) surge = 5000000;
+                    GameManager.company.adjustCash(surge, "Expansion Sales: " + exp.gameTitle);
+                    _n("Expansion Released!", "Your Major Expansion for " + exp.gameTitle + " has been released to critical acclaim! It generated $" + UI.getShortNumberString(surge) + " in sales!");
+                    store.data.activeMajorExpansion = null;
+                }
+            }
+        }
+
         var activeGames = GameManager.company.gameLog || [];
         var dlcKeys = Object.keys(store.data.dlcData);
         for (var i = 0; i < dlcKeys.length; i++) {

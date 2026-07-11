@@ -65,21 +65,12 @@
                             var dlcCost = Math.floor((game.costs || 100000) * 0.1);
                             if (dlcCost < 20000) dlcCost = 20000;
 
-                            var dlcBtn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt;">Develop DLC ($' + UI.getShortNumberString(dlcCost) + ')</div>');
+                            var dlcBtn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt;">EXPANSION OPTIONS...</div>');
                             dlcBtn.click(function () {
-                                if (GameManager.company.cash >= dlcCost) {
-                                    Sound.click();
-                                    GameManager.company.adjustCash(-dlcCost, "DLC Development: " + game.title);
-                                    if (!store.data.dlcData[game.id]) store.data.dlcData[game.id] = { count: 0, activeDLCs: [] };
-                                    store.data.dlcData[game.id].activeDLCs.push({
-                                        pendingPlayerDev: 10,
-                                        gameTitle: game.title,
-                                        weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.015)
-                                    });
-                                    store.data.dlcData[game.id].count++;
-                                    $.modal.close();
+                                if (typeof DLCWizard !== "undefined") {
+                                    DLCWizard.show(game.id);
                                 } else {
-                                    csNotify("Not enough funds!");
+                                    csShowExpansionOptionsModal(game, dlcCost, dlcCount, age);
                                 }
                             });
                             dlcControls.append(dlcBtn);
@@ -89,15 +80,36 @@
                                     var subBtn = $('<div class="selectorButton whiteBoardButton" style="flex: 1; font-size: 10pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Assign: ' + store.data.studios[s].name + '</div>');
                                     (function (studio) {
                                         subBtn.click(function () {
+                                            var dlcId = "DLC_SUB_" + Date.now();
+                                            var newDLC = {
+                                                id: dlcId,
+                                                baseGameId: game.id,
+                                                title: game.title,
+                                                subtitle: "Expansion",
+                                                theme: "Expansion",
+                                                type: "Expansion Pack",
+                                                scale: "Medium",
+                                                allocation: { story: 20, gameplay: 30, graphics: 20, audio: 30 },
+                                                price: 9.99,
+                                                marketingStrategy: "None",
+                                                releaseTiming: "Immediate",
+                                                devStats: { cost: 500000, marketingCost: 0, weeksInDev: 0, bugs: 0, progress: 0, requiredProgress: 3000 },
+                                                marketStats: { score: 0, totalSales: 0, totalRevenue: 0, baseGameUnitsAtLaunch: game.unitsSold || 500000 },
+                                                status: "subsidiary_development",
+                                                history: { salesOverTime: [], priceHistory: [] }
+                                            };
+                                            if (store.data.dlcData && store.data.dlcData.dlcs) {
+                                                store.data.dlcData.dlcs[dlcId] = newDLC;
+                                                if (!store.data.dlcData.games[game.id]) store.data.dlcData.games[game.id] = { activeSeasonPass: null, dlcList: [] };
+                                                store.data.dlcData.games[game.id].dlcList.push(dlcId);
+                                            }
                                             studio.currentProject = {
                                                 name: game.title + " DLC",
                                                 isDLC: true,
                                                 gameId: game.id,
-                                                weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.015),
+                                                dlcId: dlcId,
                                                 weeksRemaining: 18
                                             };
-                                            if (!store.data.dlcData[game.id]) store.data.dlcData[game.id] = { count: 0, activeDLCs: [] };
-                                            store.data.dlcData[game.id].count++;
                                             routeModMenu("dlc");
                                         });
                                     })(store.data.studios[s]);
@@ -415,9 +427,21 @@
         contentArea.empty();
 
         var currentWkInst = Math.floor(GameManager.company.currentWeek);
+        function parseGameWeek(dateVal) {
+            if (!dateVal) return 0;
+            if (typeof dateVal === 'number') return dateVal;
+            var parts = dateVal.split('/');
+            if (parts.length === 3) {
+                var y = parseInt(parts[0], 10) || 1;
+                var m = parseInt(parts[1], 10) || 1;
+                var w = parseInt(parts[2], 10) || 1;
+                return (y - 1) * 48 + (m - 1) * 4 + w;
+            }
+            return 0;
+        }
         var myPlats = Platforms.allPlatforms.filter(function (p) {
-            var pubWk = (typeof p.published === 'number') ? p.published : 0;
-            var retWk = p.retireDate ? (typeof p.retireDate === 'number' ? p.retireDate : Infinity) : Infinity;
+            var pubWk = parseGameWeek(p.published);
+            var retWk = p.retiring ? parseGameWeek(p.retiring) : (p.retireDate ? parseGameWeek(p.retireDate) : 999999);
             return (pubWk <= currentWkInst) && (retWk > currentWkInst);
         });
         if (myPlats.length === 0) myPlats = [Platforms.allPlatforms[0]];
@@ -693,3 +717,114 @@
         }, 10);
     }
 
+    function csShowExpansionOptionsModal(game, dlcCost, dlcCount, age) {
+        var modalContent = $('<div style="padding: 15px; display: flex; flex-direction: column; background:#eee;"></div>');
+        _ae(modalContent, '<h2 style="margin-top: 0; color: #111; border-bottom: 2px solid #444; padding-bottom:5px;">Expansion Options: ' + game.title + '</h2>');
+        
+        var optionsContainer = _ae(modalContent, '<div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;"></div>');
+
+        var opt1 = _ae(optionsContainer, '<div class="selectorButton whiteBoardButton" style="text-align: left; padding: 10px;"></div>');
+        if (dlcCount >= 5) opt1.css('opacity', 0.5);
+        else {
+            opt1.click(function() {
+                if (GameManager.company.cash >= dlcCost) {
+                    Sound.click();
+                    GameManager.company.adjustCash(-dlcCost, "DLC Development: " + game.title);
+                    if (!store.data.dlcData[game.id]) store.data.dlcData[game.id] = { count: 0, activeDLCs: [] };
+                    store.data.dlcData[game.id].activeDLCs.push({
+                        pendingPlayerDev: 10,
+                        gameTitle: game.title,
+                        weeklyRevenue: Math.floor((game.totalSalesCash || 1500000) * 0.015)
+                    });
+                    store.data.dlcData[game.id].count++;
+                    _n("DLC Development Started", "Your team has started developing a standard DLC for " + game.title + ". It will take about 10 weeks to complete.");
+                    $.modal.close();
+                    if (typeof routeModMenu === 'function') routeModMenu("dlc");
+                } else csNotify("Not enough funds!");
+            });
+        }
+        _ae(opt1, '<div style="font-weight: bold; font-size: 11pt; color: #2980b9;">Standard DLC (-$' + UI.getShortNumberString(dlcCost) + ')</div>');
+        _ae(opt1, '<div style="font-size: 9pt; color: #555;">Quickly develop a small content drop. (Max 5 per game, currently: ' + dlcCount + '/5)</div>');
+
+        var expCost = Math.floor((game.costs || 100000) * 1.5);
+        if (expCost < 2000000) expCost = 2000000;
+        var hasActiveExp = store.data.activeMajorExpansion && store.data.activeMajorExpansion.weeksRemaining > 0;
+        var opt2 = _ae(optionsContainer, '<div class="selectorButton whiteBoardButton" style="text-align: left; padding: 10px;"></div>');
+        if (hasActiveExp) opt2.css('opacity', 0.5);
+        else {
+            opt2.click(function() {
+                if (GameManager.company.cash >= expCost) {
+                    Sound.click();
+                    GameManager.company.adjustCash(-expCost, "Major Expansion: " + game.title);
+                    store.data.activeMajorExpansion = {
+                        gameId: game.id,
+                        gameTitle: game.title,
+                        weeksRemaining: 12,
+                        totalSalesCash: game.totalSalesCash || 1500000
+                    };
+                    _n("Major Expansion Started", "A massive expansion for " + game.title + " is now in development! It will lock up core team resources for 12 weeks.");
+                    $.modal.close();
+                    if (typeof routeModMenu === 'function') routeModMenu("dlc");
+                } else csNotify("Not enough funds!");
+            });
+        }
+        _ae(opt2, '<div style="font-weight: bold; font-size: 11pt; color: #8e44ad;">Major Expansion Pack (-$' + UI.getShortNumberString(expCost) + ')</div>');
+        _ae(opt2, '<div style="font-size: 9pt; color: #555;">Develop a massive expansion. Locks up staff for 12 weeks, provides a massive sales surge.' + (hasActiveExp ? ' (Busy)' : '') + '</div>');
+
+        var remCost = Math.floor((game.costs || 100000) * 2.5);
+        if (remCost < 5000000) remCost = 5000000;
+        var isRemaster = game.title.indexOf("Remastered") !== -1;
+        var opt3 = _ae(optionsContainer, '<div class="selectorButton whiteBoardButton" style="text-align: left; padding: 10px;"></div>');
+        if (age < 48 * 5 || isRemaster) opt3.css('opacity', 0.5); 
+        else {
+            opt3.click(function() {
+                if (GameManager.company.cash >= remCost) {
+                    Sound.click();
+                    GameManager.company.adjustCash(-remCost, "Remaster: " + game.title);
+                    
+                    var clonedGame = JSON.parse(JSON.stringify(game));
+                    clonedGame.id = "remaster_" + Date.now();
+                    clonedGame.title = game.title + " Remastered";
+                    clonedGame.releaseWeek = Math.floor(GameManager.company.currentWeek);
+                    clonedGame.totalSalesCash = 0;
+                    clonedGame.unitsSold = 0;
+                    clonedGame.costs = remCost;
+                    clonedGame.score = Math.min(10, (game.score || 5) + 1.0); 
+                    GameManager.company.gameLog.push(clonedGame);
+
+                    _n("Remaster Released!", clonedGame.title + " has been rebuilt for modern audiences and is back on the charts!");
+                    $.modal.close();
+                    if (typeof routeModMenu === 'function') routeModMenu("dlc");
+                } else csNotify("Not enough funds!");
+            });
+        }
+        _ae(opt3, '<div style="font-weight: bold; font-size: 11pt; color: #d35400;">Remaster / Director\'s Cut (-$' + UI.getShortNumberString(remCost) + ')</div>');
+        _ae(opt3, '<div style="font-size: 9pt; color: #555;">Re-release this game for modern audiences at full price. Requires game to be >5 years old.</div>');
+
+        var portCost = Math.floor((game.costs || 100000) * 0.5);
+        if (portCost < 500000) portCost = 500000;
+        var opt4 = _ae(optionsContainer, '<div class="selectorButton whiteBoardButton" style="text-align: left; padding: 10px;"></div>');
+        opt4.click(function() {
+            if (GameManager.company.cash >= portCost) {
+                Sound.click();
+                GameManager.company.adjustCash(-portCost, "Platform Port: " + game.title);
+                
+                var salesSurge = Math.floor((game.totalSalesCash || 1500000) * 0.25);
+                GameManager.company.adjustCash(salesSurge, "Port Sales: " + game.title);
+                _n("Platform Port Complete", game.title + " was ported to new platforms and earned $" + UI.getShortNumberString(salesSurge) + "!");
+                $.modal.close();
+                if (typeof routeModMenu === 'function') routeModMenu("dlc");
+            } else csNotify("Not enough funds!");
+        });
+        _ae(opt4, '<div style="font-weight: bold; font-size: 11pt; color: #27ae60;">Platform Port (-$' + UI.getShortNumberString(portCost) + ')</div>');
+        _ae(opt4, '<div style="font-size: 9pt; color: #555;">Port the game to modern consoles for a quick, guaranteed 25% lifetime sales surge.</div>');
+
+        _ae(modalContent, '<div class="selectorButton" style="margin-top: 15px; text-align: center; font-weight: bold; padding: 10px;">CANCEL</div>').click(function() { $.modal.close(); });
+
+        $.modal(modalContent, { 
+            overlayClose: true, 
+            opacity: 80, 
+            overlayCss: { backgroundColor: "#000" }, 
+            containerCss: { width: "500px", backgroundColor: "#eee", border: "4px solid #333", padding: "0" } 
+        });
+    }

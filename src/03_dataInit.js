@@ -104,6 +104,7 @@
 
         if (!store.data.gridService) store.data.gridService = csCreateDefaultGrid();
         csRepairGrid(store.data.gridService);
+        csRepairDLCData(store.data);
 
         store.data.pendingDistribution.forEach(function (p) {
             _d(p, 'mediaProjectId', null); _dn(p, 'decisionDeadlineWeek', 0); _d(p, 'notified', false);
@@ -172,6 +173,58 @@
             _dn(e, 'licenseWeeksRemaining', 0); _d(e, 'franchiseId', null);
             if (typeof e.freshness !== "number" || isNaN(e.freshness) || e.freshness <= 0) e.freshness = 0.5;
         });
+    }
+
+    function csRepairDLCData(data) {
+        if (!data) return;
+        
+        if (!data.dlcData) {
+            data.dlcData = { games: {}, dlcs: {} };
+            return;
+        }
+
+        if (Array.isArray(data.dlcData) || !data.dlcData.games || !data.dlcData.dlcs) {
+            var oldData = data.dlcData;
+            data.dlcData = { games: {}, dlcs: {} };
+            
+            if (Array.isArray(oldData)) {
+                oldData.forEach(function(oldDLC, idx) {
+                    var dlcId = oldDLC.id || ("DLC_LEGACY_" + Date.now() + "_" + idx);
+                    var gameId = oldDLC.gameId || oldDLC.baseGameId || "UNKNOWN_GAME";
+                    
+                    data.dlcData.dlcs[dlcId] = {
+                        id: dlcId,
+                        baseGameId: gameId,
+                        title: oldDLC.title || ("Expansion " + (idx+1)),
+                        theme: "Legacy Expansion",
+                        type: "Expansion Pack",
+                        scale: "Medium",
+                        allocation: { story: 25, gameplay: 25, graphics: 25, audio: 25 },
+                        price: 9.99,
+                        marketingStrategy: "None",
+                        releaseTiming: "Immediate",
+                        devStats: { cost: 500000, marketingCost: 0, weeksInDev: 12, bugs: 0 },
+                        marketStats: { 
+                            score: 7.0, 
+                            totalSales: oldDLC.sales || 0, 
+                            totalRevenue: oldDLC.revenue || 0, 
+                            baseGameUnitsAtLaunch: 100000 
+                        },
+                        status: "released",
+                        releaseWeek: oldDLC.releaseWeek || 0,
+                        history: {
+                            salesOverTime: [],
+                            priceHistory: []
+                        }
+                    };
+                    
+                    if (!data.dlcData.games[gameId]) {
+                        data.dlcData.games[gameId] = { activeSeasonPass: null, dlcList: [] };
+                    }
+                    data.dlcData.games[gameId].dlcList.push(dlcId);
+                });
+            }
+        }
     }
 
     function csCreateGridEntry(opts) {
@@ -522,12 +575,22 @@
         var grid = store.data.gridService;
         if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
 
-
         for (var i = 0; i < grid.contentLibrary.length; i++) {
             if (grid.contentLibrary[i].mediaProjectId === mediaProject.id) {
                 csNotify("Already in Grid Library."); return;
             }
         }
+
+        var gridLevel = grid.contentLibrary.length;
+        var baseCost = 500000;
+        var upgradeCost = Math.floor(baseCost * Math.pow(1.65, gridLevel));
+        
+        if (GameManager.company.cash < upgradeCost) {
+            csNotify("Insufficient funds to expand The Grid. Need $" + UI.getShortNumberString(upgradeCost));
+            return;
+        }
+        
+        GameManager.company.adjustCash(-upgradeCost, "Grid Expansion Cost: " + mediaProject.title);
 
         var entry = csCreateGridEntry({
             mediaProjectId: mediaProject.id,
