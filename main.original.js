@@ -1,4 +1,3 @@
-    // ========== 00_polyfills.js ==========
 (function () {
     var polyfillFind = function(predicate) {
         if (this == null) throw new TypeError('"this" is null or not defined');
@@ -61,10 +60,6 @@
             if (e && e.items && e.items.constructor) applyPolyfills(e.items.constructor.prototype);
         });
     }
-
-
-
-    // ========== 01_styles.js ==========
     (function injectModStyles() {
         if (document.getElementById('cs-mod-styles')) return;
         var css = document.createElement('style');
@@ -92,9 +87,6 @@
         document.head.appendChild(css);
     })();
 
-
-
-    // ========== 02_helpers.js ==========
     function makeSelectSearchable($select) {
         if ($select.find('option').length <= 10) return;
         var placeholder = "Search " + ($select.find('option').length) + " items...";
@@ -226,9 +218,6 @@
         return $input;
     }
 
-
-
-    // ========== 03_dataInit.js ==========
     function initData() {
         if (typeof GameManager !== 'undefined' && GameManager.company && GameManager.company.gameLog) {
             var gp = GameManager.company.gameLog.constructor.prototype;
@@ -1197,8 +1186,6 @@
     }
 
 
-
-    // ========== 04_coreHooks.js ==========
     setInterval(function () {
         if (typeof GameManager === 'undefined' || typeof UI === 'undefined' || !GameManager.company) {
             return;
@@ -1257,9 +1244,6 @@
         });
     }
 
-
-
-    // ========== 05_franchises.js ==========
     function processFranchisePassiveIncome() {
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         var playerFrans = getPlayerFranchises();
@@ -1469,9 +1453,6 @@
         if (idx > -1) store.data.aiLicensingOffers.splice(idx, 1);
     }
 
-
-
-    // ========== 06_media.js ==========
     function processMediaProjects() {
         if (!store.data.mediaProjects) return;
         var currentWeek = Math.floor(GameManager.company.currentWeek);
@@ -1687,9 +1668,6 @@
         }
     }
 
-
-
-    // ========== 07_studios.js ==========
     function csProcessMediaStudios() {
         if (!store.data.movieStudios) return;
         var currentWk = Math.floor(GameManager.company.currentWeek);
@@ -1830,9 +1808,6 @@
         }
     }
 
-
-
-    // ========== 08_streaming.js ==========
     function csProcessStreamingContracts() {
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         if (!store.data.streamingPlatforms) return;
@@ -1877,9 +1852,6 @@
         }
     }
 
-
-
-    // ========== 09_theater.js ==========
     function csProcessTheaterReleases() {
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         if (!store.data.theaterReleases) return;
@@ -1947,9 +1919,6 @@
         }
     }
 
-
-
-    // ========== 10_grid.js ==========
     function csProcessGridService() {
         if (!store.data.gridService || !store.data.gridService.isActive) return;
         var grid = store.data.gridService;
@@ -2252,9 +2221,6 @@
         }
     }
 
-
-
-    // ========== 11_competitors.js ==========
     function processCompetitors() {
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         var studios = store.data.studios;
@@ -3145,9 +3111,6 @@
         return boost;
     }
 
-
-
-    // ========== 12_ui_base.js ==========
     function showModMenu(activeTab, menuType) {
         menuType = menuType || "studios";
         if (menuType === "studios") activeTab = activeTab || "market";
@@ -3517,9 +3480,6 @@
         return bar;
     }
 
-
-
-    // ========== 13_ui_franchises.js ==========
     function renderFranchisesTab(container) {
         var subTab = "my";
 
@@ -3787,9 +3747,6 @@
         refresh();
     }
 
-
-
-    // ========== 14_ui_media.js ==========
     function renderMediaTab(container) {
         var subTab = 'active';
 
@@ -3967,9 +3924,6 @@
         });
     }
 
-
-
-    // ========== 15_ui_market.js ==========
     function renderMarketTab(container) {
         var sArr = store.data.studios || [];
         var studios = sArr.filter(function (s) { return s.sharesOwned < 50 && !s.isFounded; });
@@ -4065,9 +4019,6 @@
         });
     }
 
-
-
-    // ========== 16_ui_subsidiaries.js ==========
     function renderSubsidiariesTab(container) {
         var sArr2 = store.data.studios || [];
         var studios = sArr2.filter(function (s) { return s.sharesOwned >= 50 || s.isFounded; });
@@ -4454,9 +4405,6 @@
         });
     }
 
-
-
-    // ========== 17_ui_projects.js ==========
     function renderDLCTab(container) {
         var allGames = GameManager.company.gameLog || [];
         var games = allGames;
@@ -4473,17 +4421,6 @@
 
             function renderDLCList(term) {
                 listContainer.empty();
-                
-                var dlcStudioMap = {};
-                if (store.data.studios) {
-                    for (var s = 0; s < store.data.studios.length; s++) {
-                        var st = store.data.studios[s];
-                        if (st.currentProject && st.currentProject.isDLC && st.currentProject.gameId) {
-                            dlcStudioMap[st.currentProject.gameId] = st;
-                        }
-                    }
-                }
-
                 for (var i = 0; i < sortedGames.length; i++) {
                     (function (game) {
                         if (term && game.title.toLowerCase().indexOf(term) === -1) return;
@@ -4515,7 +4452,12 @@
                             item.append(activeStatus);
                         }
 
-                        var subDev = dlcStudioMap[game.id] || false;
+                        var subDev = false;
+                        for (var s = 0; s < store.data.studios.length; s++) {
+                            if (store.data.studios[s].currentProject && store.data.studios[s].currentProject.isDLC && store.data.studios[s].currentProject.gameId === game.id) {
+                                subDev = store.data.studios[s];
+                            }
+                        }
 
                         if (subDev) {
                             item.append('<div style="font-size: 10pt; margin-top: 3px; color: #2980b9; font-weight: bold;">In Dev by ' + subDev.name + ' (' + Math.ceil(subDev.currentProject.weeksRemaining) + 'w left)</div>');
@@ -5152,9 +5094,6 @@
         }, 10);
     }
 
-
-
-    // ========== 18_ui_distribution.js ==========
     function csRenderDistributionTab(container) {
         container.empty();
         _ae(container, csRenderSectionHeader('Media Distribution'));
@@ -5822,7 +5761,5 @@
             });
         });
     }
-
-
 
 })();
