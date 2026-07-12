@@ -121,7 +121,6 @@
                 grid.pendingUpkeep = 0;
             }
 
-
             var totalCatMaint = 0;
             if (!store.data.activeCatalogueDeals) store.data.activeCatalogueDeals = [];
             for (var cdi = store.data.activeCatalogueDeals.length - 1; cdi >= 0; cdi--) {
@@ -139,6 +138,20 @@
             if (grid.pendingLicenses > 0) {
                 GameManager.company.adjustCash(-grid.pendingLicenses, "Grid Licenses (Monthly)");
                 grid.pendingLicenses = 0;
+            }
+            if (reportRev > 0 || reportCosts > 0) {
+                var net = reportRev - reportCosts;
+                var color = net >= 0 ? "#2ecc71" : "#e74c3c";
+                var sign = net >= 0 ? "+" : "-";
+                var text = sign + "$" + UI.getShortNumberString(Math.abs(net));
+                
+                var moneyIcon = $('.money').first(); 
+                var startX = moneyIcon.length ? moneyIcon.offset().left : $(window).width() - 200;
+                var startY = moneyIcon.length ? moneyIcon.offset().top + 50 : 100;
+                
+                var floating = $('<div style="position:absolute; left:'+startX+'px; top:'+startY+'px; color:'+color+'; font-weight:bold; font-size:18pt; text-shadow:1px 1px 2px black; z-index:9999; pointer-events:none;">'+text+'</div>');
+                $('body').append(floating);
+                floating.animate({top: startY - 50, opacity: 0}, 3000, function() { floating.remove(); });
             }
         }
 

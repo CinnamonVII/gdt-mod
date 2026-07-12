@@ -19,8 +19,22 @@
             '.media-type-card{border:none;padding:10px 14px;margin-bottom:8px;cursor:pointer;background:#f8f9fa;box-shadow:0 1px 3px rgba(0,0,0,0.12);}' +
             '.media-type-card:hover{background:#fff;box-shadow:0 3px 6px rgba(0,0,0,0.15);}.media-type-card.selected{border-left:4px solid #d35400;background:#fff;}' +
             '.cs-progress-track{background:#e0e0e0;border:none;height:12px;overflow:hidden;margin-top:6px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);}' +
-            '.cs-progress-fill{height:100%;background:#d35400;transition:width .3s ease;}'
- +
+            '.cs-progress-fill{height:100%;background:#d35400;transition:width .3s ease;}' +
+            '.cs-card{background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:16px; margin-bottom:12px; border-radius:6px;}' +
+            '.cs-card-flex{display:flex; justify-content:space-between; align-items:center;}' +
+            '.cs-card-header{display:flex; justify-content:space-between; align-items:baseline;}' +
+            '.cs-text-title{font-weight:bold; font-size:11pt; color:#2c3e50;}' +
+            '.cs-text-muted{color:#7f8c8d; font-size:9pt;}' +
+            '.cs-text-bold{font-weight:bold;}' +
+            '.cs-text-green{color:#27ae60;}' +
+            '.cs-text-orange{color:#e67e22;}' +
+            '.cs-text-red{color:#e74c3c;}' +
+            '.cs-text-center{text-align:center;}' +
+            '.cs-text-right{text-align:right;}' +
+            '.cs-table{width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; margin-bottom:20px; border-radius:6px; overflow:hidden;}' +
+            '.cs-table th{background:#34495e; color:white; text-transform:uppercase; letter-spacing:0.5px; padding:10px; text-align:left;}' +
+            '.cs-table td{padding:8px;}' +
+            '.cs-table tr{border-bottom:1px solid #bdc3c7;}' +
             '#modUI .selectorButton { white-space: normal !important; height: auto !important; min-height: 28px !important; width: fit-content !important; min-width: 100px; box-sizing: border-box; line-height: 1.2; }';
         document.head.appendChild(css);
     })();

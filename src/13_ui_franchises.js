@@ -251,8 +251,7 @@
 
                         var revBtn = $('<div class="selectorButton orangeButton" style="padding: 8px 15px; font-weight: bold;">Review Offer</div>');
                         revBtn.click(function () {
-                            store.data.activeLicensingOffer = o;
-                            routeModMenu("licensing_review", "media");
+                            csShowAILicensingModal(o);
                         });
                         card.append(revBtn);
                         container.append(card);

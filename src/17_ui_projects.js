@@ -67,11 +67,15 @@
 
                             var dlcBtn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt;">EXPANSION OPTIONS...</div>');
                             dlcBtn.click(function () {
-                                if (typeof DLCWizard !== "undefined") {
-                                    DLCWizard.show(game.id);
-                                } else {
-                                    csShowExpansionOptionsModal(game, dlcCost, dlcCount, age);
-                                }
+                                Sound.click();
+                                $.modal.close(); // Must close the active Released Games modal before opening another one
+                                setTimeout(function() {
+                                    if (typeof window.DLCWizard !== "undefined") {
+                                        window.DLCWizard.show(game.id);
+                                    } else {
+                                        csShowExpansionOptionsModal(game, dlcCost, dlcCount, age);
+                                    }
+                                }, 150);
                             });
                             dlcControls.append(dlcBtn);
 
@@ -157,11 +161,11 @@
         if (typeof Game === 'undefined' || !Game.isModern) grid.css('display', 'block');
 
         franchises.forEach(function (f) {
-            var card = _ae(grid, '<div class="cs-marketing-card" style="background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:16px; display:flex; flex-direction:column; gap:8px; border-radius:6px;"></div>');
+            var card = _ae(grid, '<div class="cs-marketing-card" class="cs-card" style="display:flex; flex-direction:column; gap:8px;"></div>');
             
             // Header
             var head = _ae(card, '<div style="display:flex; justify-content:space-between; align-items:baseline;"></div>');
-            _ae(head, '<div class="cs-fran-name" style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + f.name + '</div>');
+            _ae(head, '<div class="cs-fran-name" class="cs-text-title">' + f.name + '</div>');
             _ae(head, '<div style="font-size:8pt; color:#7f8c8d;">Tier ' + (f.tier || 1) + '</div>');
             
             _ae(card, '<div style="font-size:9pt; color:#555;">Fanbase: <b style="color:#2980b9;">' + Math.floor(f.fanbaseScore || 0) + '/100</b></div>');

@@ -129,3 +129,17 @@
         return $input;
     }
 
+    function csRenderButton(label, type, styleExt) {
+        var btnClass = "selectorButton";
+        if (type === "primary" || type === "orange") btnClass += " orangeButton";
+        else if (type === "danger" || type === "delete") btnClass += " deleteButton";
+        else if (type === "secondary" || type === "white") btnClass += " whiteBoardButton";
+        return '<div class="' + btnClass + '" style="' + (styleExt || '') + '">' + label + '</div>';
+    }
+
+    function csRenderCardFlex(leftHtml, rightHtml, extraStyles) {
+        return '<div class="cs-card cs-card-flex" style="' + (extraStyles || '') + '">' +
+               '<div style="flex:1;">' + leftHtml + '</div>' +
+               '<div>' + rightHtml + '</div>' +
+               '</div>';
+    }

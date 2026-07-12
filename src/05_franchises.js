@@ -136,7 +136,7 @@
 
                     var notifyText = chosenStudio.name + " wants to license your '" + chosenFran.name + "' franchise!";
                     _nb("Licensing Proposal", notifyText, "Review Proposal", function () {
-                        store.data.activeLicensingOffer = offer; showModMenu("licensing_review", "media");
+                        csShowAILicensingModal(offer);
                     });
 
                 }

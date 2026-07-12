@@ -466,16 +466,16 @@
     }
 
     function csConfirmStreamingDeal(mediaProject, platform, isExclusive) {
-        if (!platform || !mediaProject) return;
+        if (!platform || !mediaProject) return false;
         var currentWeek = Math.floor(GameManager.company.currentWeek);
 
-        if (platform.acceptsType.indexOf(mediaProject.type) === -1) { csNotify("This platform does not accept this content type!"); return; }
-        if (mediaProject.distributionStatus !== "pending") return;
-        if (currentWeek - (platform.bookingCooldownWeek || -100) < 16) { csNotify("Must wait 16 weeks between deals with this platform."); return; }
+        if (platform.acceptsType.indexOf(mediaProject.type) === -1) { csNotify("This platform does not accept this content type!"); return false; }
+        if (mediaProject.distributionStatus !== "pending") return false;
+        if (currentWeek - (platform.bookingCooldownWeek || -100) < 16) { csNotify("Must wait 16 weeks between deals with this platform."); return false; }
 
         if (isExclusive) {
             var currentExclusiveCount = platform.activeDeals.filter(function (d) { return d.isExclusive; }).length;
-            if (currentExclusiveCount >= platform.exclusivitySlots) { csNotify("This platform has no exclusive slots left."); return; }
+            if (currentExclusiveCount >= platform.exclusivitySlots) { csNotify("This platform has no exclusive slots left."); return false; }
         }
 
         var advanceMultiplier = platform.advanceMultiplier || 1.0;
@@ -520,14 +520,15 @@
         }
 
         _n("Streaming Deal Signed!", mediaProject.title + " will stream on " + platform.name + ". Advance: $" + UI.getShortNumberString(advance) + ". Weekly revenue starts next week.");
+        return true;
     }
 
     function csConfirmTheaterRelease(mediaProject, theaterChain) {
-        if (!theaterChain || !mediaProject) return;
-        if (mediaProject.type !== "movie") { csNotify("Theatrical releases are only available for feature films."); return; }
-        if (mediaProject.distributionStatus !== "pending") return;
-        if (theaterChain.activeRelease !== null) { csNotify("This theater chain is already running another release!"); return; }
-        if (GameManager.company.cash < theaterChain.bookingFee) { csNotify("Not enough cash for booking fee."); return; }
+        if (!theaterChain || !mediaProject) return false;
+        if (mediaProject.type !== "movie") { csNotify("Theatrical releases are only available for feature films."); return false; }
+        if (mediaProject.distributionStatus !== "pending") return false;
+        if (theaterChain.activeRelease !== null) { csNotify("This theater chain is already running another release!"); return false; }
+        if (GameManager.company.cash < theaterChain.bookingFee) { csNotify("Not enough cash for booking fee."); return false; }
 
         GameManager.company.adjustCash(-theaterChain.bookingFee, "Theater Booking: " + theaterChain.name);
 
@@ -564,20 +565,21 @@
         }
 
         _n("Opening Weekend!", mediaProject.title + " opens in " + theaterChain.screens + " screens at " + theaterChain.name + "! Projected opening gross: $" + UI.getShortNumberString(est.peakWeeklyRevenue));
+        return true;
     }
 
     function csAddToGrid(mediaProject) {
-        if (!store.data.gridService || !store.data.gridService.isActive) return;
-        if (!mediaProject || mediaProject.distributionStatus !== "pending") return;
+        if (!store.data.gridService || !store.data.gridService.isActive) return false;
+        if (!mediaProject || mediaProject.distributionStatus !== "pending") return false;
         var validTypes = ["movie", "tvSeries", "animatedShow", "comicBook", "soundtrack"];
-        if (validTypes.indexOf(mediaProject.type) === -1) { csNotify("Grid does not support this content type."); return; }
+        if (validTypes.indexOf(mediaProject.type) === -1) { csNotify("Grid does not support this content type."); return false; }
 
         var grid = store.data.gridService;
         if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
 
         for (var i = 0; i < grid.contentLibrary.length; i++) {
             if (grid.contentLibrary[i].mediaProjectId === mediaProject.id) {
-                csNotify("Already in Grid Library."); return;
+                csNotify("Already in Grid Library."); return false;
             }
         }
 
@@ -587,7 +589,7 @@
         
         if (GameManager.company.cash < upgradeCost) {
             csNotify("Insufficient funds to expand The Grid. Need $" + UI.getShortNumberString(upgradeCost));
-            return;
+            return false;
         }
         
         GameManager.company.adjustCash(-upgradeCost, "Grid Expansion Cost: " + mediaProject.title);
@@ -626,6 +628,7 @@
         grid.subscribers = (grid.subscribers || 0) + instantSubBoost;
 
         _n("Added to Grid", entry.title + " added to Grid's library! +" + UI.getShortNumberString(instantSubBoost) + " instant subscribers.");
+        return true;
     }
 
     function csLicenseExternalToGrid(movieEntry, weeklyCost, weeks) {

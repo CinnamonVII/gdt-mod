@@ -86,8 +86,22 @@
             '.media-type-card{border:none;padding:10px 14px;margin-bottom:8px;cursor:pointer;background:#f8f9fa;box-shadow:0 1px 3px rgba(0,0,0,0.12);}' +
             '.media-type-card:hover{background:#fff;box-shadow:0 3px 6px rgba(0,0,0,0.15);}.media-type-card.selected{border-left:4px solid #d35400;background:#fff;}' +
             '.cs-progress-track{background:#e0e0e0;border:none;height:12px;overflow:hidden;margin-top:6px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);}' +
-            '.cs-progress-fill{height:100%;background:#d35400;transition:width .3s ease;}'
- +
+            '.cs-progress-fill{height:100%;background:#d35400;transition:width .3s ease;}' +
+            '.cs-card{background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:16px; margin-bottom:12px; border-radius:6px;}' +
+            '.cs-card-flex{display:flex; justify-content:space-between; align-items:center;}' +
+            '.cs-card-header{display:flex; justify-content:space-between; align-items:baseline;}' +
+            '.cs-text-title{font-weight:bold; font-size:11pt; color:#2c3e50;}' +
+            '.cs-text-muted{color:#7f8c8d; font-size:9pt;}' +
+            '.cs-text-bold{font-weight:bold;}' +
+            '.cs-text-green{color:#27ae60;}' +
+            '.cs-text-orange{color:#e67e22;}' +
+            '.cs-text-red{color:#e74c3c;}' +
+            '.cs-text-center{text-align:center;}' +
+            '.cs-text-right{text-align:right;}' +
+            '.cs-table{width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; margin-bottom:20px; border-radius:6px; overflow:hidden;}' +
+            '.cs-table th{background:#34495e; color:white; text-transform:uppercase; letter-spacing:0.5px; padding:10px; text-align:left;}' +
+            '.cs-table td{padding:8px;}' +
+            '.cs-table tr{border-bottom:1px solid #bdc3c7;}' +
             '#modUI .selectorButton { white-space: normal !important; height: auto !important; min-height: 28px !important; width: fit-content !important; min-width: 100px; box-sizing: border-box; line-height: 1.2; }';
         document.head.appendChild(css);
     })();
@@ -226,6 +240,20 @@
         return $input;
     }
 
+    function csRenderButton(label, type, styleExt) {
+        var btnClass = "selectorButton";
+        if (type === "primary" || type === "orange") btnClass += " orangeButton";
+        else if (type === "danger" || type === "delete") btnClass += " deleteButton";
+        else if (type === "secondary" || type === "white") btnClass += " whiteBoardButton";
+        return '<div class="' + btnClass + '" style="' + (styleExt || '') + '">' + label + '</div>';
+    }
+
+    function csRenderCardFlex(leftHtml, rightHtml, extraStyles) {
+        return '<div class="cs-card cs-card-flex" style="' + (extraStyles || '') + '">' +
+               '<div style="flex:1;">' + leftHtml + '</div>' +
+               '<div>' + rightHtml + '</div>' +
+               '</div>';
+    }
 
 
     // ========== 03_dataInit.js ==========
@@ -697,16 +725,16 @@
     }
 
     function csConfirmStreamingDeal(mediaProject, platform, isExclusive) {
-        if (!platform || !mediaProject) return;
+        if (!platform || !mediaProject) return false;
         var currentWeek = Math.floor(GameManager.company.currentWeek);
 
-        if (platform.acceptsType.indexOf(mediaProject.type) === -1) { csNotify("This platform does not accept this content type!"); return; }
-        if (mediaProject.distributionStatus !== "pending") return;
-        if (currentWeek - (platform.bookingCooldownWeek || -100) < 16) { csNotify("Must wait 16 weeks between deals with this platform."); return; }
+        if (platform.acceptsType.indexOf(mediaProject.type) === -1) { csNotify("This platform does not accept this content type!"); return false; }
+        if (mediaProject.distributionStatus !== "pending") return false;
+        if (currentWeek - (platform.bookingCooldownWeek || -100) < 16) { csNotify("Must wait 16 weeks between deals with this platform."); return false; }
 
         if (isExclusive) {
             var currentExclusiveCount = platform.activeDeals.filter(function (d) { return d.isExclusive; }).length;
-            if (currentExclusiveCount >= platform.exclusivitySlots) { csNotify("This platform has no exclusive slots left."); return; }
+            if (currentExclusiveCount >= platform.exclusivitySlots) { csNotify("This platform has no exclusive slots left."); return false; }
         }
 
         var advanceMultiplier = platform.advanceMultiplier || 1.0;
@@ -751,14 +779,15 @@
         }
 
         _n("Streaming Deal Signed!", mediaProject.title + " will stream on " + platform.name + ". Advance: $" + UI.getShortNumberString(advance) + ". Weekly revenue starts next week.");
+        return true;
     }
 
     function csConfirmTheaterRelease(mediaProject, theaterChain) {
-        if (!theaterChain || !mediaProject) return;
-        if (mediaProject.type !== "movie") { csNotify("Theatrical releases are only available for feature films."); return; }
-        if (mediaProject.distributionStatus !== "pending") return;
-        if (theaterChain.activeRelease !== null) { csNotify("This theater chain is already running another release!"); return; }
-        if (GameManager.company.cash < theaterChain.bookingFee) { csNotify("Not enough cash for booking fee."); return; }
+        if (!theaterChain || !mediaProject) return false;
+        if (mediaProject.type !== "movie") { csNotify("Theatrical releases are only available for feature films."); return false; }
+        if (mediaProject.distributionStatus !== "pending") return false;
+        if (theaterChain.activeRelease !== null) { csNotify("This theater chain is already running another release!"); return false; }
+        if (GameManager.company.cash < theaterChain.bookingFee) { csNotify("Not enough cash for booking fee."); return false; }
 
         GameManager.company.adjustCash(-theaterChain.bookingFee, "Theater Booking: " + theaterChain.name);
 
@@ -795,20 +824,21 @@
         }
 
         _n("Opening Weekend!", mediaProject.title + " opens in " + theaterChain.screens + " screens at " + theaterChain.name + "! Projected opening gross: $" + UI.getShortNumberString(est.peakWeeklyRevenue));
+        return true;
     }
 
     function csAddToGrid(mediaProject) {
-        if (!store.data.gridService || !store.data.gridService.isActive) return;
-        if (!mediaProject || mediaProject.distributionStatus !== "pending") return;
+        if (!store.data.gridService || !store.data.gridService.isActive) return false;
+        if (!mediaProject || mediaProject.distributionStatus !== "pending") return false;
         var validTypes = ["movie", "tvSeries", "animatedShow", "comicBook", "soundtrack"];
-        if (validTypes.indexOf(mediaProject.type) === -1) { csNotify("Grid does not support this content type."); return; }
+        if (validTypes.indexOf(mediaProject.type) === -1) { csNotify("Grid does not support this content type."); return false; }
 
         var grid = store.data.gridService;
         if (!Array.isArray(grid.contentLibrary)) grid.contentLibrary = [];
 
         for (var i = 0; i < grid.contentLibrary.length; i++) {
             if (grid.contentLibrary[i].mediaProjectId === mediaProject.id) {
-                csNotify("Already in Grid Library."); return;
+                csNotify("Already in Grid Library."); return false;
             }
         }
 
@@ -818,7 +848,7 @@
         
         if (GameManager.company.cash < upgradeCost) {
             csNotify("Insufficient funds to expand The Grid. Need $" + UI.getShortNumberString(upgradeCost));
-            return;
+            return false;
         }
         
         GameManager.company.adjustCash(-upgradeCost, "Grid Expansion Cost: " + mediaProject.title);
@@ -857,6 +887,7 @@
         grid.subscribers = (grid.subscribers || 0) + instantSubBoost;
 
         _n("Added to Grid", entry.title + " added to Grid's library! +" + UI.getShortNumberString(instantSubBoost) + " instant subscribers.");
+        return true;
     }
 
     function csLicenseExternalToGrid(movieEntry, weeklyCost, weeks) {
@@ -1470,7 +1501,7 @@
 
                     var notifyText = chosenStudio.name + " wants to license your '" + chosenFran.name + "' franchise!";
                     _nb("Licensing Proposal", notifyText, "Review Proposal", function () {
-                        store.data.activeLicensingOffer = offer; showModMenu("licensing_review", "media");
+                        csShowAILicensingModal(offer);
                     });
 
                 }
@@ -2158,7 +2189,6 @@
                 grid.pendingUpkeep = 0;
             }
 
-
             var totalCatMaint = 0;
             if (!store.data.activeCatalogueDeals) store.data.activeCatalogueDeals = [];
             for (var cdi = store.data.activeCatalogueDeals.length - 1; cdi >= 0; cdi--) {
@@ -2176,6 +2206,20 @@
             if (grid.pendingLicenses > 0) {
                 GameManager.company.adjustCash(-grid.pendingLicenses, "Grid Licenses (Monthly)");
                 grid.pendingLicenses = 0;
+            }
+            if (reportRev > 0 || reportCosts > 0) {
+                var net = reportRev - reportCosts;
+                var color = net >= 0 ? "#2ecc71" : "#e74c3c";
+                var sign = net >= 0 ? "+" : "-";
+                var text = sign + "$" + UI.getShortNumberString(Math.abs(net));
+                
+                var moneyIcon = $('.money').first(); 
+                var startX = moneyIcon.length ? moneyIcon.offset().left : $(window).width() - 200;
+                var startY = moneyIcon.length ? moneyIcon.offset().top + 50 : 100;
+                
+                var floating = $('<div style="position:absolute; left:'+startX+'px; top:'+startY+'px; color:'+color+'; font-weight:bold; font-size:18pt; text-shadow:1px 1px 2px black; z-index:9999; pointer-events:none;">'+text+'</div>');
+                $('body').append(floating);
+                floating.animate({top: startY - 50, opacity: 0}, 3000, function() { floating.remove(); });
             }
         }
 
@@ -3920,8 +3964,7 @@
 
                         var revBtn = $('<div class="selectorButton orangeButton" style="padding: 8px 15px; font-weight: bold;">Review Offer</div>');
                         revBtn.click(function () {
-                            store.data.activeLicensingOffer = o;
-                            routeModMenu("licensing_review", "media");
+                            csShowAILicensingModal(o);
                         });
                         card.append(revBtn);
                         container.append(card);
@@ -4679,11 +4722,15 @@
 
                             var dlcBtn = $('<div class="selectorButton orangeButton" style="flex: 1; font-size: 10pt;">EXPANSION OPTIONS...</div>');
                             dlcBtn.click(function () {
-                                if (typeof DLCWizard !== "undefined") {
-                                    DLCWizard.show(game.id);
-                                } else {
-                                    csShowExpansionOptionsModal(game, dlcCost, dlcCount, age);
-                                }
+                                Sound.click();
+                                $.modal.close(); // Must close the active Released Games modal before opening another one
+                                setTimeout(function() {
+                                    if (typeof window.DLCWizard !== "undefined") {
+                                        window.DLCWizard.show(game.id);
+                                    } else {
+                                        csShowExpansionOptionsModal(game, dlcCost, dlcCount, age);
+                                    }
+                                }, 150);
                             });
                             dlcControls.append(dlcBtn);
 
@@ -4769,11 +4816,11 @@
         if (typeof Game === 'undefined' || !Game.isModern) grid.css('display', 'block');
 
         franchises.forEach(function (f) {
-            var card = _ae(grid, '<div class="cs-marketing-card" style="background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); padding:16px; display:flex; flex-direction:column; gap:8px; border-radius:6px;"></div>');
+            var card = _ae(grid, '<div class="cs-marketing-card" class="cs-card" style="display:flex; flex-direction:column; gap:8px;"></div>');
             
             // Header
             var head = _ae(card, '<div style="display:flex; justify-content:space-between; align-items:baseline;"></div>');
-            _ae(head, '<div class="cs-fran-name" style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + f.name + '</div>');
+            _ae(head, '<div class="cs-fran-name" class="cs-text-title">' + f.name + '</div>');
             _ae(head, '<div style="font-size:8pt; color:#7f8c8d;">Tier ' + (f.tier || 1) + '</div>');
             
             _ae(card, '<div style="font-size:9pt; color:#555;">Fanbase: <b style="color:#2980b9;">' + Math.floor(f.fanbaseScore || 0) + '/100</b></div>');
@@ -5463,11 +5510,11 @@
                 var weeksLeft = Math.max(0, pd.decisionDeadlineWeek - currentWeek);
                 var urgencyColor = weeksLeft <= 1 ? "#e74c3c" : (weeksLeft <= 2 ? "#e67e22" : "#27ae60");
 
-                var card = _ae(container, '<div style="background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); border-left:4px solid ' + urgencyColor + '; padding:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-radius:6px;"></div>');
+                var card = _ae(container, '<div class="cs-card cs-card-flex" style="border-left:4px solid ' + urgencyColor + ';"></div>');
 
                 var info = _ae(card, '<div></div>');
-                _ae(info, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + mediaProj.title + ' <span style="font-size:8pt; color:#7f8c8d; text-transform:uppercase;">[' + mediaProj.type + ']</span></div>');
-                _ae(info, '<div style="font-size:9pt; margin-top:4px;">Score: ' + csRenderScoreBadge(mediaProj.score) + ' | Est. Revenue: <span style="color:#27ae60; font-weight:bold;">$' + UI.getShortNumberString(mediaProj.estimatedRevenue) + '</span></div>');
+                _ae(info, '<div class="cs-text-title">' + mediaProj.title + ' <span style="font-size:8pt; color:#7f8c8d; text-transform:uppercase;">[' + mediaProj.type + ']</span></div>');
+                _ae(info, '<div style="font-size:9pt; margin-top:4px;">Score: ' + csRenderScoreBadge(mediaProj.score) + ' | Est. Revenue: <span class="cs-text-green cs-text-bold">$' + UI.getShortNumberString(mediaProj.estimatedRevenue) + '</span></div>');
                 _ae(info, '<div style="font-size:11pt; margin-top:6px; font-weight:bold; color:' + urgencyColor + ';">' + weeksLeft + ' WKS LEFT</div>');
 
                 var actionBtn = _ae(card, '<div class="selectorButton orangeButton" style="padding:12px 20px; font-weight:bold; font-size:11pt;">REVIEW OFFERS</div>');
@@ -5495,14 +5542,14 @@
         if (activeStreamDeals.length === 0) {
             _ae(container, csRenderEmptyState('No active streaming contracts.'));
         } else {
-            var sTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; margin-bottom:20px; border-radius:6px; overflow:hidden;">' +
-                '<tr style="background:#34495e; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:10px; text-align:left;">Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th><th>Action</th></tr></table>');
+            var sTable = _ae(container, '<table class="cs-table">' +
+                '<tr ><th>Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th><th>Action</th></tr></table>');
 
             activeStreamDeals.forEach(function (item, idx) {
                 var d = item.deal, p = item.platform, bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
-                var r = _ae(sTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
-                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + d.title + '</td>');
-                _ae(r, '<td style="padding:8px;"><span style="display:inline-block; width:8px; height:8px; background:' + (p.logoColor || '#555') + '; margin-right:6px;"></span>' + p.name + '</td>');
+                var r = _ae(sTable, '<tr style="background:' + bg + ';"></tr>');
+                _ae(r, '<td class="cs-text-title">' + d.title + '</td>');
+                _ae(r, '<td><span style="display:inline-block; width:8px; height:8px; background:' + (p.logoColor || '#555') + '; margin-right:6px;"></span>' + p.name + '</td>');
                 _ae(r, '<td style="text-align:center; color:#27ae60; font-weight:bold;">+$' + UI.getShortNumberString(d.weeklyRevenue) + '</td>');
                 
                 var progTd = _ae(r, '<td style="text-align:center;"></td>');
@@ -5538,13 +5585,13 @@
         if (activeTheater.length === 0) {
             _ae(container, csRenderEmptyState('No active theater releases.'));
         } else {
-            var tTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:2px solid #555;">' +
+            var tTable = _ae(container, '<table class="cs-table" style="border:2px solid #555;">' +
                 '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Movie</th><th>Chain</th><th>Box Office</th><th>Player Share</th><th>Week</th><th>Cancel</th></tr></table>');
 
             activeTheater.forEach(function (tr, idx) {
                 var chain = csGetTheaterChainById(tr.theaterChainId), chainName = chain ? chain.name : "Unknown", bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
-                var r = _ae(tTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
-                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + tr.title + '</td>');
+                var r = _ae(tTable, '<tr style="background:' + bg + ';"></tr>');
+                _ae(r, '<td class="cs-text-title">' + tr.title + '</td>');
                 _ae(r, '<td>' + chainName + '</td>');
                 _ae(r, '<td style="text-align:right; padding-right:10px;">$' + UI.getShortNumberString(tr.accumulatedRevenue || 0) + '</td>');
                 _ae(r, '<td style="text-align:right; font-weight:bold; color:#27ae60; padding-right:10px;">$' + UI.getShortNumberString(tr.playerShare) + '</td>');
@@ -5608,23 +5655,27 @@
             var chains = store.data.theaterChains.slice().sort(function(a,b){ return b.prestige - a.prestige; });
             chains.forEach(function(chain) {
                 var minReq = Math.ceil(chain.prestige * 1.5), isOk = project.score >= minReq;
-                var cCard = _ae(container, '<div style="background:#fff; border:2px solid #bdc3c7; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;' + (isOk?'':'opacity:0.6') + '"></div>');
+                var cCard = _ae(container, '<div class="cs-card cs-card-flex" style="padding:12px; margin-bottom:8px;' + (isOk?'':'opacity:0.6') + '"></div>');
                 
                 var cL = _ae(cCard, '<div style="flex:1;"></div>');
                 var stars = ""; for(var i=0; i<5; i++) stars += (i < chain.prestige ? '★' : '☆');
                 _ae(cL, '<div style="font-weight:bold; font-size:11pt;">' + chain.name + ' <span style="color:#f39c12; font-size:10pt;">' + stars + '</span></div>');
-                _ae(cL, '<div style="font-size:9pt; color:#7f8c8d;">Fee: ' + (chain.distributionFeeRate*100).toFixed(0) + '% | Screens: ' + (chain.prestige*100) + '</div>');
+                _ae(cL, '<div class="cs-text-muted">Fee: ' + (chain.distributionFeeRate*100).toFixed(0) + '% | Screens: ' + (chain.prestige*100) + '</div>');
 
                 var cM = _ae(cCard, '<div style="flex:1; text-align:center;"></div>');
                 if (isOk) {
                     var est = csEstimateTheaterRevenue(project, chain);
                     _ae(cM, '<div style="color:#27ae60; font-weight:bold; font-size:10pt;">$' + UI.getShortNumberString(est.playerShare.min) + ' - $' + UI.getShortNumberString(est.playerShare.max) + '</div>');
-                } else _ae(cM, '<div style="color:#e74c3c; font-weight:bold; font-size:9pt; text-transform:uppercase;">Score too low</div>');
+                } else _ae(cM, '<div class="cs-text-red cs-text-bold" style="font-size:9pt; text-transform:uppercase;">Score too low</div>');
 
                 var cR = _ae(cCard, '<div style="width:100px; text-align:right;"></div>');
                 if (isOk) {
                     var bBtn = _ae(cR, '<div class="selectorButton whiteBoardButton" style="padding:6px 12px; font-size:10pt;">BOOK</div>');
-                    bBtn.click(function(){ csConfirmTheaterRelease(project, chain); routeModMenu("media", "media"); });
+                    bBtn.click(function(){ 
+                        if (csConfirmTheaterRelease(project, chain) !== false) {
+                            routeModMenu("media", "media"); 
+                        }
+                    });
                 }
             });
         }
@@ -5636,11 +5687,11 @@
             platforms.forEach(function(plat) {
                 if (plat.acceptsType && plat.acceptsType.indexOf(project.type) === -1) return;
                 var est = csEstimateStreamingRevenue(project, plat);
-                var pCard = _ae(container, '<div style="background:#fff; border:2px solid #bdc3c7; border-left:4px solid ' + (plat.logoColor || '#555') + '; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;"></div>');
+                var pCard = _ae(container, '<div class="cs-card cs-card-flex" style="padding:12px; margin-bottom:8px; border-left:4px solid ' + (plat.logoColor || '#555') + ';"></div>');
                 
                 var pL = _ae(pCard, '<div style="flex:1;"></div>');
                 _ae(pL, '<div style="font-weight:bold; font-size:11pt;">' + plat.name + (plat.subscriberBase > 1e8 ? ' <span style="background:#ff9f43; color:white; font-size:7pt; padding:1px 4px; vertical-align:middle;">POPULAR</span>' : '') + '</div>');
-                _ae(pL, '<div style="font-size:9pt; color:#7f8c8d;">Users: ' + UI.getShortNumberString(plat.subscriberBase) + ' | Length: ' + est.weeks + 'w</div>');
+                _ae(pL, '<div class="cs-text-muted">Users: ' + UI.getShortNumberString(plat.subscriberBase) + ' | Length: ' + est.weeks + 'w</div>');
 
                 var pM = _ae(pCard, '<div style="flex:1; text-align:center;"></div>');
                 _ae(pM, '<div style="color:#27ae60; font-weight:bold; font-size:10pt;">Est. Max: $' + UI.getShortNumberString(est.totalRevenue) + '</div>');
@@ -5648,7 +5699,11 @@
 
                 var pR = _ae(pCard, '<div style="width:100px; text-align:right;"></div>');
                 var sBtn = _ae(pR, '<div class="selectorButton whiteBoardButton" style="padding:6px 12px; font-size:10pt;">SIGN DEAL</div>');
-                sBtn.click(function(){ csConfirmStreamingDeal(project, plat); routeModMenu("media", "media"); });
+                sBtn.click(function(){ 
+                    if (csConfirmStreamingDeal(project, plat) !== false) {
+                        routeModMenu("media", "media"); 
+                    }
+                });
             });
         }
     }
@@ -5673,9 +5728,11 @@
 
             var gridBtn = $('<div class="selectorButton orangeButton" style="padding: 10px 20px;">Publish to Grid</div>');
             gridBtn.click(function () {
-                csAddToGrid(project);
-                $.modal.close();
-                if (onRefresh) onRefresh();
+                var success = csAddToGrid(project);
+                if (success !== false) {
+                    $.modal.close();
+                    if (onRefresh) onRefresh();
+                }
             });
             gridObj.append(gridBtn);
             offersContainer.append(gridObj);
@@ -5705,9 +5762,11 @@
                 if (isAcceptable) {
                     var tBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
                     tBtn.click(function () {
-                        csConfirmTheaterRelease(project, chain);
-                        $.modal.close();
-                        if (onRefresh) onRefresh();
+                        var success = csConfirmTheaterRelease(project, chain);
+                        if (success !== false) {
+                            $.modal.close();
+                            if (onRefresh) onRefresh();
+                        }
                     });
                     tObj.append(tBtn);
                 } else {
@@ -5737,9 +5796,11 @@
 
                 var sBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
                 sBtn.click(function () {
-                    csConfirmStreamingDeal(project, platform);
-                    $.modal.close();
-                    if (onRefresh) onRefresh();
+                    var success = csConfirmStreamingDeal(project, platform);
+                    if (success !== false) {
+                        $.modal.close();
+                        if (onRefresh) onRefresh();
+                    }
                 });
                 sObj.append(sBtn);
 
@@ -5790,8 +5851,8 @@
                 '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Title</th><th>Type</th><th>Score</th><th>Weekly Rev</th><th>Popularity</th></tr></table>');
             internal.forEach(function (p, idx) {
                 var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
-                var r = _ae(iTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
-                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + p.title + '</td>');
+                var r = _ae(iTable, '<tr style="background:' + bg + ';"></tr>');
+                _ae(r, '<td class="cs-text-title">' + p.title + '</td>');
                 _ae(r, '<td style="text-align:center; font-size:8pt; text-transform:uppercase;">' + p.type + '</td>');
                 _ae(r, '<td style="text-align:center;">' + csRenderScoreBadge(p.score) + '</td>');
                 _ae(r, '<td style="text-align:center; color:#27ae60; font-weight:bold;">+$' + UI.getShortNumberString(p.weeklyRevenue || 0) + '</td>');
@@ -5805,12 +5866,12 @@
         if (licensed.length === 0) {
             _ae(container, csRenderEmptyState('No licensed movies in your catalog. Browse the Content Market to expand your library.'));
         } else {
-            var lTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:2px solid #555;">' +
+            var lTable = _ae(container, '<table class="cs-table" style="border:2px solid #555;">' +
                 '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Title</th><th>Score</th><th>Weekly Cost</th><th>Expires</th></tr></table>');
             licensed.forEach(function (c, idx) {
                 var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
-                var r = _ae(lTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
-                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + c.title + '</td>');
+                var r = _ae(lTable, '<tr style="background:' + bg + ';"></tr>');
+                _ae(r, '<td class="cs-text-title">' + c.title + '</td>');
                 _ae(r, '<td style="text-align:center;">' + csRenderScoreBadge(c.score) + '</td>');
                 _ae(r, '<td style="text-align:center; color:#e74c3c; font-weight:bold;">-$' + UI.getShortNumberString(c.licenseCostWeekly || 0) + '</td>');
                 _ae(r, '<td style="text-align:center;">' + (c.licenseWeeksRemaining || 0) + 'w</td>');
@@ -5891,7 +5952,7 @@
         }
 
         var infraInfo = _ae(infraRow, '<div style="flex:2; padding-right:15px;"></div>');
-        _ae(infraInfo, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">Server Infrastructure (Tier ' + servers + ')</div>');
+        _ae(infraInfo, '<div class="cs-text-title">Server Infrastructure (Tier ' + servers + ')</div>');
         _ae(infraInfo, '<div style="font-size:9pt; color:#555; margin:4px 0;">Capacity: ' + UI.getShortNumberString(g.subscribers || 0) + ' / ' + UI.getShortNumberString(capacity) + ' (' + usagePct + '%)</div>');
         _ae(infraInfo, csRenderMiniBar(usagePct, (usagePct > 95 ? '#e74c3c' : (usagePct > 75 ? '#f39c12' : '#27ae60')), 200));
         
@@ -5928,7 +5989,7 @@
         // Leaderboard (Simple Table)
         _ae(contentArea, csRenderSectionHeader('Market Share Leaderboard'));
         var lbTable = _ae(contentArea, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; border-radius:6px; overflow:hidden;">' +
-            '<tr style="background:#34495e; color:white; text-transform:uppercase;"><th style="padding:10px; text-align:left;">Service</th><th>Subscribers</th><th>Market Share</th></tr></table>');
+            '<tr style="background:#34495e; color:white; text-transform:uppercase;"><th>Service</th><th>Subscribers</th><th>Market Share</th></tr></table>');
         
         var competitors = [
             { name: "The Grid", subs: subs, color: '#d35400' },
@@ -5941,7 +6002,7 @@
         competitors.forEach(function(c, idx) {
             var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
             var share = totalSubs > 0 ? ((c.subs / totalSubs) * 100).toFixed(1) : "0.0";
-            var r = _ae(lbTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
+            var r = _ae(lbTable, '<tr style="background:' + bg + ';"></tr>');
             _ae(r, '<td style="padding:8px; font-weight:bold;"><span style="display:inline-block; width:10px; height:10px; background:'+c.color+'; margin-right:8px;"></span>' + c.name + (c.name === "The Grid" ? ' (YOU)' : '') + '</td>');
             _ae(r, '<td style="text-align:center;">' + UI.getShortNumberString(c.subs || 0) + '</td>');
             _ae(r, '<td style="text-align:center;">' + share + '%</td>');
@@ -6145,7 +6206,7 @@
             var hash = 0; for(var i=0; i<f.studioName.length; i++) hash = f.studioName.charCodeAt(i) + ((hash << 5) - hash);
             var dotColor = 'hsl(' + (Math.abs(hash) % 360) + ', 70%, 50%)';
             
-            _ae(info, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + f.title + '</div>');
+            _ae(info, '<div class="cs-text-title">' + f.title + '</div>');
             _ae(info, '<div style="font-size:9pt; color:#7f8c8d; display:flex; align-items:center; gap:6px; margin-top:4px;"><span style="width:8px; height:8px; border-radius:50%; background:'+dotColor+';"></span>' + f.studioName + ' | ' + csRenderScoreBadge(f.score) + '</div>');
             
             var cost = 1000000 + (f.score * 500000);
@@ -6404,25 +6465,46 @@
         // Initialize allocation to 0
         DLCSystem.Allocations.forEach(function(a) { DLCWizard.currentData.allocation[a] = 0; });
 
-        var modal = UI.createModal("DLC Wizard", "dlc-wizard-modal");
+        $('#dlc-wizard-modal').remove(); // Clean up any previous wizard modal instance to prevent ID conflicts
+
+        var modal = $('<div id="dlc-wizard-modal" class="windowBorder" style="background:#eee; padding:20px; width:600px; max-height:80%; display:flex; flex-direction:column; border-radius:10px;"></div>');
+        modal.append('<h3 style="margin-top:0; color:#d35400;">DLC Wizard</h3>');
         
-        var content = $('<div id="dlc-wizard-content" style="height:400px; overflow-y:auto; padding:10px;"></div>');
+        var content = $('<div id="dlc-wizard-content" style="height:400px; overflow-y:auto; padding:10px; background:#fff; border:1px solid #bdc3c7;"></div>');
         modal.append(content);
 
         var footer = $('<div style="display:flex; justify-content:space-between; margin-top:20px;"></div>');
-        var btnPrev = UI.createButton("Previous", function() { DLCWizard.navigate(-1); }).attr('id', 'dlc-btn-prev').hide();
-        var btnNext = UI.createButton("Next", function() { DLCWizard.navigate(1); }).attr('id', 'dlc-btn-next');
+        var btnPrev = $('<div id="dlc-btn-prev" class="selectorButton whiteBoardButton" style="width:120px; text-align:center;">Previous</div>').click(function() { DLCWizard.navigate(-1); }).hide();
+        var btnNext = $('<div id="dlc-btn-next" class="selectorButton orangeButton" style="width:120px; text-align:center;">Next</div>').click(function() { DLCWizard.navigate(1); });
+        var btnClose = $('<div class="selectorButton" style="width:120px; text-align:center;">Close</div>').click(function() { 
+            $.modal.close(); 
+            $('#dlc-wizard-modal').remove(); 
+        });
         
-        footer.append(btnPrev).append(btnNext);
+        footer.append(btnPrev).append(btnClose).append(btnNext);
         modal.append(footer);
         
-        $('body').append(modal);
-        UI.showModal(modal);
+        modal.modal({
+            overlayClose: false,
+            opacity: 60,
+            overlayCss: { backgroundColor: "#000" },
+            containerCss: { backgroundColor: "transparent", border: "none" }
+        });
         
         DLCWizard.renderPage();
     };
 
     DLCWizard.navigate = function(dir) {
+        if (dir === 1 && DLCWizard.currentPage === 4) {
+            var sum = 0;
+            $('.dlc-alloc-input').each(function() { sum += parseInt($(this).val()) || 0; });
+            if (sum !== 100) {
+                var totalEl = $('#dlc-alloc-total');
+                totalEl.css('font-size', '14pt').animate({fontSize: '12pt'}, 200);
+                return;
+            }
+        }
+
         DLCWizard.saveCurrentPage();
         DLCWizard.currentPage += dir;
         
@@ -6561,7 +6643,13 @@
     };
 
     DLCWizard.finish = function() {
-        UI.closeModal();
+        $.modal.close();
+        $('#dlc-wizard-modal').remove();
+        
+        // Ensure new DLC schema exists properly before writing to it
+        if (!store.data.dlcData) store.data.dlcData = { games: {}, dlcs: {} };
+        if (!store.data.dlcData.dlcs) store.data.dlcData.dlcs = {};
+        if (!store.data.dlcData.games) store.data.dlcData.games = {};
         
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         var dlcId = "DLC_" + Date.now();

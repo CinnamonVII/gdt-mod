@@ -18,11 +18,11 @@
                 var weeksLeft = Math.max(0, pd.decisionDeadlineWeek - currentWeek);
                 var urgencyColor = weeksLeft <= 1 ? "#e74c3c" : (weeksLeft <= 2 ? "#e67e22" : "#27ae60");
 
-                var card = _ae(container, '<div style="background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); border-left:4px solid ' + urgencyColor + '; padding:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-radius:6px;"></div>');
+                var card = _ae(container, '<div class="cs-card cs-card-flex" style="border-left:4px solid ' + urgencyColor + ';"></div>');
 
                 var info = _ae(card, '<div></div>');
-                _ae(info, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + mediaProj.title + ' <span style="font-size:8pt; color:#7f8c8d; text-transform:uppercase;">[' + mediaProj.type + ']</span></div>');
-                _ae(info, '<div style="font-size:9pt; margin-top:4px;">Score: ' + csRenderScoreBadge(mediaProj.score) + ' | Est. Revenue: <span style="color:#27ae60; font-weight:bold;">$' + UI.getShortNumberString(mediaProj.estimatedRevenue) + '</span></div>');
+                _ae(info, '<div class="cs-text-title">' + mediaProj.title + ' <span style="font-size:8pt; color:#7f8c8d; text-transform:uppercase;">[' + mediaProj.type + ']</span></div>');
+                _ae(info, '<div style="font-size:9pt; margin-top:4px;">Score: ' + csRenderScoreBadge(mediaProj.score) + ' | Est. Revenue: <span class="cs-text-green cs-text-bold">$' + UI.getShortNumberString(mediaProj.estimatedRevenue) + '</span></div>');
                 _ae(info, '<div style="font-size:11pt; margin-top:6px; font-weight:bold; color:' + urgencyColor + ';">' + weeksLeft + ' WKS LEFT</div>');
 
                 var actionBtn = _ae(card, '<div class="selectorButton orangeButton" style="padding:12px 20px; font-weight:bold; font-size:11pt;">REVIEW OFFERS</div>');
@@ -50,14 +50,14 @@
         if (activeStreamDeals.length === 0) {
             _ae(container, csRenderEmptyState('No active streaming contracts.'));
         } else {
-            var sTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; margin-bottom:20px; border-radius:6px; overflow:hidden;">' +
-                '<tr style="background:#34495e; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:10px; text-align:left;">Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th><th>Action</th></tr></table>');
+            var sTable = _ae(container, '<table class="cs-table">' +
+                '<tr ><th>Project</th><th>Platform</th><th>Weekly Rev</th><th>Progress</th><th>Action</th></tr></table>');
 
             activeStreamDeals.forEach(function (item, idx) {
                 var d = item.deal, p = item.platform, bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
-                var r = _ae(sTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
-                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + d.title + '</td>');
-                _ae(r, '<td style="padding:8px;"><span style="display:inline-block; width:8px; height:8px; background:' + (p.logoColor || '#555') + '; margin-right:6px;"></span>' + p.name + '</td>');
+                var r = _ae(sTable, '<tr style="background:' + bg + ';"></tr>');
+                _ae(r, '<td class="cs-text-title">' + d.title + '</td>');
+                _ae(r, '<td><span style="display:inline-block; width:8px; height:8px; background:' + (p.logoColor || '#555') + '; margin-right:6px;"></span>' + p.name + '</td>');
                 _ae(r, '<td style="text-align:center; color:#27ae60; font-weight:bold;">+$' + UI.getShortNumberString(d.weeklyRevenue) + '</td>');
                 
                 var progTd = _ae(r, '<td style="text-align:center;"></td>');
@@ -93,13 +93,13 @@
         if (activeTheater.length === 0) {
             _ae(container, csRenderEmptyState('No active theater releases.'));
         } else {
-            var tTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:2px solid #555;">' +
+            var tTable = _ae(container, '<table class="cs-table" style="border:2px solid #555;">' +
                 '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Movie</th><th>Chain</th><th>Box Office</th><th>Player Share</th><th>Week</th><th>Cancel</th></tr></table>');
 
             activeTheater.forEach(function (tr, idx) {
                 var chain = csGetTheaterChainById(tr.theaterChainId), chainName = chain ? chain.name : "Unknown", bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
-                var r = _ae(tTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
-                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + tr.title + '</td>');
+                var r = _ae(tTable, '<tr style="background:' + bg + ';"></tr>');
+                _ae(r, '<td class="cs-text-title">' + tr.title + '</td>');
                 _ae(r, '<td>' + chainName + '</td>');
                 _ae(r, '<td style="text-align:right; padding-right:10px;">$' + UI.getShortNumberString(tr.accumulatedRevenue || 0) + '</td>');
                 _ae(r, '<td style="text-align:right; font-weight:bold; color:#27ae60; padding-right:10px;">$' + UI.getShortNumberString(tr.playerShare) + '</td>');
@@ -163,23 +163,27 @@
             var chains = store.data.theaterChains.slice().sort(function(a,b){ return b.prestige - a.prestige; });
             chains.forEach(function(chain) {
                 var minReq = Math.ceil(chain.prestige * 1.5), isOk = project.score >= minReq;
-                var cCard = _ae(container, '<div style="background:#fff; border:2px solid #bdc3c7; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;' + (isOk?'':'opacity:0.6') + '"></div>');
+                var cCard = _ae(container, '<div class="cs-card cs-card-flex" style="padding:12px; margin-bottom:8px;' + (isOk?'':'opacity:0.6') + '"></div>');
                 
                 var cL = _ae(cCard, '<div style="flex:1;"></div>');
                 var stars = ""; for(var i=0; i<5; i++) stars += (i < chain.prestige ? '★' : '☆');
                 _ae(cL, '<div style="font-weight:bold; font-size:11pt;">' + chain.name + ' <span style="color:#f39c12; font-size:10pt;">' + stars + '</span></div>');
-                _ae(cL, '<div style="font-size:9pt; color:#7f8c8d;">Fee: ' + (chain.distributionFeeRate*100).toFixed(0) + '% | Screens: ' + (chain.prestige*100) + '</div>');
+                _ae(cL, '<div class="cs-text-muted">Fee: ' + (chain.distributionFeeRate*100).toFixed(0) + '% | Screens: ' + (chain.prestige*100) + '</div>');
 
                 var cM = _ae(cCard, '<div style="flex:1; text-align:center;"></div>');
                 if (isOk) {
                     var est = csEstimateTheaterRevenue(project, chain);
                     _ae(cM, '<div style="color:#27ae60; font-weight:bold; font-size:10pt;">$' + UI.getShortNumberString(est.playerShare.min) + ' - $' + UI.getShortNumberString(est.playerShare.max) + '</div>');
-                } else _ae(cM, '<div style="color:#e74c3c; font-weight:bold; font-size:9pt; text-transform:uppercase;">Score too low</div>');
+                } else _ae(cM, '<div class="cs-text-red cs-text-bold" style="font-size:9pt; text-transform:uppercase;">Score too low</div>');
 
                 var cR = _ae(cCard, '<div style="width:100px; text-align:right;"></div>');
                 if (isOk) {
                     var bBtn = _ae(cR, '<div class="selectorButton whiteBoardButton" style="padding:6px 12px; font-size:10pt;">BOOK</div>');
-                    bBtn.click(function(){ csConfirmTheaterRelease(project, chain); routeModMenu("media", "media"); });
+                    bBtn.click(function(){ 
+                        if (csConfirmTheaterRelease(project, chain) !== false) {
+                            routeModMenu("media", "media"); 
+                        }
+                    });
                 }
             });
         }
@@ -191,11 +195,11 @@
             platforms.forEach(function(plat) {
                 if (plat.acceptsType && plat.acceptsType.indexOf(project.type) === -1) return;
                 var est = csEstimateStreamingRevenue(project, plat);
-                var pCard = _ae(container, '<div style="background:#fff; border:2px solid #bdc3c7; border-left:4px solid ' + (plat.logoColor || '#555') + '; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;"></div>');
+                var pCard = _ae(container, '<div class="cs-card cs-card-flex" style="padding:12px; margin-bottom:8px; border-left:4px solid ' + (plat.logoColor || '#555') + ';"></div>');
                 
                 var pL = _ae(pCard, '<div style="flex:1;"></div>');
                 _ae(pL, '<div style="font-weight:bold; font-size:11pt;">' + plat.name + (plat.subscriberBase > 1e8 ? ' <span style="background:#ff9f43; color:white; font-size:7pt; padding:1px 4px; vertical-align:middle;">POPULAR</span>' : '') + '</div>');
-                _ae(pL, '<div style="font-size:9pt; color:#7f8c8d;">Users: ' + UI.getShortNumberString(plat.subscriberBase) + ' | Length: ' + est.weeks + 'w</div>');
+                _ae(pL, '<div class="cs-text-muted">Users: ' + UI.getShortNumberString(plat.subscriberBase) + ' | Length: ' + est.weeks + 'w</div>');
 
                 var pM = _ae(pCard, '<div style="flex:1; text-align:center;"></div>');
                 _ae(pM, '<div style="color:#27ae60; font-weight:bold; font-size:10pt;">Est. Max: $' + UI.getShortNumberString(est.totalRevenue) + '</div>');
@@ -203,7 +207,11 @@
 
                 var pR = _ae(pCard, '<div style="width:100px; text-align:right;"></div>');
                 var sBtn = _ae(pR, '<div class="selectorButton whiteBoardButton" style="padding:6px 12px; font-size:10pt;">SIGN DEAL</div>');
-                sBtn.click(function(){ csConfirmStreamingDeal(project, plat); routeModMenu("media", "media"); });
+                sBtn.click(function(){ 
+                    if (csConfirmStreamingDeal(project, plat) !== false) {
+                        routeModMenu("media", "media"); 
+                    }
+                });
             });
         }
     }
@@ -228,9 +236,11 @@
 
             var gridBtn = $('<div class="selectorButton orangeButton" style="padding: 10px 20px;">Publish to Grid</div>');
             gridBtn.click(function () {
-                csAddToGrid(project);
-                $.modal.close();
-                if (onRefresh) onRefresh();
+                var success = csAddToGrid(project);
+                if (success !== false) {
+                    $.modal.close();
+                    if (onRefresh) onRefresh();
+                }
             });
             gridObj.append(gridBtn);
             offersContainer.append(gridObj);
@@ -260,9 +270,11 @@
                 if (isAcceptable) {
                     var tBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
                     tBtn.click(function () {
-                        csConfirmTheaterRelease(project, chain);
-                        $.modal.close();
-                        if (onRefresh) onRefresh();
+                        var success = csConfirmTheaterRelease(project, chain);
+                        if (success !== false) {
+                            $.modal.close();
+                            if (onRefresh) onRefresh();
+                        }
                     });
                     tObj.append(tBtn);
                 } else {
@@ -292,9 +304,11 @@
 
                 var sBtn = $('<div class="selectorButton whiteBoardButton" style="padding: 8px 15px;">Sign Deal</div>');
                 sBtn.click(function () {
-                    csConfirmStreamingDeal(project, platform);
-                    $.modal.close();
-                    if (onRefresh) onRefresh();
+                    var success = csConfirmStreamingDeal(project, platform);
+                    if (success !== false) {
+                        $.modal.close();
+                        if (onRefresh) onRefresh();
+                    }
                 });
                 sObj.append(sBtn);
 
@@ -345,8 +359,8 @@
                 '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Title</th><th>Type</th><th>Score</th><th>Weekly Rev</th><th>Popularity</th></tr></table>');
             internal.forEach(function (p, idx) {
                 var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
-                var r = _ae(iTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
-                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + p.title + '</td>');
+                var r = _ae(iTable, '<tr style="background:' + bg + ';"></tr>');
+                _ae(r, '<td class="cs-text-title">' + p.title + '</td>');
                 _ae(r, '<td style="text-align:center; font-size:8pt; text-transform:uppercase;">' + p.type + '</td>');
                 _ae(r, '<td style="text-align:center;">' + csRenderScoreBadge(p.score) + '</td>');
                 _ae(r, '<td style="text-align:center; color:#27ae60; font-weight:bold;">+$' + UI.getShortNumberString(p.weeklyRevenue || 0) + '</td>');
@@ -360,12 +374,12 @@
         if (licensed.length === 0) {
             _ae(container, csRenderEmptyState('No licensed movies in your catalog. Browse the Content Market to expand your library.'));
         } else {
-            var lTable = _ae(container, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:2px solid #555;">' +
+            var lTable = _ae(container, '<table class="cs-table" style="border:2px solid #555;">' +
                 '<tr style="background:#555; color:white; text-transform:uppercase; letter-spacing:0.5px;"><th style="padding:8px; text-align:left;">Title</th><th>Score</th><th>Weekly Cost</th><th>Expires</th></tr></table>');
             licensed.forEach(function (c, idx) {
                 var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
-                var r = _ae(lTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
-                _ae(r, '<td style="padding:8px; font-weight:bold; color:#2c3e50;">' + c.title + '</td>');
+                var r = _ae(lTable, '<tr style="background:' + bg + ';"></tr>');
+                _ae(r, '<td class="cs-text-title">' + c.title + '</td>');
                 _ae(r, '<td style="text-align:center;">' + csRenderScoreBadge(c.score) + '</td>');
                 _ae(r, '<td style="text-align:center; color:#e74c3c; font-weight:bold;">-$' + UI.getShortNumberString(c.licenseCostWeekly || 0) + '</td>');
                 _ae(r, '<td style="text-align:center;">' + (c.licenseWeeksRemaining || 0) + 'w</td>');
@@ -446,7 +460,7 @@
         }
 
         var infraInfo = _ae(infraRow, '<div style="flex:2; padding-right:15px;"></div>');
-        _ae(infraInfo, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">Server Infrastructure (Tier ' + servers + ')</div>');
+        _ae(infraInfo, '<div class="cs-text-title">Server Infrastructure (Tier ' + servers + ')</div>');
         _ae(infraInfo, '<div style="font-size:9pt; color:#555; margin:4px 0;">Capacity: ' + UI.getShortNumberString(g.subscribers || 0) + ' / ' + UI.getShortNumberString(capacity) + ' (' + usagePct + '%)</div>');
         _ae(infraInfo, csRenderMiniBar(usagePct, (usagePct > 95 ? '#e74c3c' : (usagePct > 75 ? '#f39c12' : '#27ae60')), 200));
         
@@ -483,7 +497,7 @@
         // Leaderboard (Simple Table)
         _ae(contentArea, csRenderSectionHeader('Market Share Leaderboard'));
         var lbTable = _ae(contentArea, '<table style="width:100%; border-collapse:collapse; font-size:9pt; background:#fff; border:1px solid #bdc3c7; border-radius:6px; overflow:hidden;">' +
-            '<tr style="background:#34495e; color:white; text-transform:uppercase;"><th style="padding:10px; text-align:left;">Service</th><th>Subscribers</th><th>Market Share</th></tr></table>');
+            '<tr style="background:#34495e; color:white; text-transform:uppercase;"><th>Service</th><th>Subscribers</th><th>Market Share</th></tr></table>');
         
         var competitors = [
             { name: "The Grid", subs: subs, color: '#d35400' },
@@ -496,7 +510,7 @@
         competitors.forEach(function(c, idx) {
             var bg = (idx % 2 === 0) ? '#fff' : '#f4f4f4';
             var share = totalSubs > 0 ? ((c.subs / totalSubs) * 100).toFixed(1) : "0.0";
-            var r = _ae(lbTable, '<tr style="background:' + bg + '; border-bottom:1px solid #bdc3c7;"></tr>');
+            var r = _ae(lbTable, '<tr style="background:' + bg + ';"></tr>');
             _ae(r, '<td style="padding:8px; font-weight:bold;"><span style="display:inline-block; width:10px; height:10px; background:'+c.color+'; margin-right:8px;"></span>' + c.name + (c.name === "The Grid" ? ' (YOU)' : '') + '</td>');
             _ae(r, '<td style="text-align:center;">' + UI.getShortNumberString(c.subs || 0) + '</td>');
             _ae(r, '<td style="text-align:center;">' + share + '%</td>');
@@ -700,7 +714,7 @@
             var hash = 0; for(var i=0; i<f.studioName.length; i++) hash = f.studioName.charCodeAt(i) + ((hash << 5) - hash);
             var dotColor = 'hsl(' + (Math.abs(hash) % 360) + ', 70%, 50%)';
             
-            _ae(info, '<div style="font-weight:bold; font-size:11pt; color:#2c3e50;">' + f.title + '</div>');
+            _ae(info, '<div class="cs-text-title">' + f.title + '</div>');
             _ae(info, '<div style="font-size:9pt; color:#7f8c8d; display:flex; align-items:center; gap:6px; margin-top:4px;"><span style="width:8px; height:8px; border-radius:50%; background:'+dotColor+';"></span>' + f.studioName + ' | ' + csRenderScoreBadge(f.score) + '</div>');
             
             var cost = 1000000 + (f.score * 500000);

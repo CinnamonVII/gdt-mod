@@ -25,25 +25,46 @@
         // Initialize allocation to 0
         DLCSystem.Allocations.forEach(function(a) { DLCWizard.currentData.allocation[a] = 0; });
 
-        var modal = UI.createModal("DLC Wizard", "dlc-wizard-modal");
+        $('#dlc-wizard-modal').remove(); // Clean up any previous wizard modal instance to prevent ID conflicts
+
+        var modal = $('<div id="dlc-wizard-modal" class="windowBorder" style="background:#eee; padding:20px; width:600px; max-height:80%; display:flex; flex-direction:column; border-radius:10px;"></div>');
+        modal.append('<h3 style="margin-top:0; color:#d35400;">DLC Wizard</h3>');
         
-        var content = $('<div id="dlc-wizard-content" style="height:400px; overflow-y:auto; padding:10px;"></div>');
+        var content = $('<div id="dlc-wizard-content" style="height:400px; overflow-y:auto; padding:10px; background:#fff; border:1px solid #bdc3c7;"></div>');
         modal.append(content);
 
         var footer = $('<div style="display:flex; justify-content:space-between; margin-top:20px;"></div>');
-        var btnPrev = UI.createButton("Previous", function() { DLCWizard.navigate(-1); }).attr('id', 'dlc-btn-prev').hide();
-        var btnNext = UI.createButton("Next", function() { DLCWizard.navigate(1); }).attr('id', 'dlc-btn-next');
+        var btnPrev = $('<div id="dlc-btn-prev" class="selectorButton whiteBoardButton" style="width:120px; text-align:center;">Previous</div>').click(function() { DLCWizard.navigate(-1); }).hide();
+        var btnNext = $('<div id="dlc-btn-next" class="selectorButton orangeButton" style="width:120px; text-align:center;">Next</div>').click(function() { DLCWizard.navigate(1); });
+        var btnClose = $('<div class="selectorButton" style="width:120px; text-align:center;">Close</div>').click(function() { 
+            $.modal.close(); 
+            $('#dlc-wizard-modal').remove(); 
+        });
         
-        footer.append(btnPrev).append(btnNext);
+        footer.append(btnPrev).append(btnClose).append(btnNext);
         modal.append(footer);
         
-        $('body').append(modal);
-        UI.showModal(modal);
+        modal.modal({
+            overlayClose: false,
+            opacity: 60,
+            overlayCss: { backgroundColor: "#000" },
+            containerCss: { backgroundColor: "transparent", border: "none" }
+        });
         
         DLCWizard.renderPage();
     };
 
     DLCWizard.navigate = function(dir) {
+        if (dir === 1 && DLCWizard.currentPage === 4) {
+            var sum = 0;
+            $('.dlc-alloc-input').each(function() { sum += parseInt($(this).val()) || 0; });
+            if (sum !== 100) {
+                var totalEl = $('#dlc-alloc-total');
+                totalEl.css('font-size', '14pt').animate({fontSize: '12pt'}, 200);
+                return;
+            }
+        }
+
         DLCWizard.saveCurrentPage();
         DLCWizard.currentPage += dir;
         
@@ -182,7 +203,13 @@
     };
 
     DLCWizard.finish = function() {
-        UI.closeModal();
+        $.modal.close();
+        $('#dlc-wizard-modal').remove();
+        
+        // Ensure new DLC schema exists properly before writing to it
+        if (!store.data.dlcData) store.data.dlcData = { games: {}, dlcs: {} };
+        if (!store.data.dlcData.dlcs) store.data.dlcData.dlcs = {};
+        if (!store.data.dlcData.games) store.data.dlcData.games = {};
         
         var currentWeek = Math.floor(GameManager.company.currentWeek);
         var dlcId = "DLC_" + Date.now();

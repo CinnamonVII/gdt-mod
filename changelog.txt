@@ -1,0 +1,14 @@
+Changelog v1.0-beta
+- Added a full DLC System featuring 6 content scales, 8 types, and point allocations.
+- Created a 7-page "DLC Wizard" modal UI to custom design, price, and market DLCs.
+- Broke down monolithic main.js into modular source files under src/ (separating core hooks, data init, rival competitors, distribution channels, and specific UI modules).
+- Implemented JS and Python build scripts (scripts/build.js / build.py) to compile and package modular sources into an optimized release bundle.
+- Added extraction scripts (scripts/extract.js / extract.py) to segment monolithic code into clean modular components.
+- Standardized styling (cs-card, cs-table classes) and created button/layout helper functions.
+- Replaced the experience/fans system for franchises with a 0-100 fanbaseScore and tiering system.
+- Balanced "The Grid" by adding weekly catalog maintenance fees (0.5% of rival studio valuation).
+- Fixed Released Games modal overlap by closing the parent window before launching the DLC Wizard.
+- Upgraded "The Grid" to show floating revenue/upkeep indicator animations on weekly ticks.
+- Changed distribution contracts to return execution success for cleaner UI/modal refresh.
+- Improved licensing proposals to open in a details modal instead of redirecting subpages.
+- Integrated Array find/includes polyfills to prevent crashes on older Game Dev Tycoon engines.
